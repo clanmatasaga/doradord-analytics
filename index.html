@@ -397,10 +397,184 @@ footer {
 </footer>
 
 <script>
+
+const WORKER_URL =
+  "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
+
+const SESSION_KEY = "doradord_session";
+
 function connectTikTok() {
-    window.location.href =
-        "https://doradord-tiktok-auth.clanmatasaga.workers.dev/oauth";
+  window.location.href = WORKER_URL + "/oauth";
 }
+
+function showStatus(message, connected) {
+  const status = document.querySelector(".status");
+  status.textContent = message;
+
+  const dot = document.createElement("span");
+  dot.className = "dot";
+  dot.style.background = connected ? "#00e5a0" : "#667085";
+
+  status.prepend(dot);
+
+  document.querySelector(".connect-btn").style.display =
+    connected ? "none" : "inline-block";
+}
+
+async function loadDashboard(session) {
+  const headers = {
+    Authorization: "Bearer " + session
+  };
+
+  const profileResponse = await fetch(
+    WORKER_URL + "/profile",
+    { headers }
+  );
+
+  if (!profileResponse.ok) {
+    throw new Error("No se pudo consultar el perfil de TikTok.");
+  }
+
+  const profile = await profileResponse.json();
+
+  showStatus(
+    "Conectado: " + (profile.display_name || "TikTok"),
+    true
+  );
+
+  const videoResponse = await fetch(
+    WORKER_URL + "/videos",
+    { headers }
+  );
+
+  if (!videoResponse.ok) {
+    throw new Error("No se pudieron cargar los videos.");
+  }
+
+  const result = await videoResponse.json();
+  const videos = result.data?.videos || [];
+
+  document.querySelector(".stats .stat-card h3").textContent =
+    videos.length;
+
+  const container = document.querySelector(".empty-state");
+  const grid = document.createElement("div");
+  grid.className = "video-grid";
+
+  if (videos.length === 0) {
+    container.textContent = "No se encontraron videos públicos.";
+    return;
+  }
+
+  videos.forEach(video => {
+    const card = document.createElement("article");
+    card.className = "video-placeholder";
+
+    const cover = document.createElement("div");
+    cover.className = "video-cover";
+
+    if (video.cover_image_url) {
+      const img = document.createElement("img");
+      img.src = video.cover_image_url;
+      img.alt = "Portada del video";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.loading = "lazy";
+      cover.appendChild(img);
+    } else {
+      cover.textContent = "▶";
+    }
+
+    const info = document.createElement("div");
+    info.className = "video-info";
+
+    const title = document.createElement("h4");
+    title.textContent =
+      video.title ||
+      video.video_description ||
+      "Video de TikTok";
+
+    const duration = document.createElement("p");
+    duration.textContent =
+      "Duración: " + (video.duration ?? "--") + " segundos";
+
+    const link = document.createElement("a");
+    link.href = video.share_url || "#";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Ver en TikTok";
+    link.style.color = "#00e5a0";
+    link.style.display = "inline-block";
+    link.style.marginTop = "10px";
+    link.style.fontSize = "12px";
+
+    info.append(title, duration, link);
+    card.append(cover, info);
+    grid.appendChild(card);
+  });
+
+  container.replaceWith(grid);
+}
+
+async function initializeDashboard() {
+  const params = new URLSearchParams(window.location.search);
+  const ticket = params.get("ticket");
+
+  if (ticket) {
+    history.replaceState(
+      {},
+      document.title,
+      window.location.pathname
+    );
+
+    try {
+      const response = await fetch(
+        WORKER_URL + "/session/exchange",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ ticket })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.session_token) {
+        throw new Error("No se pudo iniciar la sesión.");
+      }
+
+      sessionStorage.setItem(
+        SESSION_KEY,
+        result.session_token
+      );
+    } catch (error) {
+      showStatus("Error de conexión", false);
+      console.error(error);
+      return;
+    }
+  }
+
+  const session = sessionStorage.getItem(SESSION_KEY);
+
+  if (!session) {
+    showStatus("TikTok pendiente de conexión", false);
+    return;
+  }
+
+  try {
+    await loadDashboard(session);
+  } catch (error) {
+    sessionStorage.removeItem(SESSION_KEY);
+    showStatus("TikTok pendiente de conexión", false);
+    console.error(error);
+  }
+}
+
+initializeDashboard();
+
 </script>
 
 </body>
