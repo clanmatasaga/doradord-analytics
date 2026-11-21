@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DoradoRD Analytics</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #080b12;
+    color: #f1f5f9;
+    font-family: Inter, Arial, sans-serif;
+}
+
+:root {
+    --bg: #080b12;
+    --card: #111722;
+    --border: #202a39;
+    --muted: #8b98ab;
+    --accent: #00e5a0;
+}
+
+header {
+    height: 75px;
+    padding: 0 6%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: #0b1019;
+}
+
+.brand {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.brand span {
+    color: var(--accent);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #667085;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+main {
+    max-width: 1400px;
+    margin: auto;
+    padding: 40px 6%;
+}
+
+.welcome {
+    margin-bottom: 30px;
+}
+
+.welcome h1 {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.welcome p {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.connect-card {
+    background: linear-gradient(120deg, #11251f, #111722 70%);
+    border: 1px solid #204638;
+    border-radius: 16px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.connect-card h2 {
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.connect-card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 550px;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.connect-btn {
+    background: var(--accent);
+    color: #06140f;
+    padding: 14px 22px;
+    border-radius: 10px;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.connect-btn:hover {
+    opacity: 0.85;
+}
+
+.section-title {
+    font-size: 18px;
+    margin-bottom: 18px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 35px;
+}
+
+.stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+}
+
+.stat-card p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+.stat-card h3 {
+    font-size: 27px;
+}
+
+.stat-card small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.videos {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 24px;
+}
+
+.video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.video-header p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.video-placeholder {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0b1019;
+}
+
+.video-cover {
+    aspect-ratio: 9 / 16;
+    background: linear-gradient(145deg, #182332, #0b1019);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 30px;
+}
+
+.video-info {
+    padding: 14px;
+}
+
+.video-info h4 {
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.video-info p {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 45px 20px;
+}
+
+.empty-state .icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 480px;
+    margin: auto;
+}
+
+footer {
+    border-top: 1px solid var(--border);
+    margin-top: 45px;
+    padding: 25px 6%;
+    color: var(--muted);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+@media (max-width: 900px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .video-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    header {
+        padding: 0 5%;
+    }
+
+    main {
+        padding: 28px 5%;
+    }
+
+    .welcome h1 {
+        font-size: 24px;
+    }
+
+    .connect-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+    }
+
+    .connect-btn {
+        width: 100%;
+    }
+
+    .stats {
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-card h3 {
+        font-size: 23px;
+    }
+
+    .video-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    footer {
+        flex-direction: column;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">DoradoRD <span>Analytics</span></div>
+    <div class="header-right">
+        <div class="status">
+            <span class="dot"></span>
+            TikTok pendiente de conexión
+        </div>
+    </div>
+</header>
+
+<main>
+
+    <section class="welcome">
+        <h1>Panel de análisis</h1>
+        <p>Gestiona y analiza tu contenido de TikTok desde un solo lugar.</p>
+    </section>
+
+    <section class="connect-card">
+        <div>
+            <h2>Conecta tu cuenta de TikTok</h2>
+            <p>
+                Autoriza DoradoRD Analytics para acceder a tu perfil
+                y consultar tus videos. Tus datos estarán protegidos.
+            </p>
+        </div>
+
+        <button class="connect-btn" onclick="connectTikTok()">
+            Conectar TikTok
+        </button>
+    </section>
+
+    <h2 class="section-title">Resumen de rendimiento</h2>
+
+    <section class="stats">
+        <div class="stat-card">
+            <p>Videos publicados</p>
+            <h3>--</h3>
+            <small>Pendiente de conexión</small>
+        </div>
+
+        <div class="stat-card">
+            <p>Visualizaciones</p>
+            <h3>--</h3>
+            <small>Datos pendientes</small>
+        </div>
+
+        <div class="stat-card">
+            <p>Seguidores</p>
+            <h3>--</h3>
+            <small>Datos pendientes</small>
+        </div>
+
+        <div class="stat-card">
+            <p>Engagement</p>
+            <h3>--</h3>
+            <small>Datos pendientes</small>
+        </div>
+    </section>
+
+    <section class="videos">
+        <div class="video-header">
+            <h2 class="section-title">Tus videos</h2>
+            <p>Biblioteca de contenido</p>
+        </div>
+
+        <div class="empty-state">
+            <div class="icon">▶</div>
+            <h3>Tu contenido aparecerá aquí</h3>
+            <p>
+                Conecta tu cuenta de TikTok para comenzar a cargar
+                tus videos y preparar su análisis dentro de
+                DoradoRD Analytics.
+            </p>
+        </div>
+    </section>
+
+</main>
+
+<footer>
+    <span>DoradoRD Analytics</span>
+    <span>Plataforma de análisis de contenido</span>
+</footer>
+
+<script>
+function connectTikTok() {
+    window.location.href =
+        "https://doradord-tiktok-auth.clanmatasaga.workers.dev/oauth";
+}
+</script>
+
+</body>
+</html>
