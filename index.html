@@ -1,54 +1,1152 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DoradoRD Analytics</title>
+
 <style>
-:root{--bg:#080b12;--card:#111722;--card2:#0b1019;--border:#202a39;--muted:#8b98ab;--accent:#00e5a0;--text:#f1f5f9;--gold:#d7b75b}
-*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
-header{height:74px;padding:0 6%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:#0b1019;position:sticky;top:0;z-index:10}.brand{font-size:20px;font-weight:800;letter-spacing:.4px}.brand span{color:var(--accent)}.header-right{display:flex;align-items:center;gap:14px}.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;background:#667085;border-radius:50%;display:inline-block;flex-shrink:0}.dot.connected{background:var(--accent);box-shadow:0 0 10px #00e5a066}
-main{max-width:1400px;margin:auto;padding:38px 6%}.welcome{margin-bottom:28px}.welcome h1{font-size:30px;margin-bottom:8px}.welcome p,.muted{color:var(--muted);font-size:14px}.connect-card{background:linear-gradient(120deg,#11251f,#111722 70%);border:1px solid #204638;border-radius:16px;padding:24px;display:flex;align-items:center;justify-content:space-between;gap:22px;margin-bottom:28px}.connect-card h2{font-size:19px;margin-bottom:8px}.connect-card p{color:var(--muted);font-size:14px;line-height:1.6;max-width:600px}.btn{border:0;cursor:pointer;font-weight:700;border-radius:10px;padding:12px 18px;transition:.15s}.btn:hover{filter:brightness(.92);transform:translateY(-1px)}.connect-btn{background:var(--accent);color:#06140f;white-space:nowrap}.section-title{font-size:18px;margin-bottom:16px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px}.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}.stat-card p{color:var(--muted);font-size:13px;margin-bottom:12px}.stat-card h3{font-size:26px;letter-spacing:.2px}.stat-card small{display:block;color:var(--muted);font-size:12px;margin-top:8px}.videos{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:22px}.video-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}.video-header .section-title{margin:0}.video-tools{display:flex;gap:9px;flex-wrap:wrap}.search{background:#080d15;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:9px;min-width:190px;outline:none}.search:focus{border-color:var(--accent)}.sort{background:#080d15;border:1px solid var(--border);color:var(--text);padding:10px;border-radius:9px}.video-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.video-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card2);min-width:0}.video-cover{position:relative;aspect-ratio:9/16;background:linear-gradient(145deg,#182332,#0b1019);overflow:hidden;cursor:pointer}.video-cover img{width:100%;height:100%;object-fit:cover;display:block}.play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0002;transition:.2s}.play-button{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:#00e5a0e8;color:#06140f;font-size:22px;box-shadow:0 4px 22px #0005}.video-cover:hover .play-overlay{background:#0005}.duration{position:absolute;bottom:9px;right:9px;background:#000b;padding:4px 7px;border-radius:5px;font-size:11px}.video-info{padding:13px}.video-info h4{font-size:13px;line-height:1.45;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:54px}.video-date{color:var(--muted);font-size:11px;margin-bottom:10px}.video-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:10px 0}.metric{font-size:12px;color:#c8d2df;background:#101722;padding:8px;border-radius:7px}.video-actions{display:flex;gap:8px}.video-actions a,.video-actions button{flex:1;text-align:center;font-size:11px;padding:9px 7px;border-radius:7px;text-decoration:none;cursor:pointer;border:1px solid var(--border);background:#121b27;color:var(--text)}.video-actions button{border-color:#24513f;color:var(--accent)}.empty-state{text-align:center;padding:42px 18px;color:var(--muted);line-height:1.6}.empty-state h3{color:var(--text);margin:10px 0}.notice{border:1px solid var(--border);background:#101722;padding:12px;border-radius:10px;color:var(--muted);font-size:13px;margin-bottom:14px;display:none}.notice.show{display:block}.loading{padding:32px;text-align:center;color:var(--muted)}footer{border-top:1px solid var(--border);margin-top:42px;padding:24px 6%;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:12px}
-.modal{display:none;position:fixed;inset:0;z-index:50;background:#000d;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}.modal-box{width:min(920px,100%);background:#0b1019;border:1px solid var(--border);border-radius:15px;overflow:hidden}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border)}.modal-head h3{font-size:14px}.close-modal{background:#202a39;color:white;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}.player-frame-wrap{background:#000;display:flex;justify-content:center;min-height:360px}.player-frame-wrap iframe{width:min(100%,430px);height:760px;border:0}.player-fallback{padding:30px;text-align:center;color:var(--muted)}
-@media(max-width:1000px){.video-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){header{padding:0 5%;height:65px}main{padding:26px 5%}.welcome h1{font-size:24px}.connect-card{flex-direction:column;align-items:flex-start;padding:20px}.connect-btn{width:100%}.video-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.videos{padding:15px}.video-info{padding:10px}.video-info h4{font-size:12px}.stats{gap:10px}.stat-card{padding:15px}.stat-card h3{font-size:22px}.search{min-width:0;width:100%}.video-tools{width:100%}.sort{flex:1}footer{flex-direction:column}}
+:root {
+  --bg: #080b0a;
+  --panel: #111714;
+  --panel2: #161e19;
+  --green: #00e676;
+  --green2: #00b85c;
+  --text: #f2f5f2;
+  --muted: #8b9890;
+  --border: #26332b;
+  --red: #ff5757;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app {
+  max-width: 1400px;
+  margin: auto;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--green);
+  color: #061009;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 23px;
+}
+
+.brand p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.connection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.status.connected {
+  color: var(--green);
+  border-color: #126a3b;
+}
+
+.status.error {
+  color: var(--red);
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 700;
+  background: var(--green);
+  color: #061009;
+  transition: .2s;
+}
+
+.btn:hover {
+  background: #32ff99;
+  transform: translateY(-1px);
+}
+
+.btn.secondary {
+  background: var(--panel2);
+  color: white;
+  border: 1px solid var(--border);
+}
+
+.hero {
+  background: linear-gradient(120deg, #102318, #0b120e);
+  border: 1px solid #1c3a28;
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 25px;
+}
+
+.hero h2 {
+  margin: 0 0 10px;
+  font-size: 27px;
+}
+
+.hero p {
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 120px;
+}
+
+.stat .label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.stat .value {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.stat .sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input, select {
+  background: #0a100c;
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 13px;
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: var(--green);
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.video-card {
+  background: #0b100d;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  overflow: hidden;
+  transition: .2s;
+}
+
+.video-card:hover {
+  border-color: #267b45;
+  transform: translateY(-3px);
+}
+
+.video-thumb {
+  height: 190px;
+  background: linear-gradient(145deg, #17221a, #080b09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.play {
+  position: absolute;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #00e676e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-size: 22px;
+  font-weight: bold;
+  box-shadow: 0 5px 25px #0008;
+}
+
+.video-info {
+  padding: 15px;
+}
+
+.video-title {
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.5;
+  min-height: 42px;
+  margin-bottom: 10px;
+}
+
+.video-date {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.video-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
+}
+
+.metric {
+  background: #131a15;
+  border-radius: 8px;
+  padding: 9px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.metric strong {
+  color: white;
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  padding: 45px 20px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.notice {
+  padding: 14px;
+  border-radius: 10px;
+  background: #151e18;
+  border: 1px solid #263a2b;
+  color: #a9b9ad;
+  margin-bottom: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.footer {
+  text-align: center;
+  color: #66736a;
+  font-size: 12px;
+  padding: 20px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000e;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 430px;
+  background: #111714;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 15px;
+  position: relative;
+}
+
+.modal-close {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.modal-close button {
+  background: #222c25;
+  border: none;
+  color: white;
+  padding: 9px 14px;
+  border-radius: 8px;
+}
+
+.player-frame {
+  width: 100%;
+  height: 700px;
+  max-height: 78vh;
+  border: none;
+  border-radius: 12px;
+  background: #000;
+}
+
+@media(max-width:1100px) {
+  .video-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media(max-width:750px) {
+  .app {
+    padding: 14px;
+  }
+  .video-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .video-thumb {
+    height: 160px;
+  }
+  .stat .value {
+    font-size: 25px;
+  }
+}
+
+@media(max-width:450px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+  .video-thumb {
+    height: 240px;
+  }
+  .stats {
+    gap: 10px;
+  }
+  .stat {
+    padding: 14px;
+  }
+}
 </style>
 </head>
+
 <body>
-<header><div class="brand">DoradoRD <span>Analytics</span></div><div class="header-right"><div class="status" id="status"><span class="dot" id="statusDot"></span><span id="statusText">TikTok pendiente de conexión</span></div></div></header>
-<main>
-<section class="welcome"><h1>Panel de análisis</h1><p>Gestiona y analiza tu contenido de TikTok desde un solo lugar.</p></section>
-<section class="connect-card" id="connectCard"><div><h2>Conecta tu cuenta de TikTok</h2><p>Autoriza DoradoRD Analytics para acceder a tu perfil y consultar tus videos. Tus datos estarán protegidos.</p></div><button class="btn connect-btn" onclick="connectTikTok()">Conectar TikTok</button></section>
-<h2 class="section-title">Resumen de rendimiento</h2>
-<section class="stats"><div class="stat-card"><p>Videos publicados</p><h3 id="statVideos">--</h3><small id="subVideos">Pendiente de conexión</small></div><div class="stat-card"><p>Visualizaciones</p><h3 id="statViews">--</h3><small>Sumatoria de videos cargados</small></div><div class="stat-card"><p>Seguidores</p><h3 id="statFollowers">--</h3><small>Datos del perfil, si están disponibles</small></div><div class="stat-card"><p>Engagement</p><h3 id="statEngagement">--</h3><small>Likes, comentarios y compartidos / views</small></div></section>
-<section class="videos"><div class="video-header"><h2 class="section-title">Tus videos</h2><div class="video-tools"><input class="search" id="searchVideos" type="search" placeholder="Buscar entre tus videos…" aria-label="Buscar videos"><select class="sort" id="sortVideos" aria-label="Ordenar videos"><option value="newest">Más recientes</option><option value="views">Más vistos</option><option value="likes">Más likes</option></select></div></div><div id="notice" class="notice"></div><div id="videoArea" class="loading">Conecta TikTok para cargar tu biblioteca.</div></section>
-</main><footer><span>DoradoRD Analytics</span><span>Plataforma de análisis de contenido</span></footer>
-<div class="modal" id="playerModal" role="dialog" aria-modal="true"><div class="modal-box"><div class="modal-head"><h3 id="playerTitle">Reproductor de TikTok</h3><button class="close-modal" onclick="closePlayer()">Cerrar ✕</button></div><div class="player-frame-wrap" id="playerFrameWrap"></div></div></div>
+
+<div class="app">
+
+  <header class="header">
+
+    <div class="brand">
+      <div class="logo">D</div>
+      <div>
+        <h1>DoradoRD Analytics</h1>
+        <p>Panel de rendimiento de TikTok</p>
+      </div>
+    </div>
+
+    <div class="connection">
+      <div class="status" id="connectionStatus">
+        TikTok pendiente de conexión
+      </div>
+
+      <button class="btn" id="connectButton" onclick="connectTikTok()">
+        Conectar TikTok
+      </button>
+
+      <button class="btn secondary" onclick="loadDashboard()">
+        Actualizar
+      </button>
+    </div>
+
+  </header>
+
+  <section class="hero">
+    <h2>Tu contenido. Tus estadísticas. En un solo lugar.</h2>
+    <p>
+      Consulta tus videos, revisa el rendimiento y reproduce tu contenido
+      directamente desde tu panel de control.
+    </p>
+  </section>
+
+  <div id="notice"></div>
+
+  <section class="stats">
+
+    <div class="stat">
+      <div class="label">Videos publicados</div>
+      <div class="value" id="totalVideos">--</div>
+      <div class="sub">Videos encontrados</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Visualizaciones</div>
+      <div class="value" id="totalViews">--</div>
+      <div class="sub">Reproducciones acumuladas</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Seguidores</div>
+      <div class="value" id="totalFollowers">--</div>
+      <div class="sub">Perfil TikTok</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Engagement</div>
+      <div class="value" id="engagement">--</div>
+      <div class="sub">Interacciones / visualizaciones</div>
+    </div>
+
+  </section>
+
+  <section class="section">
+
+    <div class="section-header">
+      <h2>Biblioteca de videos</h2>
+
+      <div class="controls">
+
+        <input
+          type="search"
+          id="searchVideos"
+          placeholder="Buscar video..."
+          oninput="renderVideos()"
+        >
+
+        <select id="sortVideos" onchange="renderVideos()">
+          <option value="date">Más recientes</option>
+          <option value="views">Más vistos</option>
+          <option value="likes">Más likes</option>
+        </select>
+
+      </div>
+    </div>
+
+    <div id="videoGrid" class="video-grid">
+      <div class="empty">
+        Conecta tu cuenta de TikTok para cargar tus videos.
+      </div>
+    </div>
+
+  </section>
+
+  <footer class="footer">
+    DoradoRD Analytics · Sistema de análisis de contenido
+  </footer>
+
+</div>
+
+<div class="modal" id="playerModal" onclick="modalBackdrop(event)">
+
+  <div class="modal-content">
+
+    <div class="modal-close">
+      <button onclick="closePlayer()">Cerrar ✕</button>
+    </div>
+
+    <iframe
+      id="playerFrame"
+      class="player-frame"
+      allow="autoplay; encrypted-media"
+      allowfullscreen
+    ></iframe>
+
+  </div>
+
+</div>
+
 <script>
-const WORKER_URL="https://doradord-tiktok-auth.clanmatasaga.workers.dev";
-const SESSION_KEY="doradord_session";
-let allVideos=[];
-function connectTikTok(){window.location.href=WORKER_URL+"/oauth";}
-function setStatus(message,connected){document.getElementById("statusText").textContent=message;document.getElementById("statusDot").className="dot"+(connected?" connected":"");document.getElementById("connectCard").style.display=connected?"none":"flex";}
-function notice(message){const n=document.getElementById("notice");n.textContent=message;n.classList.add("show");}
-function numberValue(v){return Number(v||0)}
-function formatNumber(v){return numberValue(v).toLocaleString("es-DO");}
-function videoId(video){return video.video_id||video.id||video.tiktok_video_id||"";}
-function statsOf(video){return video.statistics||video.stats||video;}
-function getViews(v){const s=statsOf(v);return numberValue(s.view_count??s.views??v.view_count);}
-function getLikes(v){const s=statsOf(v);return numberValue(s.like_count??s.likes??v.like_count);}
-function getComments(v){const s=statsOf(v);return numberValue(s.comment_count??s.comments??v.comment_count);}
-function getShares(v){const s=statsOf(v);return numberValue(s.share_count??s.shares??v.share_count);}
-function displayDate(v){const raw=v.create_time||v.created_at||v.publish_time;if(!raw)return "Fecha no disponible";const d=typeof raw==="number"?(raw>1e12?new Date(raw):new Date(raw*1000)):new Date(raw);return Number.isNaN(d.getTime())?"Fecha no disponible":d.toLocaleDateString("es-DO",{year:"numeric",month:"short",day:"numeric"});}
-function titleOf(v){return v.title||v.video_description||v.description||"Video de TikTok";}
-function openPlayer(video){const id=videoId(video);const title=titleOf(video);document.getElementById("playerTitle").textContent=title;const wrap=document.getElementById("playerFrameWrap");wrap.innerHTML="";if(id){const iframe=document.createElement("iframe");iframe.src="https://www.tiktok.com/player/v1/"+encodeURIComponent(id)+"?music_info=1&description=1";iframe.allow="autoplay; fullscreen";iframe.allowFullscreen=true;iframe.title=title;wrap.appendChild(iframe);}else{const fallback=document.createElement("div");fallback.className="player-fallback";fallback.textContent="TikTok no proporcionó un ID de video para el reproductor integrado. Usa el enlace externo del video.";wrap.appendChild(fallback);}document.getElementById("playerModal").classList.add("open");}
-function closePlayer(){document.getElementById("playerFrameWrap").innerHTML="";document.getElementById("playerModal").classList.remove("open");}
-document.getElementById("playerModal").addEventListener("click",e=>{if(e.target.id==="playerModal")closePlayer();});document.addEventListener("keydown",e=>{if(e.key==="Escape")closePlayer();});
-function makeCard(video){const card=document.createElement("article");card.className="video-card";const cover=document.createElement("div");cover.className="video-cover";cover.title="Reproducir video";cover.addEventListener("click",()=>openPlayer(video));const imageUrl=video.cover_image_url||video.thumbnail_url||video.cover_url||video.video_cover_url;if(imageUrl){const img=document.createElement("img");img.src=imageUrl;img.alt="Portada de video";img.loading="lazy";cover.appendChild(img);}const overlay=document.createElement("div");overlay.className="play-overlay";const play=document.createElement("span");play.className="play-button";play.textContent="▶";overlay.appendChild(play);cover.appendChild(overlay);if(video.duration){const dur=document.createElement("span");dur.className="duration";dur.textContent=video.duration+" s";cover.appendChild(dur);}const info=document.createElement("div");info.className="video-info";const title=document.createElement("h4");title.textContent=titleOf(video);const date=document.createElement("div");date.className="video-date";date.textContent=displayDate(video);const metrics=document.createElement("div");metrics.className="video-metrics";[["▶",getViews(video)],["♥",getLikes(video)],["💬",getComments(video)],["↗",getShares(video)]].forEach(([icon,val])=>{const m=document.createElement("div");m.className="metric";m.textContent=icon+" "+formatNumber(val);metrics.appendChild(m);});const actions=document.createElement("div");actions.className="video-actions";const playBtn=document.createElement("button");playBtn.textContent="Reproducir";playBtn.onclick=()=>openPlayer(video);actions.appendChild(playBtn);const link=document.createElement("a");link.href=video.share_url||video.url||"https://www.tiktok.com/";link.target="_blank";link.rel="noopener noreferrer";link.textContent="TikTok ↗";actions.appendChild(link);info.append(title,date,metrics,actions);card.append(cover,info);return card;}
-function renderVideos(){const area=document.getElementById("videoArea");const query=document.getElementById("searchVideos").value.trim().toLowerCase();let filtered=allVideos.filter(v=>titleOf(v).toLowerCase().includes(query));const sort=document.getElementById("sortVideos").value;if(sort==="views")filtered.sort((a,b)=>getViews(b)-getViews(a));else if(sort==="likes")filtered.sort((a,b)=>getLikes(b)-getLikes(a));else filtered.sort((a,b)=>dateNumber(b)-dateNumber(a));area.innerHTML="";if(!filtered.length){area.className="empty-state";area.textContent=allVideos.length?"No hay videos que coincidan con tu búsqueda.":"No se encontraron videos públicos en la respuesta de TikTok.";return;}area.className="video-grid";filtered.forEach(v=>area.appendChild(makeCard(v)));}
-function dateNumber(v){const raw=v.create_time||v.created_at||v.publish_time||0;return typeof raw==="number"?raw:(Date.parse(raw)||0);}
-async function loadDashboard(session){const headers={Authorization:"Bearer "+session};const profileResponse=await fetch(WORKER_URL+"/profile",{headers});if(!profileResponse.ok)throw new Error("No se pudo consultar el perfil de TikTok.");const profile=await profileResponse.json();const profileData=profile.data||profile.user||profile;const displayName=profileData.display_name||profileData.username||"TikTok";setStatus("Conectado: "+displayName,true);const followers=profileData.follower_count??profileData.followers??profileData.fans_count;document.getElementById("statFollowers").textContent=followers==null?"--":formatNumber(followers);const videoResponse=await fetch(WORKER_URL+"/videos",{headers});if(!videoResponse.ok)throw new Error("No se pudieron cargar los videos.");const result=await videoResponse.json();allVideos=result.data?.videos||result.videos||[];document.getElementById("statVideos").textContent=formatNumber(allVideos.length);const totalViews=allVideos.reduce((sum,v)=>sum+getViews(v),0);document.getElementById("statViews").textContent=formatNumber(totalViews);const interactions=allVideos.reduce((sum,v)=>sum+getLikes(v)+getComments(v)+getShares(v),0);document.getElementById("statEngagement").textContent=totalViews?((interactions/totalViews)*100).toFixed(2)+"%":"--";document.getElementById("subVideos").textContent="Videos recibidos desde TikTok";renderVideos();const metricFields=allVideos.some(v=>getViews(v)||getLikes(v)||getComments(v)||getShares(v));if(!metricFields)notice("Videos cargados. TikTok no incluyó métricas en la respuesta; los indicadores de interacción se muestran en cero o pendientes hasta que el Worker entregue esos campos.");}
-async function initializeDashboard(){const params=new URLSearchParams(window.location.search);const ticket=params.get("ticket");if(ticket){history.replaceState({},document.title,window.location.pathname);try{const response=await fetch(WORKER_URL+"/session/exchange",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ticket})});const result=await response.json();if(!response.ok||!result.session_token)throw new Error("No se pudo iniciar la sesión.");sessionStorage.setItem(SESSION_KEY,result.session_token);}catch(error){setStatus("Error de conexión",false);notice(error.message);console.error(error);return;}}const session=sessionStorage.getItem(SESSION_KEY);if(!session){setStatus("TikTok pendiente de conexión",false);document.getElementById("videoArea").textContent="Conecta TikTok para cargar tu biblioteca.";return;}try{await loadDashboard(session);}catch(error){setStatus("Sesión no disponible",false);notice(error.message+" La sesión guardada no se borró automáticamente. Puedes volver a intentar recargar.");console.error(error);}}
-document.getElementById("searchVideos").addEventListener("input",renderVideos);document.getElementById("sortVideos").addEventListener("change",renderVideos);initializeDashboard();
+/* ==========================================
+   CONFIGURACIÓN
+========================================== */
+
+const WORKER = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
+
+const SESSION_KEY = "doradord_session";
+
+let videos = [];
+let profileData = {};
+let loading = false;
+
+
+/* ==========================================
+   UTILIDADES
+========================================== */
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function setStatus(text, type = "") {
+  const el = $("connectionStatus");
+
+  el.textContent = text;
+  el.className = "status " + type;
+}
+
+function notice(message, type = "info") {
+  if (!message) {
+    $("notice").innerHTML = "";
+    return;
+  }
+
+  const color = type === "error" ? "#ff5757" : "#a9b9ad";
+
+  $("notice").innerHTML = `
+    <div class="notice" style="color:${color}">
+      ${message}
+    </div>
+  `;
+}
+
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return "--";
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "--";
+  }
+
+  return number.toLocaleString("es-DO");
+}
+
+function numberValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const n = Number(value);
+
+  return Number.isFinite(n) ? n : null;
+}
+
+function videoId(video) {
+  return (
+    video?.id ||
+    video?.video_id ||
+    video?.item_id ||
+    video?.share_url?.match(/\/video\/(\d+)/)?.[1] ||
+    video?.url?.match(/\/video\/(\d+)/)?.[1] ||
+    null
+  );
+}
+
+function statsOf(video) {
+  return video?.statistics ||
+         video?.stats ||
+         video?.video_statistics ||
+         video ||
+         {};
+}
+
+function getViews(video) {
+  const s = statsOf(video);
+
+  return numberValue(
+    s.view_count ??
+    s.views ??
+    s.play_count
+  );
+}
+
+function getLikes(video) {
+  const s = statsOf(video);
+
+  return numberValue(
+    s.like_count ??
+    s.likes ??
+    s.digg_count
+  );
+}
+
+function getComments(video) {
+  const s = statsOf(video);
+
+  return numberValue(
+    s.comment_count ??
+    s.comments
+  );
+}
+
+function getShares(video) {
+  const s = statsOf(video);
+
+  return numberValue(
+    s.share_count ??
+    s.shares
+  );
+}
+
+function titleOf(video) {
+  return (
+    video?.title ||
+    video?.video_description ||
+    video?.description ||
+    "Video de TikTok"
+  );
+}
+
+function displayDate(video) {
+  const raw =
+    video?.create_time ||
+    video?.created_at ||
+    video?.date ||
+    video?.createTime;
+
+  if (!raw) return "Fecha no disponible";
+
+  let date;
+
+  if (typeof raw === "number") {
+    date = new Date(raw < 1000000000000 ? raw * 1000 : raw);
+  } else {
+    date = new Date(raw);
+  }
+
+  if (isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  return date.toLocaleDateString("es-DO");
+}
+
+
+/* ==========================================
+   CONEXIÓN TIKTOK
+========================================== */
+
+function connectTikTok() {
+  window.location.href = WORKER + "/oauth";
+}
+
+
+/* ==========================================
+   REPRODUCTOR
+========================================== */
+
+function openPlayer(video) {
+  const id = videoId(video);
+
+  if (!id) {
+    notice("No fue posible obtener el ID de este video.", "error");
+    return;
+  }
+
+  const frame = $("playerFrame");
+
+  frame.src =
+    "https://www.tiktok.com/player/v1/" +
+    encodeURIComponent(id) +
+    "?music_info=1&description=1";
+
+  $("playerModal").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closePlayer() {
+  $("playerModal").classList.remove("open");
+  $("playerFrame").src = "";
+  document.body.style.overflow = "";
+}
+
+function modalBackdrop(event) {
+  if (event.target === $("playerModal")) {
+    closePlayer();
+  }
+}
+
+
+/* ==========================================
+   TARJETAS DE VIDEOS
+========================================== */
+
+function makeCard(video) {
+  const id = videoId(video);
+
+  const views = getViews(video);
+  const likes = getLikes(video);
+  const comments = getComments(video);
+  const shares = getShares(video);
+
+  const cover =
+    video?.cover_image_url ||
+    video?.cover_url ||
+    video?.thumbnail_url ||
+    video?.thumbnail ||
+    video?.cover ||
+    "";
+
+  const card = document.createElement("article");
+  card.className = "video-card";
+
+  const thumb = document.createElement("div");
+  thumb.className = "video-thumb";
+  thumb.onclick = () => openPlayer(video);
+
+  if (cover) {
+    const img = document.createElement("img");
+    img.src = cover;
+    img.alt = "Miniatura del video";
+    img.loading = "lazy";
+
+    img.onerror = () => {
+      img.remove();
+    };
+
+    thumb.appendChild(img);
+  }
+
+  const play = document.createElement("div");
+  play.className = "play";
+  play.textContent = "▶";
+  thumb.appendChild(play);
+
+  const info = document.createElement("div");
+  info.className = "video-info";
+
+  const title = document.createElement("div");
+  title.className = "video-title";
+  title.textContent = titleOf(video);
+
+  const date = document.createElement("div");
+  date.className = "video-date";
+  date.textContent = displayDate(video);
+
+  const metrics = document.createElement("div");
+  metrics.className = "video-metrics";
+
+  const metricItems = [
+    ["Visualizaciones", views],
+    ["Likes", likes],
+    ["Comentarios", comments],
+    ["Compartidos", shares]
+  ];
+
+  metricItems.forEach(([label, value]) => {
+    const metric = document.createElement("div");
+    metric.className = "metric";
+
+    const strong = document.createElement("strong");
+    strong.textContent = formatNumber(value);
+
+    metric.textContent = label;
+    metric.appendChild(strong);
+
+    metrics.appendChild(metric);
+  });
+
+  info.appendChild(title);
+  info.appendChild(date);
+  info.appendChild(metrics);
+
+  card.appendChild(thumb);
+  card.appendChild(info);
+
+  return card;
+}
+
+
+/* ==========================================
+   RENDERIZADO
+========================================== */
+
+function renderVideos() {
+  const grid = $("videoGrid");
+
+  const search = $("searchVideos").value.toLowerCase().trim();
+  const sort = $("sortVideos").value;
+
+  let filtered = videos.filter(video =>
+    titleOf(video).toLowerCase().includes(search)
+  );
+
+  if (sort === "views") {
+    filtered.sort((a, b) =>
+      (getViews(b) ?? -1) - (getViews(a) ?? -1)
+    );
+  }
+
+  if (sort === "likes") {
+    filtered.sort((a, b) =>
+      (getLikes(b) ?? -1) - (getLikes(a) ?? -1)
+    );
+  }
+
+  if (sort === "date") {
+    filtered.sort((a, b) =>
+      dateNumber(b) - dateNumber(a)
+    );
+  }
+
+  grid.innerHTML = "";
+
+  if (!filtered.length) {
+    grid.innerHTML = `
+      <div class="empty">
+        ${videos.length
+          ? "No se encontraron videos con esa búsqueda."
+          : "No hay videos disponibles."}
+      </div>
+    `;
+    return;
+  }
+
+  filtered.forEach(video => {
+    grid.appendChild(makeCard(video));
+  });
+}
+
+function dateNumber(video) {
+  const raw =
+    video?.create_time ||
+    video?.created_at ||
+    video?.date ||
+    video?.createTime;
+
+  if (!raw) return 0;
+
+  const n = Number(raw);
+
+  if (Number.isFinite(n)) {
+    return n;
+  }
+
+  const parsed = new Date(raw).getTime();
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+
+/* ==========================================
+   MÉTRICAS
+========================================== */
+
+function loadDashboard(profile, videoList) {
+  profileData = profile || {};
+  videos = Array.isArray(videoList) ? videoList : [];
+
+  const profileStats =
+    profileData?.statistics ||
+    profileData?.stats ||
+    profileData?.data?.statistics ||
+    profileData?.data ||
+    profileData;
+
+  const followers =
+    profileStats?.follower_count ??
+    profileStats?.followers ??
+    profileStats?.fans ??
+    profileData?.follower_count ??
+    profileData?.followers ??
+    null;
+
+  $("totalVideos").textContent = formatNumber(videos.length);
+
+  const views = videos.reduce((sum, video) => {
+    const value = getViews(video);
+    return sum + (value === null ? 0 : value);
+  }, 0);
+
+  const viewsAvailable = videos.some(video => getViews(video) !== null);
+
+  $("totalViews").textContent =
+    viewsAvailable ? formatNumber(views) : "--";
+
+  $("totalFollowers").textContent =
+    formatNumber(followers);
+
+  let totalLikes = 0;
+  let totalComments = 0;
+  let totalShares = 0;
+
+  let hasInteractionData = false;
+
+  videos.forEach(video => {
+    const likes = getLikes(video);
+    const comments = getComments(video);
+    const shares = getShares(video);
+
+    if (likes !== null || comments !== null || shares !== null) {
+      hasInteractionData = true;
+    }
+
+    totalLikes += likes || 0;
+    totalComments += comments || 0;
+    totalShares += shares || 0;
+  });
+
+  if (viewsAvailable && views > 0 && hasInteractionData) {
+    const engagement =
+      ((totalLikes + totalComments + totalShares) / views) * 100;
+
+    $("engagement").textContent =
+      engagement.toFixed(2) + "%";
+  } else {
+    $("engagement").textContent = "--";
+  }
+
+  renderVideos();
+}
+
+
+/* ==========================================
+   CARGA DE DATOS
+========================================== */
+
+async function loadDashboardData(session) {
+  const headers = {
+    "Authorization": "Bearer " + session,
+    "Content-Type": "application/json"
+  };
+
+  const profileResponse = await fetch(WORKER + "/profile", {
+    headers
+  });
+
+  if (!profileResponse.ok) {
+    throw new Error("No se pudo obtener el perfil (" +
+      profileResponse.status + ")");
+  }
+
+  const profile = await profileResponse.json();
+
+  const videosResponse = await fetch(WORKER + "/videos", {
+    headers
+  });
+
+  if (!videosResponse.ok) {
+    throw new Error("No se pudieron obtener los videos (" +
+      videosResponse.status + ")");
+  }
+
+  const videoResult = await videosResponse.json();
+
+  const videoList =
+    videoResult?.data?.videos ||
+    videoResult?.videos ||
+    videoResult?.data?.video_list ||
+    videoResult?.video_list ||
+    [];
+
+  loadDashboard(profile, videoList);
+
+  const name =
+    profile?.display_name ||
+    profile?.data?.display_name ||
+    profile?.user?.display_name ||
+    "DoradoTK";
+
+  setStatus("Conectado: LMS · " + name, "connected");
+
+  if (videos.length) {
+    notice("Conexión activa. Se cargaron " +
+      videos.length + " videos de TikTok.");
+  } else {
+    notice("La cuenta está conectada, pero TikTok no devolvió videos.");
+  }
+}
+
+
+/* ==========================================
+   INICIALIZACIÓN Y SESIÓN
+========================================== */
+
+async function initializeDashboard() {
+  if (loading) return;
+  loading = true;
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+
+    const ticket = params.get("ticket");
+
+    /*
+      Si TikTok regresa con un ticket, intercambiarlo
+      por la sesión de DoradoRD.
+    */
+
+    if (ticket) {
+      setStatus("Finalizando conexión...");
+      notice("Verificando conexión con TikTok...");
+
+      const exchangeResponse = await fetch(
+        WORKER + "/session/exchange",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ ticket })
+        }
+      );
+
+      if (!exchangeResponse.ok) {
+        throw new Error("No se pudo completar la conexión (" +
+          exchangeResponse.status + ")");
+      }
+
+      const exchangeData = await exchangeResponse.json();
+
+      const session =
+        exchangeData?.session_token ||
+        exchangeData?.session ||
+        exchangeData?.token;
+
+      if (!session) {
+        throw new Error("El Worker no devolvió una sesión válida.");
+      }
+
+      sessionStorage.setItem(SESSION_KEY, session);
+
+      /*
+        Limpiar ticket de la URL.
+      */
+
+      window.history.replaceState(
+        {},
+        document.title,
+        window.location.pathname
+      );
+    }
+
+    /*
+      Recuperar sesión existente.
+    */
+
+    const session = sessionStorage.getItem(SESSION_KEY);
+
+    if (!session) {
+      setStatus("TikTok pendiente de conexión");
+      return;
+    }
+
+    setStatus("Conectando con TikTok...");
+    notice("Cargando perfil y videos...");
+
+    await loadDashboardData(session);
+
+  } catch (error) {
+    console.error("DoradoRD:", error);
+
+    setStatus("Error de conexión", "error");
+
+    notice(
+      "No se pudieron cargar los datos: " +
+      error.message,
+      "error"
+    );
+
+  } finally {
+    loading = false;
+  }
+}
+
+
+/* ==========================================
+   ARRANQUE
+========================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeDashboard();
+});
 </script>
+
 </body>
 </html>
