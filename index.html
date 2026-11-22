@@ -1365,8 +1365,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     return sessionStorage.getItem("doradord_session") || "";
   }
 
-  
-async function loadFFmpeg(){
+  async function loadFFmpeg(){
   if(ffmpegInstance) return ffmpegInstance;
 
   if(!window.FFmpegWASM || !window.FFmpegWASM.FFmpeg){
