@@ -402,7 +402,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <input type="file" id="drd-ai-upload" accept="video/*">
 
         <video id="drd-ai-local-preview"
-          class="drd-preview" controls style="display:none"></video>
+          class="drd-preview" controls playsinline preload="metadata" style="display:none"></video>
+        <div class="drd-actions" id="drd-ai-local-actions" style="display:none">
+          <button class="drd-btn" id="drd-ai-use-local" type="button">✓ Usar este video para trabajar</button>
+          <span class="drd-small" id="drd-ai-local-state">Video cargado, todavía no seleccionado</span>
+        </div>
 
         <p class="drd-small" style="margin-top:10px">
           El archivo seleccionado se utilizará como material de trabajo.
@@ -618,9 +622,12 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   const $ = id => document.getElementById("drd-ai-" + id);
   let localVideoUrl = null;
+  let localFile = null;
+  let activeLocalVideo = false;
   let outputText = "";
 
   function selectedVideo(){
+    if(activeLocalVideo) return null;
     const value = $("video-select").value;
     if (!value || !Array.isArray(window.videos)) return null;
     return window.videos.find(v => String(window.videoKey(v)) === value) || null;
@@ -649,6 +656,25 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   window.DoradoRDAIRefreshLibrary=refreshLibrary;
   window.DoradoRDAIRefreshSelection=syncSelection;
+  window.DoradoRDAISetTikTokMode=()=>{
+    activeLocalVideo=false;
+    $("local-state").textContent=localFile?"Video local cargado; puedes volver a seleccionarlo.":"";
+  };
+
+  function selectLocalVideo(){
+    if(!localFile) return;
+    activeLocalVideo=true;
+    $("local-state").textContent="✓ Video local seleccionado para trabajar";
+    $("analysis-status").textContent="Video local activo: "+localFile.name+". Ya puedes preparar un guion y trabajar con este archivo.";
+    writeOutput("");
+  }
+
+  function hasWorkVideo(){ return activeLocalVideo ? !!localFile : !!selectedVideo(); }
+
+  function workVideoTitle(){
+    if(activeLocalVideo && localFile) return localFile.name;
+    return currentTitle();
+  }
 
   function getMetrics(v){
     const s = v.statistics || v.stats || v;
@@ -662,7 +688,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   function currentTitle(){
     const v=selectedVideo();
-    return v ? (v.title || v.video_description || "Video seleccionado") : "Video nuevo";
+    return v ? (v.title || v.video_description || "Video seleccionado") : (activeLocalVideo && localFile ? localFile.name : "Video nuevo");
   }
 
   function writeOutput(text){
@@ -672,11 +698,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   function makeScript(improve){
     const v=selectedVideo();
-    if(!v){
-      writeOutput("Selecciona un video de TikTok o carga un archivo para comenzar.");
+    if(!hasWorkVideo()){
+      writeOutput("Selecciona un video de TikTok, del Top 5 o carga un archivo local y pulsa «Usar este video para trabajar».");
       return;
     }
-    const m=getMetrics(v);
+    const m=v?getMetrics(v):{views:0,likes:0,comments:0,shares:0};
     const title=currentTitle();
     const duration=$("duration").value;
     const goal=$("goal").value;
@@ -694,7 +720,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 ${improve?"VIDEO MEJORADO":"NUEVO GUION"}
 
 VIDEO DE REFERENCIA:
-${title}
+${activeLocalVideo && localFile ? "Archivo local: "+localFile.name : title}
 
 MÉTRICAS DISPONIBLES:
 Visualizaciones: ${m.views.toLocaleString("es-DO")}
@@ -739,6 +765,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   $("video-select").addEventListener("change",()=>{
     const v=selectedVideo();
     if(v){
+      activeLocalVideo=false;
       if(typeof window.selectVideo==="function") window.selectVideo(v,false);
       $("analysis-status").textContent=
         "Video seleccionado: "+currentTitle()+". El análisis audiovisual real requiere conectar el motor de IA.";
@@ -746,6 +773,12 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   });
 
   $("watch").addEventListener("click",()=>{
+    if(activeLocalVideo && localFile){
+      const preview=$("local-preview");
+      preview.scrollIntoView({behavior:"smooth",block:"center"});
+      preview.play().catch(()=>{});
+      return;
+    }
     const v=selectedVideo();
     if(v && typeof window.openPlayer==="function") window.openPlayer(v);
     else $("analysis-status").textContent="Selecciona un video de tu biblioteca.";
@@ -755,13 +788,20 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     const file=e.target.files && e.target.files[0];
     if(!file) return;
     if(localVideoUrl) URL.revokeObjectURL(localVideoUrl);
+    localFile=file;
+    activeLocalVideo=false;
     localVideoUrl=URL.createObjectURL(file);
     const preview=$("local-preview");
     preview.src=localVideoUrl;
     preview.style.display="block";
+    preview.load();
+    $("local-actions").style.display="flex";
+    $("local-state").textContent="Video cargado. Pulsa el botón para convertirlo en tu video de trabajo.";
     $("analysis-status").textContent=
-      "Video cargado localmente: "+file.name+". Para analizarlo con IA deberá enviarse a un servicio compatible.";
+      "Video cargado localmente: "+file.name+". Reprodúcelo aquí y pulsa «Usar este video para trabajar».";
   });
+
+  $("use-local").addEventListener("click",selectLocalVideo);
 
   $("mode").addEventListener("change",()=>{
     const automatic=$("mode").value==="automatic";
@@ -772,16 +812,16 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
 
   $("analyze").addEventListener("click",()=>{
     const v=selectedVideo();
-    $("analysis-status").textContent=v?
-      "Video seleccionado: "+currentTitle()+". Falta conectar IA multimodal para analizar imágenes, escenas, audio, voz y retención. No se ha realizado un análisis falso.":
-      "Selecciona un video de TikTok primero. El análisis real de archivos locales se habilitará al conectar el motor de IA.";
+    $("analysis-status").textContent=hasWorkVideo()?
+      "Video listo: "+workVideoTitle()+". Falta conectar IA multimodal para analizar imágenes, escenas, audio, voz y retención. No se ha realizado un análisis falso.":
+      "Selecciona un video de TikTok, Top 5 o un archivo local para comenzar.";
   });
 
   $("cover").addEventListener("click",()=>{
     const v=selectedVideo();
-    $("analysis-status").textContent=v?
-      "Portada detectada: "+(v.cover_image_url?"TikTok proporcionó una imagen de portada.":"No se recibió portada")+" El análisis inteligente de composición, texto, colores y atractivo requiere conectar el modelo visual.":
-      "Selecciona un video de TikTok para revisar su portada.";
+    $("analysis-status").textContent=hasWorkVideo()?
+      (activeLocalVideo?"Video local seleccionado: "+workVideoTitle()+". La extracción y análisis automático de su portada requiere conectar el motor visual.":"Portada detectada: "+(v.cover_image_url?"TikTok proporcionó una imagen de portada.":"No se recibió portada")+" El análisis inteligente de composición, texto, colores y atractivo requiere conectar el modelo visual."):
+      "Selecciona un video de TikTok, Top 5 o un archivo local.";
   });
 
   $("script").addEventListener("click",()=>makeScript(false));
@@ -1132,6 +1172,7 @@ function modalBackdrop(event){
 function selectVideo(video,scrollToLab=false){
   if(!video)return;
   selectedVideo=video;
+  if(window.DoradoRDAISetTikTokMode) window.DoradoRDAISetTikTokMode();
   renderVideos();
   updateSelectedVideoPanel();
   if(window.DoradoRDAIRefreshSelection) window.DoradoRDAIRefreshSelection();
