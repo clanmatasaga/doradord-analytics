@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -192,7 +191,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <!-- ==============================================
      DORADOR RD AI STUDIO - MODULO INDEPENDIENTE
-     No reemplaza ni modifica funciones existentes
 ================================================ -->
 
 <style>
@@ -277,6 +275,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   margin-top: 8px;
 }
 #drd-ai-studio .drd-btn:hover { filter: brightness(1.15); }
+#drd-ai-studio .drd-btn:disabled { opacity: .5; cursor: not-allowed; }
 #drd-ai-studio .drd-btn.primary {
   background: #00e5a0;
   color: #06140f;
@@ -307,6 +306,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   color: #aee6c5;
   font-size: 12px;
   line-height: 1.6;
+  white-space: pre-line;
 }
 #drd-ai-studio .drd-preview {
   width: 100%;
@@ -410,7 +410,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         <p class="drd-small" style="margin-top:10px">
           El archivo seleccionado se utilizará como material de trabajo.
-          La carga local no significa que se haya enviado a una IA.
+          Al pulsar «Analizar», se envían a la IA solo fotogramas y audio extraídos en tu navegador, no el archivo completo.
         </p>
       </div>
 
@@ -465,8 +465,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <h3>🧠 Análisis del contenido</h3>
 
         <p class="drd-small">
-          Futuro análisis audiovisual de IA: escenas, voz, sonido,
-          portada, ritmo, retención y estadísticas.
+          Análisis audiovisual con IA: escenas, voz, sonido,
+          portada, ritmo y potencial de retención (estimado).
         </p>
 
         <div class="drd-actions">
@@ -479,7 +479,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </div>
 
         <div class="drd-status" id="drd-ai-analysis-status">
-          Análisis IA audiovisual pendiente de conectar.
+          Selecciona un video y pulsa «Analizar video completo».
         </div>
       </div>
 
@@ -665,7 +665,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     if(!localFile) return;
     activeLocalVideo=true;
     $("local-state").textContent="✓ Video local seleccionado para trabajar";
-    $("analysis-status").textContent="Video local activo: "+localFile.name+". Ya puedes preparar un guion y trabajar con este archivo.";
+    $("analysis-status").textContent="Video local activo: "+localFile.name+". Pulsa «Analizar video completo» para el análisis con IA.";
     writeOutput("");
   }
 
@@ -757,18 +757,187 @@ CIERRE:
 ${extra ? "INSTRUCCIONES DEL CREADOR:\n"+extra : ""}
 
 NOTA:
-Este guion es una estructura creativa preliminar. Aún no es un análisis generado por IA del video real.`;
+Este guion es una estructura creativa preliminar. Aún no es un análisis generado por IA del video real. Pulsa «Analizar video completo» primero para un guion basado en el análisis real.`;
 
     writeOutput(script);
+  }
+
+  /* ===== CONEXIÓN CON IA (WORKER + GEMINI) ===== */
+  const AI_WORKER = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
+  let lastAnalysis = "";
+  let aiBusy = false;
+
+  function aiToken(){ return sessionStorage.getItem("doradord_session") || ""; }
+
+  async function extractFrames(file, count = 8){
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.muted = true;
+    video.preload = "auto";
+    video.playsInline = true;
+    await new Promise((res, rej) => {
+      video.onloadedmetadata = res;
+      video.onerror = () => rej(new Error("No se pudo leer el video."));
+    });
+    const duration = video.duration || 0;
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 640 / (video.videoWidth || 640));
+    canvas.width = Math.round((video.videoWidth || 640) * scale);
+    canvas.height = Math.round((video.videoHeight || 360) * scale);
+    const ctx = canvas.getContext("2d");
+    const frames = [];
+    for (let i = 0; i < count; i++) {
+      const t = (duration * (i + 0.5)) / count;
+      await new Promise(res => {
+        video.onseeked = res;
+        video.currentTime = t;
+      });
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      frames.push({ timestamp: Math.round(t), image: canvas.toDataURL("image/jpeg", 0.7) });
+    }
+    URL.revokeObjectURL(url);
+    return { frames, duration };
+  }
+
+  async function extractAudioWav(file){
+    const buffer = await file.arrayBuffer();
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const decoded = await ac.decodeAudioData(buffer);
+    await ac.close();
+    const rate = 16000;
+    const offline = new OfflineAudioContext(1, Math.ceil(decoded.duration * rate), rate);
+    const src = offline.createBufferSource();
+    src.buffer = decoded;
+    src.connect(offline.destination);
+    src.start();
+    const pcm = (await offline.startRendering()).getChannelData(0);
+    const wav = new ArrayBuffer(44 + pcm.length * 2);
+    const v = new DataView(wav);
+    const w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    w(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true);
+    w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, "data"); v.setUint32(40, pcm.length * 2, true);
+    for (let i = 0; i < pcm.length; i++) {
+      const s = Math.max(-1, Math.min(1, pcm[i]));
+      v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+    }
+    return new Blob([wav], { type: "audio/wav" });
+  }
+
+  async function runAIAnalysis(coverOnly){
+    if (aiBusy) return;
+    if (!hasWorkVideo()) {
+      $("analysis-status").textContent = "Selecciona un video de TikTok, Top 5 o un archivo local para comenzar.";
+      return;
+    }
+    const token = aiToken();
+    if (!token) {
+      $("analysis-status").textContent = "Conecta TikTok primero: no hay sesión activa.";
+      return;
+    }
+    aiBusy = true;
+    $("analyze").disabled = true;
+    $("cover").disabled = true;
+    try {
+      const form = new FormData();
+      form.append("title", workVideoTitle());
+      let note = "";
+
+      if (activeLocalVideo && localFile) {
+        form.append("source", "upload");
+        $("analysis-status").textContent = "Extrayendo fotogramas del video...";
+        const { frames, duration } = await extractFrames(localFile, coverOnly ? 1 : 8);
+        form.append("frames", JSON.stringify(frames));
+        form.append("metadata", JSON.stringify({ duration, size: localFile.size, name: localFile.name }));
+        if (!coverOnly) {
+          try {
+            $("analysis-status").textContent = "Extrayendo el audio...";
+            form.append("audio", await extractAudioWav(localFile), "audio.wav");
+          } catch (e) {
+            note = "\n⚠ No se pudo extraer el audio de este archivo; el análisis no incluye voz.";
+          }
+        }
+      } else {
+        const v = selectedVideo();
+        const m = getMetrics(v);
+        form.append("source", "tiktok");
+        form.append("metadata", JSON.stringify({
+          views: m.views, likes: m.likes, comments: m.comments, shares: m.shares,
+          duration: v.duration || null, description: v.video_description || ""
+        }));
+        if (v.cover_image_url) form.append("coverUrl", v.cover_image_url);
+        note = "\n⚠ Los videos de TikTok no se pueden descargar desde la API: solo se analizó la portada y las métricas. Para analizar audio y escenas, carga el archivo MP4 local.";
+      }
+
+      $("analysis-status").textContent = "Analizando con IA, esto puede tardar entre 20 y 60 segundos...";
+      const res = await fetch(AI_WORKER + "/ai/analyze", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: form
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error HTTP " + res.status);
+
+      lastAnalysis = data.analysis || "";
+      let report = lastAnalysis;
+      if (data.transcript) report = "TRANSCRIPCIÓN:\n" + data.transcript + "\n\n" + report;
+      writeOutput(report);
+
+      $("analysis-status").textContent =
+        "✓ Análisis completado. Fotogramas analizados: " + data.framesAnalyzed +
+        " · Audio transcrito: " + (data.audioTranscribed ? "sí" : "no") + note;
+    } catch (error) {
+      $("analysis-status").textContent = "No se pudo analizar: " + error.message;
+    } finally {
+      aiBusy = false;
+      $("analyze").disabled = false;
+      $("cover").disabled = false;
+    }
+  }
+
+  async function runAIScript(improve){
+    if (!hasWorkVideo()) { makeScript(improve); return; }
+    const token = aiToken();
+    if (!token) { $("output").textContent = "Conecta TikTok primero: no hay sesión activa."; return; }
+    if (aiBusy) return;
+    aiBusy = true;
+    try {
+      writeOutput("Generando guion con IA...");
+      const res = await fetch(AI_WORKER + "/ai/script", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysis: lastAnalysis,
+          title: workVideoTitle(),
+          goal: $("goal").value,
+          style: $("style").value,
+          duration: Number($("duration").value),
+          instructions: $("instructions").value.trim(),
+          improve
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Error HTTP " + res.status);
+      writeOutput(data.script);
+    } catch (error) {
+      writeOutput("No se pudo generar el guion: " + error.message);
+    } finally {
+      aiBusy = false;
+    }
   }
 
   $("video-select").addEventListener("change",()=>{
     const v=selectedVideo();
     if(v){
       activeLocalVideo=false;
+      lastAnalysis="";
       if(typeof window.selectVideo==="function") window.selectVideo(v,false);
       $("analysis-status").textContent=
-        "Video seleccionado: "+currentTitle()+". El análisis audiovisual real requiere conectar el motor de IA.";
+        "Video seleccionado: "+currentTitle()+". Pulsa «Analizar video completo».";
     }
   });
 
@@ -790,6 +959,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     if(localVideoUrl) URL.revokeObjectURL(localVideoUrl);
     localFile=file;
     activeLocalVideo=false;
+    lastAnalysis="";
     localVideoUrl=URL.createObjectURL(file);
     const preview=$("local-preview");
     preview.src=localVideoUrl;
@@ -806,26 +976,19 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   $("mode").addEventListener("change",()=>{
     const automatic=$("mode").value==="automatic";
     $("mode-status").textContent=automatic?
-      "Modo automático seleccionado. La automatización real se activará cuando conectemos el motor de IA y el sistema de producción.":
+      "Modo automático seleccionado. La automatización real se activará cuando conectemos el sistema de producción.":
       "Modo manual activo. Tú controlas cada paso.";
   });
 
-  $("analyze").addEventListener("click",()=>{
-    const v=selectedVideo();
-    $("analysis-status").textContent=hasWorkVideo()?
-      "Video listo: "+workVideoTitle()+". Falta conectar IA multimodal para analizar imágenes, escenas, audio, voz y retención. No se ha realizado un análisis falso.":
-      "Selecciona un video de TikTok, Top 5 o un archivo local para comenzar.";
-  });
+  $("analyze").addEventListener("click", () => runAIAnalysis(false));
+  $("cover").addEventListener("click", () => runAIAnalysis(true));
 
-  $("cover").addEventListener("click",()=>{
-    const v=selectedVideo();
-    $("analysis-status").textContent=hasWorkVideo()?
-      (activeLocalVideo?"Video local seleccionado: "+workVideoTitle()+". La extracción y análisis automático de su portada requiere conectar el motor visual.":"Portada detectada: "+(v.cover_image_url?"TikTok proporcionó una imagen de portada.":"No se recibió portada")+" El análisis inteligente de composición, texto, colores y atractivo requiere conectar el modelo visual."):
-      "Selecciona un video de TikTok, Top 5 o un archivo local.";
+  $("script").addEventListener("click", () => {
+    if (lastAnalysis) runAIScript(false); else makeScript(false);
   });
-
-  $("script").addEventListener("click",()=>makeScript(false));
-  $("improve").addEventListener("click",()=>makeScript(true));
+  $("improve").addEventListener("click", () => {
+    if (lastAnalysis) runAIScript(true); else makeScript(true);
+  });
 
   $("cover-create").addEventListener("click",()=>{
     writeOutput("PROPUESTA DE NUEVA PORTADA\n\nVideo: "+currentTitle()+
@@ -834,7 +997,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   });
 
   $("production").addEventListener("click",()=>{
-    makeScript(true);
+    if (lastAnalysis) runAIScript(true); else makeScript(true);
     $("export-status").textContent=
       "Plan de producción preparado como texto. La generación real de clips, voz, música, montaje y render MP4 todavía no está conectada.";
   });
@@ -908,8 +1071,6 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
 })();
 </script>
 <!-- FIN DORADOR RD AI STUDIO -->
-
-
 
 <!-- LABORATORIO VIRAL -->
 <section class="viral-lab" id="viralLab">
@@ -1725,6 +1886,6 @@ async function initializeDashboard(force=false){
 
 document.addEventListener("DOMContentLoaded",()=>initializeDashboard());
 </script>
-  
+
 </body>
 </html>
