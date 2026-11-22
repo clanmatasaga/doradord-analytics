@@ -7,151 +7,74 @@
 <title>DoradoRD Analytics</title>
 
 <style>
-:root {
-  --bg:#080b0a;
-  --panel:#111714;
-  --panel2:#161e19;
-  --green:#00e676;
-  --green2:#00b85c;
-  --text:#f2f5f2;
-  --muted:#8b9890;
-  --border:#26332b;
-  --red:#ff5757;
+:root{
+  --bg:#080b0a;--panel:#111714;--panel2:#161e19;
+  --green:#00e676;--green2:#00b85c;--text:#f2f5f2;
+  --muted:#8b9890;--border:#26332b;--red:#ff5757
 }
 *{box-sizing:border-box}
-body{
-  margin:0;font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);color:var(--text)
-}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
 button{cursor:pointer;font-family:inherit}
 .app{max-width:1400px;margin:auto;padding:24px}
-.header{
-  display:flex;justify-content:space-between;align-items:center;
-  flex-wrap:wrap;gap:20px;margin-bottom:30px
-}
+.header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;margin-bottom:30px}
 .brand{display:flex;align-items:center;gap:12px}
-.logo{
-  width:48px;height:48px;border-radius:14px;
-  background:var(--green);color:#061009;
-  display:flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:900
-}
+.logo{width:48px;height:48px;border-radius:14px;background:var(--green);color:#061009;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900}
 .brand h1{margin:0;font-size:23px}
 .brand p{margin:5px 0 0;color:var(--muted);font-size:12px}
 .connection{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.status{
-  padding:10px 14px;border-radius:12px;background:var(--panel);
-  border:1px solid var(--border);color:var(--muted);font-size:13px
-}
+.status{padding:10px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--border);color:var(--muted);font-size:13px}
 .status.connected{color:var(--green);border-color:#126a3b}
 .status.error{color:var(--red)}
-.btn{
-  border:none;border-radius:10px;padding:12px 18px;
-  font-weight:700;background:var(--green);color:#061009;transition:.2s
-}
+.btn{border:none;border-radius:10px;padding:12px 18px;font-weight:700;background:var(--green);color:#061009;transition:.2s}
 .btn:hover{background:#32ff99;transform:translateY(-1px)}
 .btn.secondary{background:var(--panel2);color:white;border:1px solid var(--border)}
-.hero{
-  background:linear-gradient(120deg,#102318,#0b120e);
-  border:1px solid #1c3a28;border-radius:20px;
-  padding:28px;margin-bottom:25px
-}
+.hero{background:linear-gradient(120deg,#102318,#0b120e);border:1px solid #1c3a28;border-radius:20px;padding:28px;margin-bottom:25px}
 .hero h2{margin:0 0 10px;font-size:27px}
 .hero p{color:var(--muted);margin:0;line-height:1.6}
-.stats{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:16px;margin-bottom:25px
-}
-.stat{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:16px;padding:20px;min-height:120px
-}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:25px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;min-height:120px}
 .stat .label{color:var(--muted);font-size:13px;margin-bottom:15px}
 .stat .value{font-size:30px;font-weight:800}
 .stat .sub{font-size:12px;color:var(--muted);margin-top:8px}
-.section{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:18px;padding:22px;margin-bottom:24px
-}
-.section-header{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:15px;flex-wrap:wrap;margin-bottom:20px
-}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:24px}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:20px}
 .section-header h2{margin:0;font-size:20px}
 .controls{display:flex;gap:10px;flex-wrap:wrap}
-input,select{
-  background:#0a100c;color:white;border:1px solid var(--border);
-  border-radius:10px;padding:11px 13px;outline:none
-}
+input,select{background:#0a100c;color:white;border:1px solid var(--border);border-radius:10px;padding:11px 13px;outline:none}
 input:focus,select:focus{border-color:var(--green)}
-.video-grid{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px
-}
-.video-card{
-  background:#0b100d;border:1px solid var(--border);
-  border-radius:15px;overflow:hidden;transition:.2s
-}
-.video-card:hover{border-color:#267b45;transform:translateY(-3px)}
-.video-thumb{
-  height:190px;background:linear-gradient(145deg,#17221a,#080b09);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;cursor:pointer;overflow:hidden
-}
+.video-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.video-card{background:#0b100d;border:1px solid var(--border);border-radius:15px;overflow:hidden;transition:.2s}
+.video-card:hover{border-color:#267b45;transform:translateY(-2px)}
+.video-card.selected{border:2px solid var(--green);box-shadow:0 0 18px #00e67622}
+.video-thumb{height:190px;background:linear-gradient(145deg,#17221a,#080b09);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden}
 .video-thumb img{width:100%;height:100%;object-fit:cover}
-.play{
-  position:absolute;width:55px;height:55px;border-radius:50%;
-  background:#00e676e8;display:flex;align-items:center;
-  justify-content:center;color:black;font-size:22px;font-weight:bold;
-  box-shadow:0 5px 25px #0008
-}
+.play{position:absolute;width:55px;height:55px;border-radius:50%;background:#00e676e8;display:flex;align-items:center;justify-content:center;color:black;font-size:22px;font-weight:bold;box-shadow:0 5px 25px #0008}
 .video-info{padding:15px}
-.video-title{
-  font-size:14px;font-weight:bold;line-height:1.5;
-  min-height:42px;margin-bottom:10px
-}
+.video-title{font-size:14px;font-weight:bold;line-height:1.5;min-height:42px;margin-bottom:10px}
 .video-date{color:var(--muted);font-size:12px;margin-bottom:12px}
 .video-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
 .metric{background:#131a15;border-radius:8px;padding:9px;font-size:12px;color:var(--muted)}
 .metric strong{color:white;display:block;margin-top:5px;font-size:14px}
-.empty{
-  grid-column:1/-1;padding:45px 20px;text-align:center;color:var(--muted);
-  border:1px dashed var(--border);border-radius:12px
-}
-.notice{
-  padding:14px;border-radius:10px;background:#151e18;
-  border:1px solid #263a2b;color:#a9b9ad;
-  margin-bottom:18px;font-size:13px;line-height:1.6
-}
+.select-video-btn{width:100%;margin-top:12px;background:#17241b;border:1px solid #2a4934;color:#c5d4c9;padding:10px;border-radius:9px;font-weight:bold}
+.select-video-btn:hover{border-color:var(--green);color:var(--green)}
+.video-card.selected .select-video-btn{background:#00e676;color:#061009;border-color:var(--green)}
+.selected-badge{display:none;position:absolute;top:10px;left:10px;background:var(--green);color:#041008;padding:6px 10px;border-radius:7px;font-size:11px;font-weight:bold;z-index:2}
+.video-card.selected .selected-badge{display:block}
+.empty{grid-column:1/-1;padding:45px 20px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:12px}
+.notice{padding:14px;border-radius:10px;background:#151e18;border:1px solid #263a2b;color:#a9b9ad;margin-bottom:18px;font-size:13px;line-height:1.6}
 .footer{text-align:center;color:#66736a;font-size:12px;padding:20px}
-.modal{
-  display:none;position:fixed;inset:0;z-index:9999;background:#000e;
-  align-items:center;justify-content:center;padding:20px
-}
+.modal{display:none;position:fixed;inset:0;z-index:9999;background:#000e;align-items:center;justify-content:center;padding:20px}
 .modal.open{display:flex}
-.modal-content{
-  width:100%;max-width:430px;background:#111714;
-  border:1px solid var(--border);border-radius:18px;padding:15px;position:relative
-}
+.modal-content{width:100%;max-width:430px;background:#111714;border:1px solid var(--border);border-radius:18px;padding:15px;position:relative}
 .modal-close{display:flex;justify-content:flex-end;margin-bottom:12px}
-.modal-close button{
-  background:#222c25;border:none;color:white;padding:9px 14px;border-radius:8px
-}
-.player-frame{
-  width:100%;height:700px;max-height:78vh;
-  border:none;border-radius:12px;background:#000
-}
+.modal-close button{background:#222c25;border:none;color:white;padding:9px 14px;border-radius:8px}
+.player-frame{width:100%;height:700px;max-height:78vh;border:none;border-radius:12px;background:#000}
 
-/* LABORATORIO VIRAL */
-.viral-lab{
-  background:linear-gradient(145deg,#101d15,#0b100d);
-  border:1px solid #205b38;border-radius:18px;padding:22px;margin-bottom:24px
-}
+/* LABORATORIO */
+.viral-lab{background:linear-gradient(145deg,#101d15,#0b100d);border:1px solid #205b38;border-radius:18px;padding:22px;margin-bottom:24px}
 .viral-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:15px;margin-bottom:20px}
 .viral-title{display:flex;align-items:center;gap:12px}
-.viral-icon{
-  width:48px;height:48px;background:#063d25;border:1px solid #087a45;
-  border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px
-}
+.viral-icon{width:48px;height:48px;background:#063d25;border:1px solid #087a45;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px}
 .viral-title h2{margin:0;font-size:22px}
 .viral-title p{color:var(--muted);font-size:12px;margin:5px 0 0}
 .viral-description{color:#a9b9ad;line-height:1.6;margin-bottom:20px;font-size:14px}
@@ -161,67 +84,39 @@ input:focus,select:focus{border-color:var(--green)}
 .viral-stat-value{font-size:23px;font-weight:800;color:var(--green)}
 .viral-stat-sub{color:#829188;font-size:11px;margin-top:6px}
 .viral-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
-.viral-button{
-  border:1px solid #087a45;background:var(--green);color:#061009;
-  padding:13px 18px;border-radius:10px;font-weight:bold;transition:.2s
-}
+.viral-button{border:1px solid #087a45;background:var(--green);color:#061009;padding:13px 18px;border-radius:10px;font-weight:bold;transition:.2s}
 .viral-button:hover{background:#37ff99;transform:translateY(-2px)}
 .viral-button.secondary{background:#14231a;color:white;border-color:#294334}
+.viral-button:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .viral-results{display:none}
 .viral-results.show{display:block}
-.viral-card{
-  background:#101914;border:1px solid #263a2b;border-radius:13px;
-  padding:18px;margin-bottom:14px
-}
+.viral-card{background:#101914;border:1px solid #263a2b;border-radius:13px;padding:18px;margin-bottom:14px}
 .viral-card h3{margin:0 0 12px;font-size:16px}
 .viral-card p{color:#b1c0b5;font-size:13px;line-height:1.7;margin:8px 0}
 .viral-highlight{border-color:#147c48;background:linear-gradient(145deg,#10281a,#101914)}
-.viral-badge{
-  display:inline-block;padding:5px 9px;border-radius:7px;
-  background:#12482c;color:#4aff9f;font-size:11px;font-weight:bold;margin-bottom:10px
-}
+.viral-badge{display:inline-block;padding:5px 9px;border-radius:7px;background:#12482c;color:#4aff9f;font-size:11px;font-weight:bold;margin-bottom:10px}
 .viral-video-title{font-size:14px;font-weight:bold;line-height:1.6;color:white;margin-bottom:10px}
-.viral-idea{
-  border-left:3px solid var(--green);padding:10px 14px;
-  background:#101d15;border-radius:0 9px 9px 0;margin:12px 0
-}
+.viral-idea{border-left:3px solid var(--green);padding:10px 14px;background:#101d15;border-radius:0 9px 9px 0;margin:12px 0}
 .viral-idea strong{color:var(--green);display:block;margin-bottom:6px}
-.viral-script{
-  white-space:pre-line;background:#080d09;border:1px solid #26372b;
-  border-radius:10px;padding:14px;color:#d9e5dc;font-size:13px;line-height:1.8;margin-top:10px
-}
+.viral-script{white-space:pre-line;background:#080d09;border:1px solid #26372b;border-radius:10px;padding:14px;color:#d9e5dc;font-size:13px;line-height:1.8;margin-top:10px}
 .viral-empty{text-align:center;color:#839188;padding:22px 10px;font-size:13px}
 .viral-small{color:#829188;font-size:11px;margin-top:12px;line-height:1.6}
 .viral-top-list{display:grid;gap:9px}
-.viral-top-item{
-  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
-  background:#111b14;border:1px solid #23352a;border-radius:9px;padding:11px
-}
+.viral-top-item{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#111b14;border:1px solid #23352a;border-radius:9px;padding:11px}
+.viral-top-item.selected{border-color:var(--green);background:#10251a}
 .viral-top-item-title{font-size:12px;line-height:1.5;flex:1}
 .viral-top-item-views{color:var(--green);font-weight:bold;font-size:12px;white-space:nowrap}
-
-@media(max-width:1100px){
-  .video-grid{grid-template-columns:repeat(3,1fr)}
-  .stats{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:750px){
-  .app{padding:14px}
-  .video-grid{grid-template-columns:repeat(2,1fr);gap:12px}
-  .video-thumb{height:160px}
-  .stat .value{font-size:25px}
-}
-@media(max-width:650px){
-  .viral-stats{grid-template-columns:1fr}
-  .viral-header{align-items:flex-start}
-  .viral-title h2{font-size:19px}
-  .viral-lab{padding:16px}
-}
-@media(max-width:450px){
-  .video-grid{grid-template-columns:1fr}
-  .video-thumb{height:240px}
-  .stats{gap:10px}
-  .stat{padding:14px}
-}
+.top-select-btn{background:#18251b;color:#b6c8bb;border:1px solid #2b4934;border-radius:7px;padding:8px 10px;font-size:11px;font-weight:bold}
+.top-select-btn:hover{border-color:var(--green);color:var(--green)}
+.selected-video-panel{display:none;background:#10251a;border:1px solid var(--green);border-radius:12px;padding:14px;margin-bottom:18px}
+.selected-video-panel.show{display:block}
+.selected-video-panel strong{color:var(--green);display:block;margin-bottom:5px}
+.selected-video-panel p{font-size:13px;margin:5px 0;color:#d4e2d7}
+.lab-tip{background:#111b14;border:1px solid #25382a;border-radius:10px;padding:12px;color:#a9b9ad;font-size:12px;line-height:1.6;margin-bottom:15px}
+@media(max-width:1100px){.video-grid{grid-template-columns:repeat(3,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:750px){.app{padding:14px}.video-grid{grid-template-columns:repeat(2,1fr);gap:12px}.video-thumb{height:160px}.stat .value{font-size:25px}}
+@media(max-width:650px){.viral-stats{grid-template-columns:1fr}.viral-header{align-items:flex-start}.viral-title h2{font-size:19px}.viral-lab{padding:16px}}
+@media(max-width:450px){.video-grid{grid-template-columns:1fr}.video-thumb{height:240px}.stats{gap:10px}.stat{padding:14px}}
 </style>
 </head>
 
@@ -236,7 +131,6 @@ input:focus,select:focus{border-color:var(--green)}
       <p>Panel de rendimiento de TikTok</p>
     </div>
   </div>
-
   <div class="connection">
     <div class="status" id="connectionStatus">TikTok pendiente de conexión</div>
     <button class="btn" id="connectButton" onclick="connectTikTok()">Conectar TikTok</button>
@@ -287,7 +181,7 @@ input:focus,select:focus{border-color:var(--green)}
   </div>
 
   <div class="viral-description">
-    Analiza tus publicaciones, descubre tus mejores contenidos y utiliza tus resultados para crear nuevas ideas de videos.
+    El Top 5 recomienda. Tú decides qué video analizar, rescatar o convertir en una nueva idea.
   </div>
 
   <div class="viral-stats">
@@ -308,14 +202,25 @@ input:focus,select:focus{border-color:var(--green)}
     </div>
   </div>
 
+  <div class="lab-tip">
+    💡 Puedes seleccionar cualquier video de tu biblioteca. No estás obligado a elegir uno del Top 5.
+  </div>
+
+  <div id="selectedVideoPanel" class="selected-video-panel">
+    <strong>🎯 VIDEO SELECCIONADO PARA EL LABORATORIO</strong>
+    <p id="selectedVideoTitle">Ningún video seleccionado</p>
+    <p id="selectedVideoStats"></p>
+  </div>
+
   <div class="viral-actions">
-    <button class="viral-button" onclick="analyzeViralLab()">🧠 Analizar mis videos</button>
-    <button class="viral-button secondary" onclick="generateViralIdea()">⚡ Generar idea de video</button>
+    <button class="viral-button" onclick="analyzeViralLab()">🧠 Analizar videos · Top 5</button>
+    <button class="viral-button secondary" onclick="generateViralIdea()">✍️ Crear guion</button>
+    <button class="viral-button secondary" onclick="improveSelectedVideo()">🚀 Mejorar video</button>
   </div>
 
   <div id="viralResults" class="viral-results">
     <div class="viral-card viral-highlight">
-      <span class="viral-badge">🏆 VIDEO DESTACADO</span>
+      <span class="viral-badge">🏆 VIDEO CON MÁS VISUALIZACIONES</span>
       <h3>Tu publicación con mejor rendimiento</h3>
       <div id="viralBestVideo" class="viral-video-title"></div>
       <p id="viralBestStats"></p>
@@ -331,20 +236,29 @@ input:focus,select:focus{border-color:var(--green)}
     </div>
 
     <div class="viral-card">
-      <h3>🔥 Videos destacados</h3>
+      <h3>🔥 Top 5 · Selecciona cualquiera para el laboratorio</h3>
       <div id="viralTopList" class="viral-top-list"></div>
     </div>
 
-    <div class="viral-card viral-highlight">
-      <span class="viral-badge">💡 NUEVA PROPUESTA</span>
-      <h3 id="viralIdeaTitle">Tu próxima idea</h3>
+    <div class="viral-card">
+      <span class="viral-badge">✍️ CREACIÓN PARA EL VIDEO SELECCIONADO</span>
+      <h3 id="viralIdeaTitle">Tu nueva idea</h3>
       <div id="viralIdeaContent"></div>
-      <button class="viral-button secondary" onclick="generateViralIdea()" style="margin-top:15px">🔄 Generar otra idea</button>
+      <button class="viral-button secondary" onclick="generateViralIdea()" style="margin-top:15px">🔄 Crear otro guion</button>
       <button class="viral-button secondary" onclick="copyViralScript()" style="margin-top:15px">📋 Copiar guion</button>
     </div>
 
+    <div class="viral-card viral-highlight">
+      <span class="viral-badge">🚀 MEJORA DEL VIDEO</span>
+      <h3 id="improveTitle">Análisis de mejora</h3>
+      <div id="improveContent">
+        <p>Selecciona un video y pulsa Mejorar video.</p>
+      </div>
+      <button class="viral-button secondary" onclick="copyImprovedScript()" style="margin-top:15px">📋 Copiar mejora</button>
+    </div>
+
     <p class="viral-small">
-      Las recomendaciones se basan en títulos y métricas disponibles. Los resultados pasados no garantizan viralidad futura.
+      El análisis utiliza los títulos y métricas disponibles. No puede confirmar la retención real sin datos de retención de TikTok. Las recomendaciones son propuestas, no garantías de viralidad.
     </p>
   </div>
 
@@ -381,7 +295,7 @@ input:focus,select:focus{border-color:var(--green)}
 </div>
 
 <script>
-/* CONFIGURACIÓN */
+/* CONFIGURACIÓN ORIGINAL */
 const WORKER = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
 const SESSION_KEY = "doradord_session";
 
@@ -391,6 +305,8 @@ let loading = false;
 let viralData = null;
 let viralIdeaIndex = 0;
 let viralCurrentScript = "";
+let improvedCurrentScript = "";
+let selectedVideo = null;
 
 /* UTILIDADES */
 function $(id){return document.getElementById(id)}
@@ -402,7 +318,7 @@ function setStatus(text,type=""){
 }
 
 function notice(message,type="info"){
-  if(!message){$("notice").innerHTML="";return}
+  if(!message){ $("notice").innerHTML=""; return; }
   const color=type==="error"?"#ff5757":"#a9b9ad";
   $("notice").innerHTML=`<div class="notice" style="color:${color}">${message}</div>`;
 }
@@ -473,12 +389,16 @@ function dateNumber(video){
   return Number.isFinite(parsed)?parsed:0;
 }
 
-/* CONEXIÓN */
+function videoKey(video){
+  return String(videoId(video)||titleOf(video)+"_"+dateNumber(video));
+}
+
+/* CONEXIÓN ORIGINAL */
 function connectTikTok(){
   window.location.href=WORKER+"/oauth";
 }
 
-/* REPRODUCTOR */
+/* REPRODUCTOR ORIGINAL */
 function openPlayer(video){
   const id=videoId(video);
   if(!id){notice("No fue posible obtener el ID de este video.","error");return}
@@ -497,16 +417,51 @@ function modalBackdrop(event){
   if(event.target===$("playerModal"))closePlayer();
 }
 
-/* TARJETAS */
+/* SELECCIÓN DE VIDEO */
+function selectVideo(video,scrollToLab=false){
+  if(!video)return;
+  selectedVideo=video;
+  renderVideos();
+  updateSelectedVideoPanel();
+
+  if(viralData)renderTopList();
+
+  notice("Video seleccionado para el laboratorio: "+titleOf(video));
+  if(scrollToLab){
+    $("viralLab").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
+
+function updateSelectedVideoPanel(){
+  const panel=$("selectedVideoPanel");
+  if(!selectedVideo){
+    panel.classList.remove("show");
+    return;
+  }
+  panel.classList.add("show");
+  $("selectedVideoTitle").textContent=titleOf(selectedVideo);
+  $("selectedVideoStats").textContent=
+    "👁 "+formatNumber(getViews(selectedVideo))+
+    " vistas · ❤️ "+formatNumber(getLikes(selectedVideo))+
+    " likes · 💬 "+formatNumber(getComments(selectedVideo))+
+    " comentarios · 🔄 "+formatNumber(getShares(selectedVideo))+" compartidos";
+}
+
+/* TARJETAS DE VIDEO */
 function makeCard(video){
   const views=getViews(video),likes=getLikes(video),comments=getComments(video),shares=getShares(video);
   const cover=video?.cover_image_url||video?.cover_url||video?.thumbnail_url||video?.thumbnail||video?.cover||"";
   const card=document.createElement("article");
-  card.className="video-card";
+  card.className="video-card"+(selectedVideo&&videoKey(selectedVideo)===videoKey(video)?" selected":"");
 
   const thumb=document.createElement("div");
   thumb.className="video-thumb";
   thumb.onclick=()=>openPlayer(video);
+
+  const badge=document.createElement("div");
+  badge.className="selected-badge";
+  badge.textContent="✓ SELECCIONADO";
+  thumb.appendChild(badge);
 
   if(cover){
     const img=document.createElement("img");
@@ -530,12 +485,18 @@ function makeCard(video){
     metric.appendChild(strong);metrics.appendChild(metric);
   });
 
-  info.append(title,date,metrics);
+  const selectBtn=document.createElement("button");
+  selectBtn.className="select-video-btn";
+  selectBtn.textContent=selectedVideo&&videoKey(selectedVideo)===videoKey(video)
+    ?"✓ Video seleccionado":"🎯 Seleccionar para laboratorio";
+  selectBtn.onclick=()=>selectVideo(video,true);
+
+  info.append(title,date,metrics,selectBtn);
   card.append(thumb,info);
   return card;
 }
 
-/* RENDERIZAR */
+/* RENDERIZAR BIBLIOTECA */
 function renderVideos(){
   const grid=$("videoGrid");
   const search=$("searchVideos").value.toLowerCase().trim();
@@ -554,7 +515,7 @@ function renderVideos(){
   filtered.forEach(video=>grid.appendChild(makeCard(video)));
 }
 
-/* MÉTRICAS DEL DASHBOARD */
+/* MÉTRICAS DEL DASHBOARD ORIGINAL */
 function loadDashboard(profile,videoList){
   profileData=profile||{};
   videos=Array.isArray(videoList)?videoList:[];
@@ -580,11 +541,18 @@ function loadDashboard(profile,videoList){
     $("engagement").textContent=(((totalLikes+totalComments+totalShares)/views)*100).toFixed(2)+"%";
   }else{$("engagement").textContent="--"}
 
+  /* Si el video seleccionado sigue existiendo, actualizar su objeto */
+  if(selectedVideo){
+    const refreshed=videos.find(v=>videoKey(v)===videoKey(selectedVideo));
+    if(refreshed)selectedVideo=refreshed;
+    else selectedVideo=null;
+  }
+
   renderVideos();
   refreshViralLab();
 }
 
-/* CARGAR DATOS */
+/* CARGAR DATOS ORIGINAL */
 async function loadDashboardData(session){
   const headers={"Authorization":"Bearer "+session,"Content-Type":"application/json"};
 
@@ -656,7 +624,7 @@ function analyzeViralLab(){
   const multiplier=averageViews>0?(getViews(bestVideo)/averageViews).toFixed(1):"1";
   $("viralBestAdvice").textContent=
     "Este video alcanzó "+multiplier+" veces tu promedio de visualizaciones. " +
-    "Estudia su tema y presentación y prueba una nueva versión, sin asumir que el resultado se repetirá.";
+    "Úsalo como referencia creativa, pero recuerda que el rendimiento pasado no garantiza resultados futuros.";
 
   const insights=[
     "Promedio de visualizaciones por video: "+formatNumber(Math.round(averageViews))+".",
@@ -667,22 +635,51 @@ function analyzeViralLab(){
 
   $("viralInsights").innerHTML=insights.map(text=>`<p>• ${viralEscape(text)}</p>`).join("");
 
-  $("viralTopList").innerHTML=sorted.slice(0,5).map((video,index)=>`
-    <div class="viral-top-item">
-      <div class="viral-top-item-title">${index+1}. ${viralEscape(titleOf(video))}</div>
-      <div class="viral-top-item-views">${formatNumber(getViews(video))} vistas</div>
-    </div>
-  `).join("");
+  renderTopList();
 
   $("viralEmpty").style.display="none";
   $("viralResults").classList.add("show");
+
+  /* Solo seleccionamos un video automáticamente si el usuario no ha elegido */
+  if(!selectedVideo){
+    selectVideo(bestVideo,false);
+  }else{
+    updateSelectedVideoPanel();
+  }
+
   viralIdeaIndex=0;
   generateViralIdea();
 
   $("viralLab").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
-/* IDEAS DE VIDEO */
+/* TOP 5 SELECCIONABLE */
+function renderTopList(){
+  if(!viralData)return;
+  const top=viralData.sorted.slice(0,5);
+  $("viralTopList").innerHTML=top.map((video,index)=>{
+    const isSelected=selectedVideo&&videoKey(selectedVideo)===videoKey(video);
+    return `
+      <div class="viral-top-item ${isSelected?"selected":""}">
+        <div class="viral-top-item-title">
+          <strong>${index+1}.</strong> ${viralEscape(titleOf(video))}
+        </div>
+        <div class="viral-top-item-views">${formatNumber(getViews(video))} vistas</div>
+        <button class="top-select-btn" onclick="selectTopVideo(${index})">
+          ${isSelected?"✓ Seleccionado":"Elegir"}
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+function selectTopVideo(index){
+  if(!viralData)return;
+  const video=viralData.sorted[index];
+  if(video)selectVideo(video,false);
+}
+
+/* CREAR GUION PARA VIDEO ELEGIDO */
 function generateViralIdea(){
   if(!videos.length){
     $("viralIdeaTitle").textContent="Todavía no hay datos";
@@ -690,49 +687,51 @@ function generateViralIdea(){
     return;
   }
   if(!viralData){analyzeViralLab();return}
+  if(!selectedVideo)selectVideo(viralData.bestVideo,false);
 
-  const best=viralData.bestVideo;
-  const bestTitle=titleOf(best);
+  const reference=selectedVideo;
+  const referenceTitle=titleOf(reference);
+
   const templates=[
     {
-      title:"Recrear tu video ganador con un giro",
-      concept:"Usa el tema de tu video destacado, pero cambia la situación, el resultado o la forma de contarlo.",
-      hook:"Si pensabas que lo anterior era increíble, espera a ver esto…",
-      scenes:["0–3 s: muestra el momento más intrigante.","3–8 s: explica brevemente el contexto.","8–20 s: presenta la acción o sorpresa.","Final: remata con un resultado inesperado."],
-      closing:"¿Cuál versión te gustó más?",
+      title:"Recrear este video con un giro",
+      concept:"Mantén la esencia del contenido, pero cambia la situación, el resultado o la forma de contarlo.",
+      hook:"Espera, porque lo que pasó al final no era lo que yo esperaba…",
+      scenes:["0–3 s: abre con el momento más intrigante o sorprendente.","3–7 s: explica el contexto sin alargar la introducción.","7–18 s: desarrolla la acción con cortes ágiles.","Final: revela el resultado o deja una sorpresa."],
+      closing:"¿Tú habrías hecho lo mismo? Te leo.",
       hashtags:"#TikTok #ParaTi #Gaming"
     },
     {
       title:"Crear una segunda parte",
-      concept:"Retoma la idea del video destacado y crea una continuación que tenga un nuevo reto o desenlace.",
-      hook:"Muchos me preguntaron qué pasó después…",
-      scenes:["0–3 s: recuerda rápidamente el momento anterior.","3–6 s: presenta el nuevo reto.","6–18 s: muestra el desarrollo.","Final: revela el resultado y deja abierta otra continuación."],
-      closing:"¿Hacemos una tercera parte?",
+      concept:"Usa este video como punto de partida para una continuación con un nuevo reto, problema o desenlace.",
+      hook:"Después de lo que pasó en el otro video, tenía que intentar esto…",
+      scenes:["0–3 s: muestra rápidamente el problema o resultado anterior.","3–6 s: plantea el nuevo reto.","6–18 s: muestra el desarrollo y los momentos importantes.","Final: revela el resultado."],
+      closing:"¿Qué debería intentar ahora? Déjame tu idea.",
       hashtags:"#Parte2 #TikTok #Gaming"
     },
     {
-      title:"Video de reacción o sorpresa",
-      concept:"Transforma el tema del video ganador en una reacción, descubrimiento o situación inesperada.",
-      hook:"No esperaba que esto terminara de esta manera…",
-      scenes:["0–3 s: anticipa algo inesperado.","3–7 s: explica el contexto.","7–18 s: muestra el momento.","Final: destaca la reacción o desenlace."],
-      closing:"¿Tú qué habrías hecho?",
-      hashtags:"#Reaccion #TikTok #ParaTi"
+      title:"Transformarlo en una historia",
+      concept:"Cuenta el contenido como una mini historia con expectativa, tensión y desenlace.",
+      hook:"Todo parecía que iba a salir bien… hasta que ocurrió esto.",
+      scenes:["0–3 s: muestra el momento que despierta curiosidad.","3–7 s: explica brevemente cómo comenzó.","7–17 s: desarrolla el problema o tensión.","Final: presenta el desenlace."],
+      closing:"¿Te esperabas ese final? Comenta tu reacción.",
+      hashtags:"#Storytime #TikTok #ParaTi"
     },
     {
-      title:"Convertir el tema en un reto",
-      concept:"Convierte el tema del video destacado en un reto con una regla o dificultad adicional.",
-      hook:"Voy a intentar esto, pero con una regla que lo cambia todo.",
-      scenes:["0–3 s: explica la regla.","3–6 s: comienza inmediatamente.","6–20 s: muestra los momentos más intensos.","Final: revela si lo conseguiste."],
-      closing:"Déjame otro reto para el próximo video.",
+      title:"Convertirlo en un reto",
+      concept:"Añade una regla o dificultad que haga más interesante el tema del video original.",
+      hook:"Esta vez voy a intentarlo, pero con una regla que lo hace mucho más difícil.",
+      scenes:["0–3 s: explica la regla de manera visual.","3–6 s: comienza el reto sin introducción larga.","6–18 s: muestra los momentos de mayor tensión.","Final: revela si lo lograste."],
+      closing:"Déjame un reto más difícil para el próximo video.",
       hashtags:"#Reto #TikTok #Gaming"
     },
     {
-      title:"Contar el momento como una historia",
-      concept:"Usa un tema que te funcionó y cuéntalo con inicio, tensión y desenlace.",
-      hook:"Todo parecía normal, hasta que pasó esto…",
-      scenes:["0–3 s: muestra una escena intrigante.","3–8 s: cuenta cómo comenzó.","8–18 s: desarrolla el conflicto.","Final: muestra el desenlace."],
-      closing:"¿Te esperabas ese final?",
-      hashtags:"#Storytime #TikTok #ParaTi"
+      title:"Reacción con un final inesperado",
+      concept:"Utiliza el tema original para construir una reacción o descubrimiento que mantenga la curiosidad.",
+      hook:"No había visto venir esto… mira lo que pasó.",
+      scenes:["0–3 s: adelanta la sorpresa.","3–6 s: introduce el contexto.","6–18 s: muestra el momento y tu reacción.","Final: remata con una reacción auténtica."],
+      closing:"¿Cuál habría sido tu reacción? Comenta.",
+      hashtags:"#Reaccion #TikTok #ParaTi"
     }
   ];
 
@@ -740,12 +739,15 @@ function generateViralIdea(){
   viralIdeaIndex++;
 
   const script=
-    "LABORATORIO VIRAL - DORADORd\n\n"+idea.title+
-    "\n\nVIDEO DE REFERENCIA:\n"+bestTitle+
-    "\nVisualizaciones: "+formatNumber(getViews(best))+
+    "DORARORD · LABORATORIO VIRAL\n\n"+idea.title+
+    "\n\nVIDEO SELECCIONADO:\n"+referenceTitle+
+    "\nVisualizaciones: "+formatNumber(getViews(reference))+
+    "\nLikes: "+formatNumber(getLikes(reference))+
+    "\nComentarios: "+formatNumber(getComments(reference))+
+    "\nCompartidos: "+formatNumber(getShares(reference))+
     "\n\nCONCEPTO:\n"+idea.concept+
-    "\n\nGANCHO:\n"+idea.hook+
-    "\n\nESCENAS:\n"+idea.scenes.join("\n")+
+    "\n\nGANCHO (0–3 SEGUNDOS):\n"+idea.hook+
+    "\n\nGUION:\n"+idea.scenes.join("\n")+
     "\n\nCIERRE:\n"+idea.closing+
     "\n\nHASHTAGS:\n"+idea.hashtags;
 
@@ -753,38 +755,149 @@ function generateViralIdea(){
   $("viralIdeaTitle").textContent=idea.title;
 
   $("viralIdeaContent").innerHTML=`
-    <div class="viral-idea"><strong>📌 Video de inspiración</strong>
-      <p>${viralEscape(bestTitle)}</p><p>Visualizaciones: ${formatNumber(getViews(best))}</p>
+    <div class="viral-idea"><strong>🎯 Video seleccionado como referencia</strong>
+      <p>${viralEscape(referenceTitle)}</p>
+      <p>👁 ${formatNumber(getViews(reference))} vistas · ❤️ ${formatNumber(getLikes(reference))} likes</p>
     </div>
     <div class="viral-idea"><strong>💡 Concepto</strong><p>${viralEscape(idea.concept)}</p></div>
-    <div class="viral-idea"><strong>🎯 Gancho · Primeros 3 segundos</strong><p>${viralEscape(idea.hook)}</p></div>
+    <div class="viral-idea"><strong>⚡ Gancho · Primeros 3 segundos</strong><p>${viralEscape(idea.hook)}</p></div>
     <div class="viral-idea"><strong>🎬 Guion por escenas</strong>${idea.scenes.map(scene=>`<p>• ${viralEscape(scene)}</p>`).join("")}</div>
-    <div class="viral-idea"><strong>💬 Cierre</strong><p>${viralEscape(idea.closing)}</p></div>
+    <div class="viral-idea"><strong>💬 Cierre para provocar comentarios</strong><p>${viralEscape(idea.closing)}</p></div>
     <div class="viral-idea"><strong>#️⃣ Hashtags sugeridos</strong><p>${viralEscape(idea.hashtags)}</p></div>
   `;
 }
 
+/* MEJORAR EL VIDEO SELECCIONADO */
+function improveSelectedVideo(){
+  if(!videos.length){
+    notice("Conecta TikTok y carga tus videos primero.","error");
+    return;
+  }
+  if(!selectedVideo){
+    notice("Selecciona primero el video que quieres mejorar.","error");
+    $("videoGrid").scrollIntoView({behavior:"smooth"});
+    return;
+  }
+
+  const video=selectedVideo;
+  const title=titleOf(video);
+  const views=getViews(video)||0;
+  const likes=getLikes(video)||0;
+  const comments=getComments(video)||0;
+  const shares=getShares(video)||0;
+  const engagement=viralEngagement(video);
+  const average=viralData?.averageViews||0;
+
+  let diagnosis=[];
+  let hook;
+  let opening;
+
+  if(average>0&&views<average){
+    diagnosis.push("Este video está por debajo del promedio de visualizaciones de tu biblioteca. Esto no demuestra que el contenido sea malo: el tema, la distribución, el momento de publicación y el gancho pueden influir.");
+  }else if(average>0){
+    diagnosis.push("Este video está igual o por encima del promedio de tu biblioteca. Conviene conservar su tema o elemento principal y probar una nueva ejecución.");
+  }else{
+    diagnosis.push("No hay suficiente información para compararlo con tu promedio. La propuesta se basa en el título y las interacciones disponibles.");
+  }
+
+  if(views>0&&comments/views<0.005){
+    diagnosis.push("La proporción de comentarios parece baja respecto a las vistas. El nuevo cierre debe incluir una pregunta concreta que invite a elegir, opinar o contar una experiencia.");
+  }else{
+    diagnosis.push("El cierre puede reforzarse con una pregunta directa y fácil de responder para convertir espectadores en participantes");
+  }
+
+  if(views>0&&likes/views<0.03){
+    diagnosis.push("La proporción de likes es relativamente baja. Prueba un momento más impactante, una opinión clara o una recompensa visual más rápida");
+  }
+
+  hook="No esperaba que esto pasara… pero mira el resultado.";
+  opening="Abre con el momento más intenso, extraño, gracioso o sorprendente del video. Evita comenzar con saludos o explicaciones largas.";
+
+  const improvedScenes=[
+    "0–3 SEGUNDOS: "+hook+" Usa una imagen o acción que confirme inmediatamente la curiosidad.",
+    "3–6 SEGUNDOS: presenta el contexto en una sola frase. No expliques detalles innecesarios.",
+    "6–12 SEGUNDOS: desarrolla la acción con cortes rápidos. Cada escena debe aportar algo nuevo.",
+    "12–20 SEGUNDOS: aumenta la tensión, muestra el cambio o prepara el resultado.",
+    "FINAL: entrega el resultado, remate o sorpresa. Evita que el video termine sin recompensa."
+  ];
+
+  const improvedTitle="No te imaginas cómo terminó esto…";
+  const closing="¿Tú qué habrías hecho en mi lugar? 👇";
+
+  improvedCurrentScript=
+    "DORARORD · MEJORA DE VIDEO\n\nVIDEO ANALIZADO:\n"+title+
+    "\nVisualizaciones: "+formatNumber(views)+
+    "\nLikes: "+formatNumber(likes)+
+    "\nComentarios: "+formatNumber(comments)+
+    "\nCompartidos: "+formatNumber(shares)+
+    "\nEngagement estimado: "+engagement.toFixed(2)+"%"+
+    "\n\nPOSIBLES CAUSAS:\n"+diagnosis.map(d=>"• "+d).join("\n")+
+    "\n\nNUEVO TITULO:\n"+improvedTitle+
+    "\n\nGANCHO (0–3 SEGUNDOS):\n"+hook+
+    "\n\nPROPUESTA DE ESTRUCTURA:\n"+improvedScenes.join("\n")+
+    "\n\nCIERRE:\n"+closing+
+    "\n\nRECOMENDACIÓN:\n"+opening;
+
+  $("improveTitle").textContent="Nueva versión: "+title;
+  $("improveContent").innerHTML=`
+    <div class="viral-idea"><strong>📌 Video analizado</strong>
+      <p>${viralEscape(title)}</p>
+      <p>👁 ${formatNumber(views)} vistas · ❤️ ${formatNumber(likes)} likes · 💬 ${formatNumber(comments)} comentarios · 🔄 ${formatNumber(shares)} compartidos</p>
+      <p>Engagement estimado: ${engagement.toFixed(2)}%</p>
+    </div>
+    <div class="viral-idea"><strong>🔍 Posibles causas / oportunidades</strong>
+      ${diagnosis.map(d=>`<p>• ${viralEscape(d)}</p>`).join("")}
+    </div>
+    <div class="viral-idea"><strong>📝 Nuevo título sugerido</strong><p>${viralEscape(improvedTitle)}</p></div>
+    <div class="viral-idea"><strong>⚡ Gancho de los primeros 3 segundos</strong><p>${viralEscape(hook)}</p></div>
+    <div class="viral-idea"><strong>🎬 Estructura optimizada</strong>
+      ${improvedScenes.map(s=>`<p>• ${viralEscape(s)}</p>`).join("")}
+    </div>
+    <div class="viral-idea"><strong>💬 Cierre para generar comentarios</strong><p>${viralEscape(closing)}</p></div>
+    <div class="viral-idea"><strong>🎯 Recomendación de edición</strong><p>${viralEscape(opening)}</p></div>
+  `;
+
+  $("viralResults").classList.add("show");
+  $("viralEmpty").style.display="none";
+  $("improveContent").scrollIntoView({behavior:"smooth",block:"center"});
+  notice("Análisis de mejora generado para el video seleccionado.");
+}
+
 async function copyViralScript(){
-  if(!viralCurrentScript){notice("Primero genera una idea de video.","error");return}
+  if(!viralCurrentScript){notice("Primero genera un guion.","error");return}
+  await copyText(viralCurrentScript,"Guion copiado.");
+}
+
+async function copyImprovedScript(){
+  if(!improvedCurrentScript){notice("Primero pulsa Mejorar video.","error");return}
+  await copyText(improvedCurrentScript,"Mejora copiada.");
+}
+
+async function copyText(text,message){
   try{
-    await navigator.clipboard.writeText(viralCurrentScript);
-    notice("Guion copiado. Ya puedes pegarlo donde quieras.");
+    await navigator.clipboard.writeText(text);
+    notice(message);
   }catch(error){
     notice("No se pudo copiar automáticamente. Intenta copiar manualmente.","error");
   }
 }
 
+/* ESTADO DEL LABORATORIO */
 function refreshViralLab(){
   $("viralAnalyzed").textContent=formatNumber(videos.length);
   viralData=null;
+  viralCurrentScript="";
+  improvedCurrentScript="";
   $("viralResults").classList.remove("show");
   $("viralEmpty").style.display="block";
   $("viralEmpty").textContent=videos.length
-    ?"Videos cargados. Pulsa «Analizar mis videos» para comenzar."
+    ?"Videos cargados. Pulsa «Analizar videos · Top 5» para comenzar."
     :"Conecta TikTok y carga tus videos para comenzar.";
+  $("selectedVideoPanel").classList.remove("show");
+  selectedVideo=null;
 }
 
-/* SESIÓN E INICIALIZACIÓN */
+/* SESIÓN E INICIALIZACIÓN ORIGINAL */
 async function initializeDashboard(force=false){
   if(loading)return;
   loading=true;
