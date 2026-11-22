@@ -117,6 +117,20 @@ input:focus,select:focus{border-color:var(--green)}
 @media(max-width:750px){.app{padding:14px}.video-grid{grid-template-columns:repeat(2,1fr);gap:12px}.video-thumb{height:160px}.stat .value{font-size:25px}}
 @media(max-width:650px){.viral-stats{grid-template-columns:1fr}.viral-header{align-items:flex-start}.viral-title h2{font-size:19px}.viral-lab{padding:16px}}
 @media(max-width:450px){.video-grid{grid-template-columns:1fr}.video-thumb{height:240px}.stats{gap:10px}.stat{padding:14px}}
+
+/* NAVEGACION Y PAGINACION */
+html{scroll-behavior:smooth;scroll-padding-top:100px}
+.main-nav{position:sticky;top:0;z-index:1000;display:flex;gap:8px;overflow-x:auto;padding:11px 14px;margin:0 0 22px;background:#0b120eeb;backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:13px}
+.main-nav a{flex:0 0 auto;text-decoration:none;color:#c5d4c9;background:#17241b;border:1px solid #2a4934;border-radius:9px;padding:10px 13px;font-size:12px;font-weight:bold}
+.main-nav a:hover{color:#061009;background:var(--green)}
+#dashboard,#drd-ai-studio,#viralLab,#videoLibrary,#publish-center{scroll-margin-top:95px}
+.pagination{display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;margin-top:20px}
+.pagination button{background:#17241b;color:#d5e2d8;border:1px solid #2a4934;border-radius:8px;padding:9px 12px;font-weight:bold}
+.pagination button.active{background:var(--green);color:#061009;border-color:var(--green)}
+.pagination button:disabled{opacity:.35;cursor:not-allowed}
+.pagination-info{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
+@media(max-width:600px){.main-nav{margin-left:-3px;margin-right:-3px}.main-nav a{padding:9px 11px}}
+
 </style>
 </head>
 
@@ -138,7 +152,15 @@ input:focus,select:focus{border-color:var(--green)}
   </div>
 </header>
 
-<section class="hero">
+<nav class="main-nav" aria-label="Navegación principal">
+  <a href="#dashboard">⌂ Dashboard</a>
+  <a href="#drd-ai-studio">✨ Estudio IA</a>
+  <a href="#viralLab">⚡ Laboratorio</a>
+  <a href="#videoLibrary">🎥 Videos</a>
+  <a href="#publish-center">📤 Publicar</a>
+</nav>
+
+<section class="hero" id="dashboard">
   <h2>Tu contenido. Tus estadísticas. En un solo lugar.</h2>
   <p>Consulta tus videos, revisa el rendimiento y reproduce tu contenido directamente desde tu panel de control.</p>
 </section>
@@ -167,6 +189,687 @@ input:focus,select:focus{border-color:var(--green)}
     <div class="sub">Interacciones / visualizaciones</div>
   </div>
 </section>
+
+<!-- ==============================================
+     DORADOR RD AI STUDIO - MODULO INDEPENDIENTE
+     No reemplaza ni modifica funciones existentes
+================================================ -->
+
+<style>
+#drd-ai-studio {
+  margin-top: 35px;
+  background: #0e151e;
+  border: 1px solid #263444;
+  border-radius: 17px;
+  overflow: hidden;
+  color: #edf5f1;
+  font-family: Inter, Arial, sans-serif;
+}
+#drd-ai-studio * { box-sizing: border-box; }
+#drd-ai-studio .drd-header {
+  padding: 24px;
+  background: linear-gradient(120deg,#123d2a,#111a25);
+  border-bottom: 1px solid #274634;
+}
+#drd-ai-studio .drd-header h2 {
+  font-size: 23px;
+  margin-bottom: 8px;
+}
+#drd-ai-studio .drd-header p {
+  color: #b7c8bd;
+  font-size: 13px;
+  line-height: 1.6;
+}
+#drd-ai-studio .drd-content { padding: 22px; }
+#drd-ai-studio .drd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+#drd-ai-studio .drd-card {
+  background: #111b27;
+  border: 1px solid #263444;
+  border-radius: 13px;
+  padding: 17px;
+  min-width: 0;
+}
+#drd-ai-studio .drd-card h3 {
+  font-size: 15px;
+  margin-bottom: 13px;
+}
+#drd-ai-studio .drd-label {
+  display: block;
+  font-size: 12px;
+  color: #a9bac9;
+  margin: 12px 0 6px;
+}
+#drd-ai-studio input,
+#drd-ai-studio select,
+#drd-ai-studio textarea {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  background: #080e16;
+  color: #f2f5f8;
+  border: 1px solid #293748;
+  outline: none;
+  font-size: 13px;
+}
+#drd-ai-studio textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+}
+#drd-ai-studio input:focus,
+#drd-ai-studio select:focus,
+#drd-ai-studio textarea:focus {
+  border-color: #00e5a0;
+}
+#drd-ai-studio .drd-btn {
+  padding: 11px 15px;
+  border-radius: 9px;
+  border: 1px solid #315743;
+  background: #163526;
+  color: #b9f4d0;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 12px;
+  margin-top: 8px;
+}
+#drd-ai-studio .drd-btn:hover { filter: brightness(1.15); }
+#drd-ai-studio .drd-btn.primary {
+  background: #00e5a0;
+  color: #06140f;
+  border: none;
+}
+#drd-ai-studio .drd-btn.secondary {
+  background: #202c3b;
+  color: #e3eaf2;
+  border-color: #344357;
+}
+#drd-ai-studio .drd-btn.warning {
+  background: #493619;
+  border-color: #765622;
+  color: #ffdf9c;
+}
+#drd-ai-studio .drd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+#drd-ai-studio .drd-status {
+  margin-top: 12px;
+  border-radius: 9px;
+  padding: 12px;
+  background: #101e19;
+  border: 1px solid #28513c;
+  color: #aee6c5;
+  font-size: 12px;
+  line-height: 1.6;
+}
+#drd-ai-studio .drd-preview {
+  width: 100%;
+  max-height: 430px;
+  background: #05080d;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+#drd-ai-studio .drd-output {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  font-size: 13px;
+  color: #d9e5df;
+  background: #080e16;
+  border: 1px solid #263444;
+  border-radius: 10px;
+  padding: 16px;
+  min-height: 120px;
+  margin-top: 12px;
+}
+#drd-ai-studio .drd-pill {
+  display: inline-block;
+  padding: 6px 9px;
+  background: #193a29;
+  border: 1px solid #2a6241;
+  color: #aef1c6;
+  border-radius: 20px;
+  font-size: 11px;
+  margin: 3px 4px 3px 0;
+}
+#drd-ai-studio .drd-divider {
+  height: 1px;
+  background: #273342;
+  margin: 16px 0;
+}
+#drd-ai-studio .drd-small {
+  color: #91a1b4;
+  font-size: 11px;
+  line-height: 1.6;
+}
+#drd-ai-studio .drd-check {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+#drd-ai-studio .drd-check input {
+  width: auto;
+}
+@media(max-width:750px) {
+  #drd-ai-studio .drd-grid { grid-template-columns: 1fr; }
+  #drd-ai-studio .drd-header { padding: 18px; }
+  #drd-ai-studio .drd-content { padding: 14px; }
+}
+</style>
+
+<section id="drd-ai-studio">
+  <div class="drd-header">
+    <h2>🐉 DoradoRD AI Studio</h2>
+    <p>
+      Centro de análisis, creación, edición y futura publicación
+      inteligente de contenido para TikTok.
+    </p>
+    <span class="drd-pill">ANÁLISIS IA</span>
+    <span class="drd-pill">CREACIÓN</span>
+    <span class="drd-pill">PORTADAS</span>
+    <span class="drd-pill">PUBLICACIÓN</span>
+  </div>
+
+  <div class="drd-content">
+    <div class="drd-grid">
+
+      <!-- SELECCION DE VIDEO -->
+      <div class="drd-card">
+        <h3>🎥 Video de trabajo</h3>
+
+        <label class="drd-label">Seleccionar de TikTok</label>
+        <select id="drd-ai-video-select">
+          <option value="">Esperando biblioteca de TikTok...</option>
+        </select>
+
+        <div class="drd-actions">
+          <button class="drd-btn secondary" id="drd-ai-watch">
+            ▶ Ver video seleccionado
+          </button>
+        </div>
+
+        <div class="drd-divider"></div>
+
+        <label class="drd-label">O cargar video desde tu computadora</label>
+        <input type="file" id="drd-ai-upload" accept="video/*">
+
+        <video id="drd-ai-local-preview"
+          class="drd-preview" controls style="display:none"></video>
+
+        <p class="drd-small" style="margin-top:10px">
+          El archivo seleccionado se utilizará como material de trabajo.
+          La carga local no significa que se haya enviado a una IA.
+        </p>
+      </div>
+
+      <!-- CONFIGURACION -->
+      <div class="drd-card">
+        <h3>⚙️ Configuración de producción</h3>
+
+        <label class="drd-label">Modo de trabajo</label>
+        <select id="drd-ai-mode">
+          <option value="manual">Manual — revisar cada paso</option>
+          <option value="automatic">Automático — preparar producción</option>
+        </select>
+
+        <label class="drd-label">Formato final</label>
+        <select id="drd-ai-format">
+          <option value="vertical">TikTok vertical 9:16</option>
+          <option value="square">Cuadrado 1:1</option>
+          <option value="landscape">Horizontal 16:9</option>
+        </select>
+
+        <label class="drd-label">Duración objetivo</label>
+        <select id="drd-ai-duration">
+          <option value="15">15 segundos</option>
+          <option value="30" selected>30 segundos</option>
+          <option value="45">45 segundos</option>
+          <option value="60">60 segundos</option>
+          <option value="90">90 segundos</option>
+          <option value="180">3 minutos</option>
+        </select>
+
+        <label class="drd-label">Estilo de video</label>
+        <select id="drd-ai-style">
+          <option value="cinematic">Cinematográfico</option>
+          <option value="viral">Dinámico / Viral</option>
+          <option value="storytelling">Storytelling</option>
+          <option value="documentary">Documental</option>
+          <option value="gaming">Gaming</option>
+          <option value="news">Noticias / Informativo</option>
+        </select>
+
+        <label class="drd-label">Instrucciones adicionales</label>
+        <textarea id="drd-ai-instructions"
+          placeholder="Ej.: Usa un comienzo impactante, narración en español dominicano, cortes rápidos y suspenso..."></textarea>
+
+        <div class="drd-status" id="drd-ai-mode-status">
+          Modo manual activo. Tú controlas cada paso.
+        </div>
+      </div>
+
+      <!-- ANALISIS -->
+      <div class="drd-card">
+        <h3>🧠 Análisis del contenido</h3>
+
+        <p class="drd-small">
+          Futuro análisis audiovisual de IA: escenas, voz, sonido,
+          portada, ritmo, retención y estadísticas.
+        </p>
+
+        <div class="drd-actions">
+          <button class="drd-btn primary" id="drd-ai-analyze">
+            🔍 Analizar video completo
+          </button>
+          <button class="drd-btn secondary" id="drd-ai-cover">
+            🖼️ Analizar portada
+          </button>
+        </div>
+
+        <div class="drd-status" id="drd-ai-analysis-status">
+          Análisis IA audiovisual pendiente de conectar.
+        </div>
+      </div>
+
+      <!-- GENERACION -->
+      <div class="drd-card">
+        <h3>✨ Crear contenido mejorado</h3>
+
+        <label class="drd-label">Objetivo de la nueva versión</label>
+        <select id="drd-ai-goal">
+          <option value="retention">Aumentar retención</option>
+          <option value="comments">Provocar comentarios</option>
+          <option value="shares">Aumentar compartidos</option>
+          <option value="story">Mejorar storytelling</option>
+          <option value="hook">Crear un comienzo más fuerte</option>
+        </select>
+
+        <div class="drd-actions">
+          <button class="drd-btn primary" id="drd-ai-script">
+            ✍️ Crear guion
+          </button>
+          <button class="drd-btn warning" id="drd-ai-improve">
+            🚀 Mejorar video
+          </button>
+        </div>
+
+        <div class="drd-actions">
+          <button class="drd-btn secondary" id="drd-ai-cover-create">
+            🎨 Nueva portada
+          </button>
+          <button class="drd-btn secondary" id="drd-ai-production">
+            🎬 Preparar producción
+          </button>
+        </div>
+
+        <div class="drd-output" id="drd-ai-output">
+          Aquí aparecerán los guiones, mejoras, propuestas de portada
+          y planes de producción.
+        </div>
+
+        <div class="drd-actions">
+          <button class="drd-btn secondary" id="drd-ai-copy">
+            📋 Copiar resultado
+          </button>
+          <button class="drd-btn secondary" id="drd-ai-download-script">
+            ⬇ Descargar texto
+          </button>
+        </div>
+      </div>
+
+      <!-- PUBLICACION -->
+      <div class="drd-card" id="publish-center">
+        <h3>📤 Centro de publicación</h3>
+
+        <label class="drd-label">Método de publicación</label>
+        <select id="drd-ai-publish-mode">
+          <option value="manual">Manual — yo decido cuándo publicar</option>
+          <option value="draft">Enviar como borrador (si TikTok lo permite)</option>
+          <option value="auto">Publicación automática autorizada</option>
+        </select>
+
+        <label class="drd-label">Descripción de TikTok</label>
+        <textarea id="drd-ai-caption"
+          placeholder="Descripción de tu publicación..."></textarea>
+
+        <label class="drd-label">Hashtags</label>
+        <input id="drd-ai-hashtags"
+          placeholder="#TikTok #DoradoRD #Viral">
+
+        <label class="drd-label">Privacidad</label>
+        <select id="drd-ai-privacy">
+          <option value="PUBLIC_TO_EVERYONE">Público</option>
+          <option value="MUTUAL_FOLLOW_FRIENDS">Amigos (si está disponible)</option>
+          <option value="SELF_ONLY">Privado</option>
+        </select>
+
+        <div class="drd-divider"></div>
+
+        <label class="drd-check">
+          <input type="checkbox" id="drd-ai-approval" checked>
+          Requerir mi aprobación antes de publicar
+        </label>
+
+        <label class="drd-check">
+          <input type="checkbox" id="drd-ai-auto-enabled">
+          Permitir automatización de publicación
+        </label>
+
+        <label class="drd-label">Límite diario de publicaciones automáticas</label>
+        <select id="drd-ai-daily-limit">
+          <option value="1">1 video al día</option>
+          <option value="2">2 videos al día</option>
+          <option value="3">3 videos al día</option>
+          <option value="5">5 videos al día</option>
+        </select>
+
+        <div class="drd-status" id="drd-ai-publish-status">
+          Publicación directa aún no conectada. Ningún video se enviará a TikTok desde este módulo.
+        </div>
+
+        <div class="drd-actions">
+          <button class="drd-btn primary" id="drd-ai-publish-ready">
+            ✔ Preparar publicación
+          </button>
+        </div>
+      </div>
+
+      <!-- FUTURO RENDER -->
+      <div class="drd-card">
+        <h3>🎞️ Exportación de video</h3>
+
+        <p class="drd-small">
+          El futuro motor de producción generará clips, narración,
+          música, subtítulos, transiciones y portada.
+        </p>
+
+        <div class="drd-status" id="drd-ai-export-status">
+          Motor de generación y renderizado MP4 pendiente de integrar.
+        </div>
+
+        <div class="drd-actions">
+          <button class="drd-btn primary" id="drd-ai-render">
+            🎬 Generar video final
+          </button>
+          <button class="drd-btn secondary" id="drd-ai-download-video" disabled>
+            ⬇ Descargar MP4
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  "use strict";
+
+  const root = document.getElementById("drd-ai-studio");
+  if (!root) return;
+
+  const $ = id => document.getElementById("drd-ai-" + id);
+  let localVideoUrl = null;
+  let outputText = "";
+
+  function selectedVideo(){
+    const value = $("video-select").value;
+    if (!value || !Array.isArray(window.videos)) return null;
+    return window.videos.find(v => String(window.videoKey(v)) === value) || null;
+  }
+
+  function refreshLibrary(){
+    const select = $("video-select");
+    const list = Array.isArray(window.videos) ? window.videos : [];
+    const previous = select.value;
+    select.innerHTML = '<option value="">Selecciona un video...</option>';
+    list.forEach(v=>{
+      const option = document.createElement("option");
+      option.value = String(window.videoKey(v));
+      option.textContent = String(window.titleOf(v)).slice(0,110);
+      select.appendChild(option);
+    });
+    const selectedKey = window.selectedVideo ? String(window.videoKey(window.selectedVideo)) : previous;
+    if (selectedKey && [...select.options].some(o=>o.value===selectedKey)) select.value=selectedKey;
+  }
+
+  function syncSelection(){
+    const chosen=window.selectedVideo;
+    const key=chosen?String(window.videoKey(chosen)):"";
+    if(key && [...$("video-select").options].some(o=>o.value===key)) $("video-select").value=key;
+  }
+
+  window.DoradoRDAIRefreshLibrary=refreshLibrary;
+  window.DoradoRDAIRefreshSelection=syncSelection;
+
+  function getMetrics(v){
+    const s = v.statistics || v.stats || v;
+    return {
+      views:Number(s.view_count ?? s.views ?? v.view_count ?? 0),
+      likes:Number(s.like_count ?? s.likes ?? v.like_count ?? 0),
+      comments:Number(s.comment_count ?? s.comments ?? v.comment_count ?? 0),
+      shares:Number(s.share_count ?? s.shares ?? v.share_count ?? 0)
+    };
+  }
+
+  function currentTitle(){
+    const v=selectedVideo();
+    return v ? (v.title || v.video_description || "Video seleccionado") : "Video nuevo";
+  }
+
+  function writeOutput(text){
+    outputText=text;
+    $("output").textContent=text;
+  }
+
+  function makeScript(improve){
+    const v=selectedVideo();
+    if(!v){
+      writeOutput("Selecciona un video de TikTok o carga un archivo para comenzar.");
+      return;
+    }
+    const m=getMetrics(v);
+    const title=currentTitle();
+    const duration=$("duration").value;
+    const goal=$("goal").value;
+    const style=$("style").value;
+    const extra=$("instructions").value.trim();
+    const target=goal==="comments"?"provocar debate y comentarios":
+      goal==="shares"?"motivar a compartirlo":
+      goal==="story"?"contar una historia más atractiva":
+      goal==="hook"?"crear un comienzo impactante":"mejorar la retención";
+    const hook=improve?
+      "¿Y si te dijera que todo lo que viste hasta ahora no era lo que realmente pasó?":
+      "Hay algo en esta historia que casi nadie está viendo...";
+    const script=
+`DORADOR RD AI STUDIO
+${improve?"VIDEO MEJORADO":"NUEVO GUION"}
+
+VIDEO DE REFERENCIA:
+${title}
+
+MÉTRICAS DISPONIBLES:
+Visualizaciones: ${m.views.toLocaleString("es-DO")}
+Likes: ${m.likes.toLocaleString("es-DO")}
+Comentarios: ${m.comments.toLocaleString("es-DO")}
+Compartidos: ${m.shares.toLocaleString("es-DO")}
+
+OBJETIVO: ${target}
+ESTILO: ${style}
+DURACIÓN OBJETIVO: ${duration} segundos
+
+GANCHO (0-3 SEGUNDOS):
+${hook}
+
+DESARROLLO:
+[0-3 s] Abrir con la frase gancho y la escena más impactante.
+[3-${Math.max(8,Math.round(duration*.35))} s] Contexto rápido, sin introducciones innecesarias.
+[${Math.max(8,Math.round(duration*.35))}-${Math.round(duration*.7)} s] Mostrar el detalle inesperado, cambio visual o giro de la historia.
+[${Math.round(duration*.7)}-${duration} s] Revelación, conclusión y cierre que deje una idea memorable.
+
+NARRACIÓN:
+Crear una narración breve, natural y dinámica que explique el tema desde una perspectiva nueva. Evitar relleno y mantener una pregunta abierta durante el desarrollo.
+
+RETENCIÓN:
+- Cambiar de plano o elemento visual con frecuencia.
+- Añadir subtítulos grandes y fáciles de leer.
+- Eliminar pausas largas.
+- Introducir un nuevo detalle antes de que decaiga la atención.
+- Mantener la promesa del gancho hasta la conclusión.
+
+CIERRE:
+"¿Tú qué habrías hecho? Te leo en los comentarios."
+
+${extra ? "INSTRUCCIONES DEL CREADOR:\n"+extra : ""}
+
+NOTA:
+Este guion es una estructura creativa preliminar. Aún no es un análisis generado por IA del video real.`;
+
+    writeOutput(script);
+  }
+
+  $("video-select").addEventListener("change",()=>{
+    const v=selectedVideo();
+    if(v){
+      if(typeof window.selectVideo==="function") window.selectVideo(v,false);
+      $("analysis-status").textContent=
+        "Video seleccionado: "+currentTitle()+". El análisis audiovisual real requiere conectar el motor de IA.";
+    }
+  });
+
+  $("watch").addEventListener("click",()=>{
+    const v=selectedVideo();
+    if(v && typeof window.openPlayer==="function") window.openPlayer(v);
+    else $("analysis-status").textContent="Selecciona un video de tu biblioteca.";
+  });
+
+  $("upload").addEventListener("change",e=>{
+    const file=e.target.files && e.target.files[0];
+    if(!file) return;
+    if(localVideoUrl) URL.revokeObjectURL(localVideoUrl);
+    localVideoUrl=URL.createObjectURL(file);
+    const preview=$("local-preview");
+    preview.src=localVideoUrl;
+    preview.style.display="block";
+    $("analysis-status").textContent=
+      "Video cargado localmente: "+file.name+". Para analizarlo con IA deberá enviarse a un servicio compatible.";
+  });
+
+  $("mode").addEventListener("change",()=>{
+    const automatic=$("mode").value==="automatic";
+    $("mode-status").textContent=automatic?
+      "Modo automático seleccionado. La automatización real se activará cuando conectemos el motor de IA y el sistema de producción.":
+      "Modo manual activo. Tú controlas cada paso.";
+  });
+
+  $("analyze").addEventListener("click",()=>{
+    const v=selectedVideo();
+    $("analysis-status").textContent=v?
+      "Video seleccionado: "+currentTitle()+". Falta conectar IA multimodal para analizar imágenes, escenas, audio, voz y retención. No se ha realizado un análisis falso.":
+      "Selecciona un video de TikTok primero. El análisis real de archivos locales se habilitará al conectar el motor de IA.";
+  });
+
+  $("cover").addEventListener("click",()=>{
+    const v=selectedVideo();
+    $("analysis-status").textContent=v?
+      "Portada detectada: "+(v.cover_image_url?"TikTok proporcionó una imagen de portada.":"No se recibió portada")+" El análisis inteligente de composición, texto, colores y atractivo requiere conectar el modelo visual.":
+      "Selecciona un video de TikTok para revisar su portada.";
+  });
+
+  $("script").addEventListener("click",()=>makeScript(false));
+  $("improve").addEventListener("click",()=>makeScript(true));
+
+  $("cover-create").addEventListener("click",()=>{
+    writeOutput("PROPUESTA DE NUEVA PORTADA\n\nVideo: "+currentTitle()+
+      "\n\nTexto sugerido:\n\"¡ESTO CAMBIÓ TODO!\"\n\n"+
+      "Composición sugerida:\n- Un sujeto principal.\n- Fondo limpio y contraste alto.\n- Texto breve, grande y legible.\n- Expresión o escena que genere curiosidad.\n\nLa generación de imagen real se habilitará al conectar el servicio de imágenes IA.");
+  });
+
+  $("production").addEventListener("click",()=>{
+    makeScript(true);
+    $("export-status").textContent=
+      "Plan de producción preparado como texto. La generación real de clips, voz, música, montaje y render MP4 todavía no está conectada.";
+  });
+
+  $("copy").addEventListener("click",async()=>{
+    if(!outputText){
+      $("output").textContent="Primero crea un guion o prepara una mejora.";
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(outputText);
+      $("output").textContent=outputText+"\n\n✓ Copiado al portapapeles.";
+    }catch(e){
+      $("output").textContent=outputText+"\n\nNo se pudo copiar automáticamente. Selecciona el texto y cópialo.";
+    }
+  });
+
+  $("download-script").addEventListener("click",()=>{
+    if(!outputText){
+      $("output").textContent="Primero genera un guion.";
+      return;
+    }
+    const blob=new Blob([outputText],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="DoradoRD-guion.txt";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+
+  $("publish-mode").addEventListener("change",()=>{
+    const mode=$("publish-mode").value;
+    $("publish-status").textContent=mode==="manual"?
+      "Modo manual: no se publicará nada sin tu acción.":
+      mode==="draft"?
+      "Borrador seleccionado. Requiere integración oficial de TikTok.":
+      "Publicación automática seleccionada. Requiere API oficial, permisos y conexión segura. Todavía no se enviará nada.";
+  });
+
+  $("auto-enabled").addEventListener("change",()=>{
+    const enabled=$("auto-enabled").checked;
+    $("publish-status").textContent=enabled?
+      "Automatización marcada como preferencia. No está activa hasta conectar el servicio de publicación y autorizarlo.":
+      "Automatización desactivada.";
+  });
+
+  $("publish-ready").addEventListener("click",()=>{
+    const mode=$("publish-mode").value;
+    const caption=$("caption").value.trim();
+    const hashtags=$("hashtags").value.trim();
+    const privacy=$("privacy").value;
+    const approval=$("approval").checked;
+    const auto=$("auto-enabled").checked;
+    $("publish-status").textContent=
+      "PUBLICACIÓN PREPARADA\n"+
+      "Modo: "+mode+"\n"+
+      "Privacidad: "+privacy+"\n"+
+      "Aprobación: "+(approval?"Requerida":"No requerida")+"\n"+
+      "Automatización: "+(auto?"Marcada":"Desactivada")+
+      "\nDescripción: "+(caption||"(vacía)")+
+      "\nHashtags: "+(hashtags||"(vacíos)")+
+      "\n\nEsto es solo una configuración local. Todavía no se ha publicado ni enviado ningún video.";
+  });
+
+  $("render").addEventListener("click",()=>{
+    $("export-status").textContent=
+      "La producción está configurada, pero aún falta conectar los servicios de generación de video, audio, subtítulos y renderizado.";
+  });
+
+  refreshLibrary();
+})();
+</script>
+<!-- FIN DORADOR RD AI STUDIO -->
+
+
 
 <!-- LABORATORIO VIRAL -->
 <section class="viral-lab" id="viralLab">
@@ -267,12 +970,12 @@ input:focus,select:focus{border-color:var(--green)}
   </div>
 </section>
 
-<section class="section">
+<section class="section" id="videoLibrary">
   <div class="section-header">
     <h2>Biblioteca de videos</h2>
     <div class="controls">
-      <input type="search" id="searchVideos" placeholder="Buscar video..." oninput="renderVideos()">
-      <select id="sortVideos" onchange="renderVideos()">
+      <input type="search" id="searchVideos" placeholder="Buscar video..." oninput="currentVideoPage=1;renderVideos()">
+      <select id="sortVideos" onchange="currentVideoPage=1;renderVideos()">
         <option value="date">Más recientes</option>
         <option value="views">Más vistos</option>
         <option value="likes">Más likes</option>
@@ -282,6 +985,7 @@ input:focus,select:focus{border-color:var(--green)}
   <div id="videoGrid" class="video-grid">
     <div class="empty">Conecta tu cuenta de TikTok para cargar tus videos.</div>
   </div>
+  <div id="videoPagination"></div>
 </section>
 
 <footer class="footer">DoradoRD Analytics · Sistema de análisis de contenido</footer>
@@ -307,6 +1011,13 @@ let viralIdeaIndex = 0;
 let viralCurrentScript = "";
 let improvedCurrentScript = "";
 let selectedVideo = null;
+/* Exponer datos al módulo IA sin duplicar el estado principal */
+Object.defineProperties(window,{
+  videos:{configurable:true,get:()=>videos},
+  selectedVideo:{configurable:true,get:()=>selectedVideo,set:value=>{selectedVideo=value;}}
+});
+let currentVideoPage = 1;
+const videosPerPage = 8;
 
 /* UTILIDADES */
 function $(id){return document.getElementById(id)}
@@ -423,6 +1134,7 @@ function selectVideo(video,scrollToLab=false){
   selectedVideo=video;
   renderVideos();
   updateSelectedVideoPanel();
+  if(window.DoradoRDAIRefreshSelection) window.DoradoRDAIRefreshSelection();
 
   if(viralData)renderTopList();
 
@@ -502,23 +1214,48 @@ function renderVideos(){
   const search=$("searchVideos").value.toLowerCase().trim();
   const sort=$("sortVideos").value;
   let filtered=videos.filter(video=>titleOf(video).toLowerCase().includes(search));
-
   if(sort==="views")filtered.sort((a,b)=>(getViews(b)??-1)-(getViews(a)??-1));
   if(sort==="likes")filtered.sort((a,b)=>(getLikes(b)??-1)-(getLikes(a)??-1));
   if(sort==="date")filtered.sort((a,b)=>dateNumber(b)-dateNumber(a));
-
+  const totalPages=Math.max(1,Math.ceil(filtered.length/videosPerPage));
+  currentVideoPage=Math.min(Math.max(1,currentVideoPage),totalPages);
+  const start=(currentVideoPage-1)*videosPerPage;
+  const pageVideos=filtered.slice(start,start+videosPerPage);
   grid.innerHTML="";
   if(!filtered.length){
     grid.innerHTML=`<div class="empty">${videos.length?"No se encontraron videos con esa búsqueda.":"No hay videos disponibles."}</div>`;
+    $("videoPagination").innerHTML="";
+    if(window.DoradoRDAIRefreshLibrary) window.DoradoRDAIRefreshLibrary();
     return;
   }
-  filtered.forEach(video=>grid.appendChild(makeCard(video)));
+  pageVideos.forEach(video=>grid.appendChild(makeCard(video)));
+  const pagination=$("videoPagination");
+  pagination.innerHTML="";
+  if(totalPages>1){
+    const controls=document.createElement("div");controls.className="pagination";
+    const prev=document.createElement("button");prev.textContent="← Anterior";prev.disabled=currentVideoPage===1;
+    prev.onclick=()=>{currentVideoPage--;renderVideos();$("videoLibrary").scrollIntoView({behavior:"smooth"});};
+    controls.appendChild(prev);
+    for(let page=1;page<=totalPages;page++){
+      const btn=document.createElement("button");btn.textContent=page;btn.className=page===currentVideoPage?"active":"";
+      btn.setAttribute("aria-label","Página "+page);btn.onclick=()=>{currentVideoPage=page;renderVideos();};
+      controls.appendChild(btn);
+    }
+    const next=document.createElement("button");next.textContent="Siguiente →";next.disabled=currentVideoPage===totalPages;
+    next.onclick=()=>{currentVideoPage++;renderVideos();$("videoLibrary").scrollIntoView({behavior:"smooth"});};
+    controls.appendChild(next);pagination.appendChild(controls);
+  }
+  const info=document.createElement("div");info.className="pagination-info";
+  info.textContent=`Mostrando ${start+1}–${Math.min(start+videosPerPage,filtered.length)} de ${filtered.length} videos · Página ${currentVideoPage} de ${totalPages}`;
+  pagination.appendChild(info);
+  if(window.DoradoRDAIRefreshLibrary) window.DoradoRDAIRefreshLibrary();
 }
 
 /* MÉTRICAS DEL DASHBOARD ORIGINAL */
 function loadDashboard(profile,videoList){
   profileData=profile||{};
   videos=Array.isArray(videoList)?videoList:[];
+  currentVideoPage=1;
 
   const profileStats=profileData?.statistics||profileData?.stats||profileData?.data?.statistics||profileData?.data||profileData;
   const followers=profileStats?.follower_count??profileStats?.followers??profileStats?.fans??profileData?.follower_count??profileData?.followers??null;
@@ -948,687 +1685,5 @@ async function initializeDashboard(force=false){
 document.addEventListener("DOMContentLoaded",()=>initializeDashboard());
 </script>
   
-<!-- ==============================================
-     DORADOR RD AI STUDIO - MODULO INDEPENDIENTE
-     No reemplaza ni modifica funciones existentes
-================================================ -->
-
-<style>
-#drd-ai-studio {
-  margin-top: 35px;
-  background: #0e151e;
-  border: 1px solid #263444;
-  border-radius: 17px;
-  overflow: hidden;
-  color: #edf5f1;
-  font-family: Inter, Arial, sans-serif;
-}
-#drd-ai-studio * { box-sizing: border-box; }
-#drd-ai-studio .drd-header {
-  padding: 24px;
-  background: linear-gradient(120deg,#123d2a,#111a25);
-  border-bottom: 1px solid #274634;
-}
-#drd-ai-studio .drd-header h2 {
-  font-size: 23px;
-  margin-bottom: 8px;
-}
-#drd-ai-studio .drd-header p {
-  color: #b7c8bd;
-  font-size: 13px;
-  line-height: 1.6;
-}
-#drd-ai-studio .drd-content { padding: 22px; }
-#drd-ai-studio .drd-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-#drd-ai-studio .drd-card {
-  background: #111b27;
-  border: 1px solid #263444;
-  border-radius: 13px;
-  padding: 17px;
-  min-width: 0;
-}
-#drd-ai-studio .drd-card h3 {
-  font-size: 15px;
-  margin-bottom: 13px;
-}
-#drd-ai-studio .drd-label {
-  display: block;
-  font-size: 12px;
-  color: #a9bac9;
-  margin: 12px 0 6px;
-}
-#drd-ai-studio input,
-#drd-ai-studio select,
-#drd-ai-studio textarea {
-  width: 100%;
-  padding: 11px;
-  border-radius: 8px;
-  background: #080e16;
-  color: #f2f5f8;
-  border: 1px solid #293748;
-  outline: none;
-  font-size: 13px;
-}
-#drd-ai-studio textarea {
-  min-height: 110px;
-  resize: vertical;
-  line-height: 1.6;
-}
-#drd-ai-studio input:focus,
-#drd-ai-studio select:focus,
-#drd-ai-studio textarea:focus {
-  border-color: #00e5a0;
-}
-#drd-ai-studio .drd-btn {
-  padding: 11px 15px;
-  border-radius: 9px;
-  border: 1px solid #315743;
-  background: #163526;
-  color: #b9f4d0;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 12px;
-  margin-top: 8px;
-}
-#drd-ai-studio .drd-btn:hover { filter: brightness(1.15); }
-#drd-ai-studio .drd-btn.primary {
-  background: #00e5a0;
-  color: #06140f;
-  border: none;
-}
-#drd-ai-studio .drd-btn.secondary {
-  background: #202c3b;
-  color: #e3eaf2;
-  border-color: #344357;
-}
-#drd-ai-studio .drd-btn.warning {
-  background: #493619;
-  border-color: #765622;
-  color: #ffdf9c;
-}
-#drd-ai-studio .drd-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-#drd-ai-studio .drd-status {
-  margin-top: 12px;
-  border-radius: 9px;
-  padding: 12px;
-  background: #101e19;
-  border: 1px solid #28513c;
-  color: #aee6c5;
-  font-size: 12px;
-  line-height: 1.6;
-}
-#drd-ai-studio .drd-preview {
-  width: 100%;
-  max-height: 430px;
-  background: #05080d;
-  border-radius: 10px;
-  margin-top: 12px;
-}
-#drd-ai-studio .drd-output {
-  white-space: pre-wrap;
-  line-height: 1.7;
-  font-size: 13px;
-  color: #d9e5df;
-  background: #080e16;
-  border: 1px solid #263444;
-  border-radius: 10px;
-  padding: 16px;
-  min-height: 120px;
-  margin-top: 12px;
-}
-#drd-ai-studio .drd-pill {
-  display: inline-block;
-  padding: 6px 9px;
-  background: #193a29;
-  border: 1px solid #2a6241;
-  color: #aef1c6;
-  border-radius: 20px;
-  font-size: 11px;
-  margin: 3px 4px 3px 0;
-}
-#drd-ai-studio .drd-divider {
-  height: 1px;
-  background: #273342;
-  margin: 16px 0;
-}
-#drd-ai-studio .drd-small {
-  color: #91a1b4;
-  font-size: 11px;
-  line-height: 1.6;
-}
-#drd-ai-studio .drd-check {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  margin: 10px 0;
-  font-size: 12px;
-  color: #cbd5e1;
-}
-#drd-ai-studio .drd-check input {
-  width: auto;
-}
-@media(max-width:750px) {
-  #drd-ai-studio .drd-grid { grid-template-columns: 1fr; }
-  #drd-ai-studio .drd-header { padding: 18px; }
-  #drd-ai-studio .drd-content { padding: 14px; }
-}
-</style>
-
-<section id="drd-ai-studio">
-  <div class="drd-header">
-    <h2>🐉 DoradoRD AI Studio</h2>
-    <p>
-      Centro de análisis, creación, edición y futura publicación
-      inteligente de contenido para TikTok.
-    </p>
-    <span class="drd-pill">ANÁLISIS IA</span>
-    <span class="drd-pill">CREACIÓN</span>
-    <span class="drd-pill">PORTADAS</span>
-    <span class="drd-pill">PUBLICACIÓN</span>
-  </div>
-
-  <div class="drd-content">
-    <div class="drd-grid">
-
-      <!-- SELECCION DE VIDEO -->
-      <div class="drd-card">
-        <h3>🎥 Video de trabajo</h3>
-
-        <label class="drd-label">Seleccionar de TikTok</label>
-        <select id="drd-ai-video-select">
-          <option value="">Esperando biblioteca de TikTok...</option>
-        </select>
-
-        <div class="drd-actions">
-          <button class="drd-btn secondary" id="drd-ai-watch">
-            ▶ Ver video seleccionado
-          </button>
-        </div>
-
-        <div class="drd-divider"></div>
-
-        <label class="drd-label">O cargar video desde tu computadora</label>
-        <input type="file" id="drd-ai-upload" accept="video/*">
-
-        <video id="drd-ai-local-preview"
-          class="drd-preview" controls style="display:none"></video>
-
-        <p class="drd-small" style="margin-top:10px">
-          El archivo seleccionado se utilizará como material de trabajo.
-          La carga local no significa que se haya enviado a una IA.
-        </p>
-      </div>
-
-      <!-- CONFIGURACION -->
-      <div class="drd-card">
-        <h3>⚙️ Configuración de producción</h3>
-
-        <label class="drd-label">Modo de trabajo</label>
-        <select id="drd-ai-mode">
-          <option value="manual">Manual — revisar cada paso</option>
-          <option value="automatic">Automático — preparar producción</option>
-        </select>
-
-        <label class="drd-label">Formato final</label>
-        <select id="drd-ai-format">
-          <option value="vertical">TikTok vertical 9:16</option>
-          <option value="square">Cuadrado 1:1</option>
-          <option value="landscape">Horizontal 16:9</option>
-        </select>
-
-        <label class="drd-label">Duración objetivo</label>
-        <select id="drd-ai-duration">
-          <option value="15">15 segundos</option>
-          <option value="30" selected>30 segundos</option>
-          <option value="45">45 segundos</option>
-          <option value="60">60 segundos</option>
-          <option value="90">90 segundos</option>
-          <option value="180">3 minutos</option>
-        </select>
-
-        <label class="drd-label">Estilo de video</label>
-        <select id="drd-ai-style">
-          <option value="cinematic">Cinematográfico</option>
-          <option value="viral">Dinámico / Viral</option>
-          <option value="storytelling">Storytelling</option>
-          <option value="documentary">Documental</option>
-          <option value="gaming">Gaming</option>
-          <option value="news">Noticias / Informativo</option>
-        </select>
-
-        <label class="drd-label">Instrucciones adicionales</label>
-        <textarea id="drd-ai-instructions"
-          placeholder="Ej.: Usa un comienzo impactante, narración en español dominicano, cortes rápidos y suspenso..."></textarea>
-
-        <div class="drd-status" id="drd-ai-mode-status">
-          Modo manual activo. Tú controlas cada paso.
-        </div>
-      </div>
-
-      <!-- ANALISIS -->
-      <div class="drd-card">
-        <h3>🧠 Análisis del contenido</h3>
-
-        <p class="drd-small">
-          Futuro análisis audiovisual de IA: escenas, voz, sonido,
-          portada, ritmo, retención y estadísticas.
-        </p>
-
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-analyze">
-            🔍 Analizar video completo
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-cover">
-            🖼️ Analizar portada
-          </button>
-        </div>
-
-        <div class="drd-status" id="drd-ai-analysis-status">
-          Análisis IA audiovisual pendiente de conectar.
-        </div>
-      </div>
-
-      <!-- GENERACION -->
-      <div class="drd-card">
-        <h3>✨ Crear contenido mejorado</h3>
-
-        <label class="drd-label">Objetivo de la nueva versión</label>
-        <select id="drd-ai-goal">
-          <option value="retention">Aumentar retención</option>
-          <option value="comments">Provocar comentarios</option>
-          <option value="shares">Aumentar compartidos</option>
-          <option value="story">Mejorar storytelling</option>
-          <option value="hook">Crear un comienzo más fuerte</option>
-        </select>
-
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-script">
-            ✍️ Crear guion
-          </button>
-          <button class="drd-btn warning" id="drd-ai-improve">
-            🚀 Mejorar video
-          </button>
-        </div>
-
-        <div class="drd-actions">
-          <button class="drd-btn secondary" id="drd-ai-cover-create">
-            🎨 Nueva portada
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-production">
-            🎬 Preparar producción
-          </button>
-        </div>
-
-        <div class="drd-output" id="drd-ai-output">
-          Aquí aparecerán los guiones, mejoras, propuestas de portada
-          y planes de producción.
-        </div>
-
-        <div class="drd-actions">
-          <button class="drd-btn secondary" id="drd-ai-copy">
-            📋 Copiar resultado
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-download-script">
-            ⬇ Descargar texto
-          </button>
-        </div>
-      </div>
-
-      <!-- PUBLICACION -->
-      <div class="drd-card">
-        <h3>📤 Centro de publicación</h3>
-
-        <label class="drd-label">Método de publicación</label>
-        <select id="drd-ai-publish-mode">
-          <option value="manual">Manual — yo decido cuándo publicar</option>
-          <option value="draft">Enviar como borrador (si TikTok lo permite)</option>
-          <option value="auto">Publicación automática autorizada</option>
-        </select>
-
-        <label class="drd-label">Descripción de TikTok</label>
-        <textarea id="drd-ai-caption"
-          placeholder="Descripción de tu publicación..."></textarea>
-
-        <label class="drd-label">Hashtags</label>
-        <input id="drd-ai-hashtags"
-          placeholder="#TikTok #DoradoRD #Viral">
-
-        <label class="drd-label">Privacidad</label>
-        <select id="drd-ai-privacy">
-          <option value="PUBLIC_TO_EVERYONE">Público</option>
-          <option value="MUTUAL_FOLLOW_FRIENDS">Amigos (si está disponible)</option>
-          <option value="SELF_ONLY">Privado</option>
-        </select>
-
-        <div class="drd-divider"></div>
-
-        <label class="drd-check">
-          <input type="checkbox" id="drd-ai-approval" checked>
-          Requerir mi aprobación antes de publicar
-        </label>
-
-        <label class="drd-check">
-          <input type="checkbox" id="drd-ai-auto-enabled">
-          Permitir automatización de publicación
-        </label>
-
-        <label class="drd-label">Límite diario de publicaciones automáticas</label>
-        <select id="drd-ai-daily-limit">
-          <option value="1">1 video al día</option>
-          <option value="2">2 videos al día</option>
-          <option value="3">3 videos al día</option>
-          <option value="5">5 videos al día</option>
-        </select>
-
-        <div class="drd-status" id="drd-ai-publish-status">
-          Publicación directa aún no conectada. Ningún video se enviará a TikTok desde este módulo.
-        </div>
-
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-publish-ready">
-            ✔ Preparar publicación
-          </button>
-        </div>
-      </div>
-
-      <!-- FUTURO RENDER -->
-      <div class="drd-card">
-        <h3>🎞️ Exportación de video</h3>
-
-        <p class="drd-small">
-          El futuro motor de producción generará clips, narración,
-          música, subtítulos, transiciones y portada.
-        </p>
-
-        <div class="drd-status" id="drd-ai-export-status">
-          Motor de generación y renderizado MP4 pendiente de integrar.
-        </div>
-
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-render">
-            🎬 Generar video final
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-download-video" disabled>
-            ⬇ Descargar MP4
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<script>
-(function(){
-  "use strict";
-
-  const root = document.getElementById("drd-ai-studio");
-  if (!root) return;
-
-  const $ = id => document.getElementById("drd-ai-" + id);
-  let localVideoUrl = null;
-  let outputText = "";
-
-  function selectedVideo(){
-    const value = $("video-select").value;
-    if (!value || !Array.isArray(window.allVideos)) return null;
-    return window.allVideos.find(v =>
-      String(v.video_id || v.id || v.tiktok_video_id || "") === value
-    ) || null;
-  }
-
-  function refreshLibrary(){
-    const select = $("video-select");
-    const list = Array.isArray(window.allVideos) ? window.allVideos : [];
-    const previous = select.value;
-    if (select.dataset.count === String(list.length)) return;
-    select.dataset.count = String(list.length);
-    select.innerHTML = '<option value="">Selecciona un video...</option>';
-    list.forEach(v=>{
-      const id = v.video_id || v.id || v.tiktok_video_id || "";
-      if (!id) return;
-      const option = document.createElement("option");
-      option.value = String(id);
-      option.textContent = (v.title || v.video_description || "Video TikTok").slice(0,110);
-      select.appendChild(option);
-    });
-    if (previous && [...select.options].some(o=>o.value===previous)){
-      select.value = previous;
-    }
-  }
-
-  function getMetrics(v){
-    const s = v.statistics || v.stats || v;
-    return {
-      views:Number(s.view_count ?? s.views ?? v.view_count ?? 0),
-      likes:Number(s.like_count ?? s.likes ?? v.like_count ?? 0),
-      comments:Number(s.comment_count ?? s.comments ?? v.comment_count ?? 0),
-      shares:Number(s.share_count ?? s.shares ?? v.share_count ?? 0)
-    };
-  }
-
-  function currentTitle(){
-    const v=selectedVideo();
-    return v ? (v.title || v.video_description || "Video seleccionado") : "Video nuevo";
-  }
-
-  function writeOutput(text){
-    outputText=text;
-    $("output").textContent=text;
-  }
-
-  function makeScript(improve){
-    const v=selectedVideo();
-    if(!v){
-      writeOutput("Selecciona un video de TikTok o carga un archivo para comenzar.");
-      return;
-    }
-    const m=getMetrics(v);
-    const title=currentTitle();
-    const duration=$("duration").value;
-    const goal=$("goal").value;
-    const style=$("style").value;
-    const extra=$("instructions").value.trim();
-    const target=goal==="comments"?"provocar debate y comentarios":
-      goal==="shares"?"motivar a compartirlo":
-      goal==="story"?"contar una historia más atractiva":
-      goal==="hook"?"crear un comienzo impactante":"mejorar la retención";
-    const hook=improve?
-      "¿Y si te dijera que todo lo que viste hasta ahora no era lo que realmente pasó?":
-      "Hay algo en esta historia que casi nadie está viendo...";
-    const script=
-`DORADOR RD AI STUDIO
-${improve?"VIDEO MEJORADO":"NUEVO GUION"}
-
-VIDEO DE REFERENCIA:
-${title}
-
-MÉTRICAS DISPONIBLES:
-Visualizaciones: ${m.views.toLocaleString("es-DO")}
-Likes: ${m.likes.toLocaleString("es-DO")}
-Comentarios: ${m.comments.toLocaleString("es-DO")}
-Compartidos: ${m.shares.toLocaleString("es-DO")}
-
-OBJETIVO: ${target}
-ESTILO: ${style}
-DURACIÓN OBJETIVO: ${duration} segundos
-
-GANCHO (0-3 SEGUNDOS):
-${hook}
-
-DESARROLLO:
-[0-3 s] Abrir con la frase gancho y la escena más impactante.
-[3-${Math.max(8,Math.round(duration*.35))} s] Contexto rápido, sin introducciones innecesarias.
-[${Math.max(8,Math.round(duration*.35))}-${Math.round(duration*.7)} s] Mostrar el detalle inesperado, cambio visual o giro de la historia.
-[${Math.round(duration*.7)}-${duration} s] Revelación, conclusión y cierre que deje una idea memorable.
-
-NARRACIÓN:
-Crear una narración breve, natural y dinámica que explique el tema desde una perspectiva nueva. Evitar relleno y mantener una pregunta abierta durante el desarrollo.
-
-RETENCIÓN:
-- Cambiar de plano o elemento visual con frecuencia.
-- Añadir subtítulos grandes y fáciles de leer.
-- Eliminar pausas largas.
-- Introducir un nuevo detalle antes de que decaiga la atención.
-- Mantener la promesa del gancho hasta la conclusión.
-
-CIERRE:
-"¿Tú qué habrías hecho? Te leo en los comentarios."
-
-${extra ? "INSTRUCCIONES DEL CREADOR:\n"+extra : ""}
-
-NOTA:
-Este guion es una estructura creativa preliminar. Aún no es un análisis generado por IA del video real.`;
-
-    writeOutput(script);
-  }
-
-  $("video-select").addEventListener("change",()=>{
-    const v=selectedVideo();
-    if(v){
-      $("analysis-status").textContent=
-        "Video seleccionado: "+currentTitle()+". El análisis audiovisual real requiere conectar el motor de IA.";
-    }
-  });
-
-  $("watch").addEventListener("click",()=>{
-    const v=selectedVideo();
-    if(v && typeof window.openPlayer==="function") window.openPlayer(v);
-    else $("analysis-status").textContent="Selecciona un video de tu biblioteca.";
-  });
-
-  $("upload").addEventListener("change",e=>{
-    const file=e.target.files && e.target.files[0];
-    if(!file) return;
-    if(localVideoUrl) URL.revokeObjectURL(localVideoUrl);
-    localVideoUrl=URL.createObjectURL(file);
-    const preview=$("local-preview");
-    preview.src=localVideoUrl;
-    preview.style.display="block";
-    $("analysis-status").textContent=
-      "Video cargado localmente: "+file.name+". Para analizarlo con IA deberá enviarse a un servicio compatible.";
-  });
-
-  $("mode").addEventListener("change",()=>{
-    const automatic=$("mode").value==="automatic";
-    $("mode-status").textContent=automatic?
-      "Modo automático seleccionado. La automatización real se activará cuando conectemos el motor de IA y el sistema de producción.":
-      "Modo manual activo. Tú controlas cada paso.";
-  });
-
-  $("analyze").addEventListener("click",()=>{
-    const v=selectedVideo();
-    $("analysis-status").textContent=v?
-      "Video seleccionado: "+currentTitle()+". Falta conectar IA multimodal para analizar imágenes, escenas, audio, voz y retención. No se ha realizado un análisis falso.":
-      "Selecciona un video de TikTok primero. El análisis real de archivos locales se habilitará al conectar el motor de IA.";
-  });
-
-  $("cover").addEventListener("click",()=>{
-    const v=selectedVideo();
-    $("analysis-status").textContent=v?
-      "Portada detectada: "+(v.cover_image_url?"TikTok proporcionó una imagen de portada.":"No se recibió portada").+" El análisis inteligente de composición, texto, colores y atractivo requiere conectar el modelo visual.":
-      "Selecciona un video de TikTok para revisar su portada.";
-  });
-
-  $("script").addEventListener("click",()=>makeScript(false));
-  $("improve").addEventListener("click",()=>makeScript(true));
-
-  $("cover-create").addEventListener("click",()=>{
-    writeOutput("PROPUESTA DE NUEVA PORTADA\n\nVideo: "+currentTitle()+
-      "\n\nTexto sugerido:\n\"¡ESTO CAMBIÓ TODO!\"\n\n"+
-      "Composición sugerida:\n- Un sujeto principal.\n- Fondo limpio y contraste alto.\n- Texto breve, grande y legible.\n- Expresión o escena que genere curiosidad.\n\nLa generación de imagen real se habilitará al conectar el servicio de imágenes IA.");
-  });
-
-  $("production").addEventListener("click",()=>{
-    makeScript(true);
-    $("export-status").textContent=
-      "Plan de producción preparado como texto. La generación real de clips, voz, música, montaje y render MP4 todavía no está conectada.";
-  });
-
-  $("copy").addEventListener("click",async()=>{
-    if(!outputText){
-      $("output").textContent="Primero crea un guion o prepara una mejora.";
-      return;
-    }
-    try{
-      await navigator.clipboard.writeText(outputText);
-      $("output").textContent=outputText+"\n\n✓ Copiado al portapapeles.";
-    }catch(e){
-      $("output").textContent=outputText+"\n\nNo se pudo copiar automáticamente. Selecciona el texto y cópialo.";
-    }
-  });
-
-  $("download-script").addEventListener("click",()=>{
-    if(!outputText){
-      $("output").textContent="Primero genera un guion.";
-      return;
-    }
-    const blob=new Blob([outputText],{type:"text/plain;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="DoradoRD-guion.txt";
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  });
-
-  $("publish-mode").addEventListener("change",()=>{
-    const mode=$("publish-mode").value;
-    $("publish-status").textContent=mode==="manual"?
-      "Modo manual: no se publicará nada sin tu acción.":
-      mode==="draft"?
-      "Borrador seleccionado. Requiere integración oficial de TikTok.":
-      "Publicación automática seleccionada. Requiere API oficial, permisos y conexión segura. Todavía no se enviará nada.";
-  });
-
-  $("auto-enabled").addEventListener("change",()=>{
-    const enabled=$("auto-enabled").checked;
-    $("publish-status").textContent=enabled?
-      "Automatización marcada como preferencia. No está activa hasta conectar el servicio de publicación y autorizarlo.":
-      "Automatización desactivada.";
-  });
-
-  $("publish-ready").addEventListener("click",()=>{
-    const mode=$("publish-mode").value;
-    const caption=$("caption").value.trim();
-    const hashtags=$("hashtags").value.trim();
-    const privacy=$("privacy").value;
-    const approval=$("approval").checked;
-    const auto=$("auto-enabled").checked;
-    $("publish-status").textContent=
-      "PUBLICACIÓN PREPARADA\n"+
-      "Modo: "+mode+"\n"+
-      "Privacidad: "+privacy+"\n"+
-      "Aprobación: "+(approval?"Requerida":"No requerida")+"\n"+
-      "Automatización: "+(auto?"Marcada":"Desactivada")+
-      "\nDescripción: "+(caption||"(vacía)")+
-      "\nHashtags: "+(hashtags||"(vacíos)")+
-      "\n\nEsto es solo una configuración local. Todavía no se ha publicado ni enviado ningún video.";
-  });
-
-  $("render").addEventListener("click",()=>{
-    $("export-status").textContent=
-      "La producción está configurada, pero aún falta conectar los servicios de generación de video, audio, subtítulos y renderizado.";
-  });
-
-  refreshLibrary();
-  const refreshTimer=setInterval(()=>{
-    refreshLibrary();
-    if(Array.isArray(window.allVideos) && window.allVideos.length){
-      clearInterval(refreshTimer);
-    }
-  },1000);
-})();
-</script>
-<!-- FIN DORADOR RD AI STUDIO -->
-
 </body>
 </html>
