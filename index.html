@@ -611,10 +611,557 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   </div>
 </section>
 
+
 <!-- FFmpeg.wasm: extracción local de audio para transcripción -->
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 <script>
+(function(){
+  "use strict";
+
+  const root = document.getElementById("drd-ai-studio");
+  if (!root) return;
+
+  const $ = id => document.getElementById("drd-ai-" + id);
+  let localVideoUrl = null;
+  let localFile = null;
+  let activeLocalVideo = false;
+  let outputText = "";
+  let lastAIAnalysis = "";
+  let ffmpegInstance = null;
+
+  function selectedVideo(){
+    if(activeLocalVideo) return null;
+    const value = $("video-select").value;
+    if (!value || !Array.isArray(window.videos)) return null;
+    return window.videos.find(v => String(window.videoKey(v)) === value) || null;
+  }
+
+  function refreshLibrary(){
+    const select = $("video-select");
+    const list = Array.isArray(window.videos) ? window.videos : [];
+    const previous = select.value;
+    select.innerHTML = '<option value="">Selecciona un video...</option>';
+    list.forEach(v=>{
+      const option = document.createElement("option");
+      option.value = String(window.videoKey(v));
+      option.textContent = String(window.titleOf(v)).slice(0,110);
+      select.appendChild(option);
+    });
+    const selectedKey = window.selectedVideo ? String(window.videoKey(window.selectedVideo)) : previous;
+    if (selectedKey && [...select.options].some(o=>o.value===selectedKey)) select.value=selectedKey;
+  }
+
+  function syncSelection(){
+    const chosen=window.selectedVideo;
+    const key=chosen?String(window.videoKey(chosen)):"";
+    if(key && [...$("video-select").options].some(o=>o.value===key)) $("video-select").value=key;
+  }
+
+  window.DoradoRDAIRefreshLibrary=refreshLibrary;
+  window.DoradoRDAIRefreshSelection=syncSelection;
+  window.DoradoRDAISetTikTokMode=()=>{
+    activeLocalVideo=false;
+    $("local-state").textContent=localFile?"Video local cargado; puedes volver a seleccionarlo.":"";
+  };
+
+  function selectLocalVideo(){
+    if(!localFile) return;
+    activeLocalVideo=true;
+    $("local-state").textContent="✓ Video local seleccionado para trabajar";
+    $("analysis-status").textContent="Video local activo: "+localFile.name+". El análisis IA examinará fotogramas y audio del archivo.";
+    writeOutput("");
+  }
+
+  function hasWorkVideo(){
+    return activeLocalVideo ? !!localFile : !!selectedVideo();
+  }
+
+  function workVideoTitle(){
+    if(activeLocalVideo && localFile) return localFile.name;
+    return currentTitle();
+  }
+
+  function getMetrics(v){
+    const s = v.statistics || v.stats || v;
+    return {
+      views:Number(s.view_count ?? s.views ?? v.view_count ?? 0),
+      likes:Number(s.like_count ?? s.likes ?? v.like_count ?? 0),
+      comments:Number(s.comment_count ?? s.comments ?? v.comment_count ?? 0),
+      shares:Number(s.share_count ?? s.shares ?? v.share_count ?? 0)
+    };
+  }
+
+  function currentTitle(){
+    const v=selectedVideo();
+    return v ? (v.title || v.video_description || "Video seleccionado") : (activeLocalVideo && localFile ? localFile.name : "Video nuevo");
+  }
+
+  function writeOutput(text){
+    outputText=text;
+    $("output").textContent=text;
+  }
+
+  function getSession(){
+    return sessionStorage.getItem("doradord_session") || "";
+  }
+
+  async function loadFFmpeg(){
+    if(ffmpegInstance) return ffmpegInstance;
+
+    if(!window.FFmpegWASM || !window.FFmpegWASM.FFmpeg){
+      throw new Error("No se pudo cargar FFmpeg. Comprueba tu conexión e inténtalo otra vez.");
+    }
+
+    if(!window.FFmpegUtil || !window.FFmpegUtil.toBlobURL){
+      throw new Error("No se pudo cargar la herramienta auxiliar de FFmpeg. Recarga la página.");
+    }
+
+    const { FFmpeg } = window.FFmpegWASM;
+    const { toBlobURL } = window.FFmpegUtil;
+    const ffmpeg = new FFmpeg();
+
+    const ffmpegBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd";
+    const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+
+    const classWorkerURL = await toBlobURL(
+      ffmpegBase + "/814.ffmpeg.js",
+      "text/javascript"
+    );
+
+    const coreURL = await toBlobURL(
+      coreBase + "/ffmpeg-core.js",
+      "text/javascript"
+    );
+
+    const wasmURL = await toBlobURL(
+      coreBase + "/ffmpeg-core.wasm",
+      "application/wasm"
+    );
+
+    await ffmpeg.load({ classWorkerURL, coreURL, wasmURL });
+    ffmpegInstance = ffmpeg;
+    return ffmpeg;
+  }
+
+  async function extractFrames(file){
+    const url=URL.createObjectURL(file);
+    const video=document.createElement("video");
+    video.preload="metadata";
+    video.muted=true;
+    video.src=url;
+
+    await new Promise((resolve,reject)=>{
+      video.onloadedmetadata=resolve;
+      video.onerror=()=>reject(new Error("No se pudo leer el MP4 seleccionado."));
+    });
+
+    const duration=video.duration||0;
+
+    if(!duration || !Number.isFinite(duration)){
+      URL.revokeObjectURL(url);
+      throw new Error("El video no tiene una duración válida.");
+    }
+
+    const points=[0.12,0.25,0.40,0.50,0.55,0.70,0.85,0.96];
+    const times=[...new Set(points.map(p=>
+      Math.min(Math.max(0.1,duration*p),Math.max(0.1,duration-0.1))
+    ))];
+
+    const canvas=document.createElement("canvas");
+    const ctx=canvas.getContext("2d");
+
+    if(!ctx){
+      URL.revokeObjectURL(url);
+      throw new Error("No se pudo iniciar el procesador de imágenes.");
+    }
+
+    const frames=[];
+
+    for(const time of times){
+      video.currentTime=time;
+
+      await new Promise((resolve,reject)=>{
+        video.onseeked=resolve;
+        video.onerror=()=>reject(new Error("No se pudo extraer un fotograma."));
+      });
+
+      const scale=Math.min(1,768/(video.videoWidth||768));
+      canvas.width=Math.round((video.videoWidth||768)*scale);
+      canvas.height=Math.round((video.videoHeight||432)*scale);
+
+      ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
+      frames.push({
+        timestamp:Number(time.toFixed(2)),
+        image:canvas.toDataURL("image/jpeg",0.68)
+      });
+    }
+
+    video.pause();
+    video.removeAttribute("src");
+    URL.revokeObjectURL(url);
+
+    return {frames,duration};
+  }
+
+  async function extractAudio(file){
+    const ffmpeg=await loadFFmpeg();
+    const inputName="doradord_input.mp4";
+    const outputName="doradord_audio.mp3";
+
+    await ffmpeg.writeFile(
+      inputName,
+      new Uint8Array(await file.arrayBuffer())
+    );
+
+    await ffmpeg.exec([
+      "-i",inputName,
+      "-vn",
+      "-ac","1",
+      "-ar","16000",
+      "-b:a","40k",
+      outputName
+    ]);
+
+    const data=await ffmpeg.readFile(outputName);
+
+    await ffmpeg.deleteFile(inputName).catch(()=>{});
+    await ffmpeg.deleteFile(outputName).catch(()=>{});
+
+    const audio=new Blob([data],{type:"audio/mpeg"});
+
+    if(audio.size>24*1024*1024){
+      throw new Error("El audio extraído supera el límite de 24 MB. Usa un video más corto.");
+    }
+
+    return audio;
+  }
+
+  async function runRealAnalysis(){
+    if(!hasWorkVideo()){
+      throw new Error("Primero selecciona un video de TikTok o carga un MP4 desde tu PC.");
+    }
+
+    const session=getSession();
+
+    if(!session){
+      throw new Error("Conecta primero tu cuenta de TikTok para iniciar una sesión segura con DoradoRD.");
+    }
+
+    const status=$("analysis-status");
+    status.textContent="Preparando el análisis...";
+
+    const form=new FormData();
+
+    form.append("title",workVideoTitle());
+    form.append("source",activeLocalVideo?"local":"tiktok");
+
+    const v=selectedVideo();
+
+    if(v){
+      const metrics=getMetrics(v);
+
+      form.append("metadata",JSON.stringify({
+        title:currentTitle(),
+        views:metrics.views,
+        likes:metrics.likes,
+        comments:metrics.comments,
+        shares:metrics.shares,
+        duration:v.duration||null,
+        share_url:v.share_url||null
+      }));
+
+      const cover=v.cover_image_url||v.cover_url||v.thumbnail_url||"";
+      if(cover) form.append("coverUrl",cover);
+    }
+
+    if(activeLocalVideo && localFile){
+
+      if(localFile.size>180*1024*1024){
+        throw new Error("El MP4 supera 180 MB. Selecciona un archivo más ligero.");
+      }
+
+      status.textContent="Extrayendo hasta 8 escenas del MP4...";
+
+      const extracted=await extractFrames(localFile);
+
+      form.append("frames",JSON.stringify(extracted.frames));
+      form.append("duration",String(extracted.duration));
+
+      status.textContent="Extrayendo y preparando el audio para transcripción...";
+
+      const audio=await extractAudio(localFile);
+      form.append("audio",audio,"doradord-audio.mp3");
+
+    }else{
+      status.textContent="Analizando los datos disponibles del video de TikTok...";
+    }
+
+    status.textContent="La IA está evaluando el contenido. Esto puede tardar un momento...";
+
+    const response=await fetch(
+      "https://doradord-tiktok-auth.clanmatasaga.workers.dev/ai/analyze",
+      {
+        method:"POST",
+        headers:{Authorization:"Bearer "+session},
+        body:form
+      }
+    );
+
+    const result=await response.json().catch(()=>({}));
+
+    if(!response.ok){
+      throw new Error(
+        result.error||result.message||("Error del servicio IA ("+response.status+")")
+      );
+    }
+
+    lastAIAnalysis=result.analysis||result.output||"La IA no devolvió un análisis legible.";
+
+    writeOutput(lastAIAnalysis);
+
+    status.textContent=activeLocalVideo
+      ? "✓ Análisis multimodal terminado: fotogramas y audio del MP4 local."
+      : "✓ Análisis de TikTok terminado con los metadatos y la portada disponibles. Para evaluar escenas y audio se necesita el MP4.";
+
+    return lastAIAnalysis;
+  }
+
+  $("video-select").addEventListener("change",()=>{
+    const v=selectedVideo();
+
+    if(v){
+      activeLocalVideo=false;
+
+      if(typeof window.selectVideo==="function"){
+        window.selectVideo(v,false);
+      }
+
+      $("analysis-status").textContent=
+        "Video seleccionado: "+currentTitle()+". Pulsa «Analizar video completo» para enviar sus datos disponibles al motor IA.";
+    }
+  });
+
+  $("watch").addEventListener("click",()=>{
+    if(activeLocalVideo && localFile){
+      const preview=$("local-preview");
+      preview.scrollIntoView({behavior:"smooth",block:"center"});
+      preview.play().catch(()=>{});
+      return;
+    }
+
+    const v=selectedVideo();
+
+    if(v && typeof window.openPlayer==="function"){
+      window.openPlayer(v);
+    }else{
+      $("analysis-status").textContent="Selecciona un video de tu biblioteca.";
+    }
+  });
+
+  $("upload").addEventListener("change",e=>{
+    const file=e.target.files && e.target.files[0];
+    if(!file) return;
+
+    if(localVideoUrl) URL.revokeObjectURL(localVideoUrl);
+
+    localFile=file;
+    activeLocalVideo=false;
+    localVideoUrl=URL.createObjectURL(file);
+
+    const preview=$("local-preview");
+    preview.src=localVideoUrl;
+    preview.style.display="block";
+    preview.load();
+
+    $("local-actions").style.display="flex";
+    $("local-state").textContent="Video cargado. Pulsa el botón para convertirlo en tu video de trabajo.";
+
+    $("analysis-status").textContent=
+      "Video cargado localmente: "+file.name+". Reprodúcelo aquí y pulsa «Usar este video para trabajar».";
+  });
+
+  $("use-local").addEventListener("click",selectLocalVideo);
+
+  $("mode").addEventListener("change",()=>{
+    const automatic=$("mode").value==="automatic";
+
+    $("mode-status").textContent=automatic
+      ? "Modo automático seleccionado. La automatización real requiere servicios adicionales."
+      : "Modo manual activo. Tú controlas cada paso.";
+  });
+
+  $("analyze").addEventListener("click",async()=>{
+    const button=$("analyze");
+    button.disabled=true;
+
+    try{
+      await runRealAnalysis();
+    }catch(error){
+      $("analysis-status").textContent="No se pudo completar el análisis: "+error.message;
+    }finally{
+      button.disabled=false;
+    }
+  });
+
+  $("cover").addEventListener("click",async()=>{
+    if(!hasWorkVideo()){
+      $("analysis-status").textContent="Selecciona un video primero.";
+      return;
+    }
+
+    try{
+      if(!lastAIAnalysis) await runRealAnalysis();
+
+      $("analysis-status").textContent=
+        "La evaluación de portada está incluida en el análisis visual cuando hay fotogramas del MP4. En TikTok solo se puede evaluar la portada que la API facilita.";
+
+    }catch(error){
+      $("analysis-status").textContent="No se pudo evaluar la portada: "+error.message;
+    }
+  });
+
+  async function makeAIScript(improve){
+    if(!hasWorkVideo()){
+      writeOutput("Selecciona un video de TikTok o carga un MP4 desde tu PC.");
+      return;
+    }
+
+    try{
+      if(!lastAIAnalysis) await runRealAnalysis();
+
+      const response=await fetch(
+        "https://doradord-tiktok-auth.clanmatasaga.workers.dev/ai/script",
+        {
+          method:"POST",
+          headers:{
+            "Authorization":"Bearer "+getSession(),
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            analysis:lastAIAnalysis,
+            title:workVideoTitle(),
+            improve,
+            goal:$("goal").value,
+            style:$("style").value,
+            duration:Number($("duration").value),
+            instructions:$("instructions").value.trim()
+          })
+        }
+      );
+
+      const result=await response.json().catch(()=>({}));
+
+      if(!response.ok){
+        throw new Error(result.error||"No se pudo generar el guion.");
+      }
+
+      writeOutput(result.script||result.output||"No se recibió un guion.");
+
+    }catch(error){
+      $("analysis-status").textContent="No se pudo generar el guion IA: "+error.message;
+    }
+  }
+
+  $("script").addEventListener("click",()=>makeAIScript(false));
+  $("improve").addEventListener("click",()=>makeAIScript(true));
+
+  $("cover-create").addEventListener("click",()=>{
+    writeOutput(
+      "PROPUESTA DE NUEVA PORTADA\n\nVideo: "+currentTitle()+
+      "\n\nTexto sugerido:\n\"¡ESTO CAMBIÓ TODO!\"\n\n"+
+      "Composición sugerida:\n- Un sujeto principal.\n- Fondo limpio y contraste alto.\n- Texto breve, grande y legible.\n- Expresión o escena que genere curiosidad.\n\nLa generación de imagen real requiere conectar un servicio de imágenes IA."
+    );
+  });
+
+  $("production").addEventListener("click",async()=>{
+    if(!hasWorkVideo()){
+      writeOutput("Selecciona primero el video que quieres preparar.");
+      return;
+    }
+
+    await makeAIScript(true);
+
+    $("export-status").textContent=
+      "Plan de producción generado con IA. La exportación/renderizado del MP4 final todavía requiere integrar el motor de edición.";
+  });
+
+  $("copy").addEventListener("click",async()=>{
+    if(!outputText){
+      $("output").textContent="Primero crea un guion o prepara una mejora.";
+      return;
+    }
+
+    try{
+      await navigator.clipboard.writeText(outputText);
+      $("output").textContent=outputText+"\n\n✓ Copiado al portapapeles.";
+    }catch(e){
+      $("output").textContent=outputText+"\n\nNo se pudo copiar automáticamente. Selecciona el texto y cópialo.";
+    }
+  });
+
+  $("download-script").addEventListener("click",()=>{
+    if(!outputText){
+      $("output").textContent="Primero genera un guion.";
+      return;
+    }
+
+    const blob=new Blob([outputText],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="DoradoRD-guion.txt";
+    a.click();
+
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+
+  $("publish-mode").addEventListener("change",()=>{
+    const mode=$("publish-mode").value;
+
+    $("publish-status").textContent=mode==="manual"
+      ? "Modo manual: no se publicará nada sin tu acción."
+      : mode==="draft"
+      ? "Borrador seleccionado. Requiere integración oficial de TikTok."
+      : "Publicación automática seleccionada. Requiere API oficial, permisos y conexión segura. Todavía no se enviará nada.";
+  });
+
+  $("auto-enabled").addEventListener("change",()=>{
+    const enabled=$("auto-enabled").checked;
+
+    $("publish-status").textContent=enabled
+      ? "Automatización marcada como preferencia. No está activa hasta conectar el servicio de publicación y autorizarlo."
+      : "Automatización desactivada.";
+  });
+
+  $("publish-ready").addEventListener("click",()=>{
+    const mode=$("publish-mode").value;
+    const caption=$("caption").value.trim();
+    const hashtags=$("hashtags").value.trim();
+    const privacy=$("privacy").value;
+    const approval=$("approval").checked;
+    const auto=$("auto-enabled").checked;
+
+    $("publish-status").textContent=
+      "PUBLICACIÓN PREPARADA\n"+
+      "Modo: "+mode+"\n"+
+      "Privacidad: "+privacy+"\n"+
+      "Aprobación: "+(approval?"Requerida":"No requerida")+"\n"+
+      "Automatización: "+(auto?"Marcada":"Desactivada")+
+      "\nDescripción: "+(caption||"(vacía)")+
+      "\nHashtags: "+(hashtags||"(vacíos)")+
+      "\n\nEsto es solo una configuración local. Todavía no se ha publicado ni enviado ningún video.";
+  });
+
+  $("render").addEventListener("click",()=>{
+    $("export-status").textContent=
+      "La producción está configurada, pero aún falta conectar los servicios de generación de video, audio, subtítulos y renderizado.";
+  });
+
+  refreshLibrary();
+})();
+</script>
+
 (function(){
   "use strict";
 
