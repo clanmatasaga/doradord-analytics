@@ -1365,21 +1365,60 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     return sessionStorage.getItem("doradord_session") || "";
   }
 
-  async function loadFFmpeg(){
-    if(ffmpegInstance) return ffmpegInstance;
-    if(!window.FFmpegWASM || !window.FFmpegWASM.FFmpeg){
-      throw new Error("No se pudo cargar el motor de audio. Comprueba tu conexión e inténtalo otra vez.");
-    }
-    const { FFmpeg } = window.FFmpegWASM;
-    const { toBlobURL } = window.FFmpegUtil || {};
-    const ffmpeg = new FFmpeg();
-    const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-    const coreURL = toBlobURL ? await toBlobURL(base+"/ffmpeg-core.js","text/javascript") : base+"/ffmpeg-core.js";
-    const wasmURL = toBlobURL ? await toBlobURL(base+"/ffmpeg-core.wasm","application/wasm") : base+"/ffmpeg-core.wasm";
-    await ffmpeg.load({coreURL,wasmURL});
-    ffmpegInstance=ffmpeg;
-    return ffmpeg;
+  
+async function loadFFmpeg(){
+  if(ffmpegInstance) return ffmpegInstance;
+
+  if(!window.FFmpegWASM || !window.FFmpegWASM.FFmpeg){
+    throw new Error(
+      "No se pudo cargar el motor FFmpeg. Comprueba tu conexión."
+    );
   }
+
+  const { FFmpeg } = window.FFmpegWASM;
+  const { toBlobURL } = window.FFmpegUtil || {};
+
+  if(!toBlobURL){
+    throw new Error(
+      "No se pudo cargar FFmpegUtil. Comprueba el script de FFmpeg."
+    );
+  }
+
+  const ffmpeg = new FFmpeg();
+
+  const ffmpegBase =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd";
+
+  const coreBase =
+    "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+
+  // Convertir el Worker en Blob para evitar el bloqueo del navegador.
+  const classWorkerURL = await toBlobURL(
+    ffmpegBase + "/814.ffmpeg.js",
+    "text/javascript"
+  );
+
+  const coreURL = await toBlobURL(
+    coreBase + "/ffmpeg-core.js",
+    "text/javascript"
+  );
+
+  const wasmURL = await toBlobURL(
+    coreBase + "/ffmpeg-core.wasm",
+    "application/wasm"
+  );
+
+  await ffmpeg.load({
+    classWorkerURL,
+    coreURL,
+    wasmURL
+  });
+
+  ffmpegInstance = ffmpeg;
+
+  return ffmpeg;
+}
+
 
   async function extractFrames(file){
     const url=URL.createObjectURL(file);
