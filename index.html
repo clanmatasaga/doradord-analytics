@@ -889,7 +889,8 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
 
       $("analysis-status").textContent =
         "✓ Análisis completado. Fotogramas analizados: " + data.framesAnalyzed +
-        " · Audio transcrito: " + (data.audioTranscribed ? "sí" : "no") + note;
+        " · Audio transcrito: " + (data.audioTranscribed ? "sí" : "no") +
+        " · Motor: " + (data.engine || "gemini") + note;
     } catch (error) {
       $("analysis-status").textContent = "No se pudo analizar: " + error.message;
     } finally {
