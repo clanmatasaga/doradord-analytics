@@ -1611,6 +1611,133 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     }
   };
 
+/* ==========================================
+   DORADOR D ANALYTICS
+   RECEPCION DE VIDEO Y GUION DESDE ESTUDIO IA
+========================================== */
+
+(function () {
+  "use strict";
+
+  const mp4Root = document.getElementById("drd-mp4-editor");
+
+  if (!mp4Root) return;
+
+  // Evitar conectar el receptor varias veces
+  if (mp4Root.dataset.aiTransferConnected === "true") return;
+
+  mp4Root.dataset.aiTransferConnected = "true";
+
+  // Crear panel de guion automáticamente
+  let scriptPanel = document.getElementById("drd-mp4-ai-script-panel");
+
+  if (!scriptPanel) {
+
+    scriptPanel = document.createElement("div");
+
+    scriptPanel.id = "drd-mp4-ai-script-panel";
+
+    scriptPanel.className = "drd-card";
+
+    scriptPanel.style.marginTop = "15px";
+
+    scriptPanel.innerHTML = `
+      <h3>🧠 Guion recibido desde Estudio IA</h3>
+
+      <div id="drd-mp4-ai-goal"
+           class="drd-small"
+           style="margin-bottom:10px;">
+        Objetivo de producción pendiente
+      </div>
+
+      <textarea
+        id="drd-mp4-ai-script"
+        rows="12"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border-radius:10px;
+          resize:vertical;
+        "
+        placeholder="Aquí aparecerá el guion mejorado enviado desde Estudio IA."
+      ></textarea>
+
+      <div class="drd-small" style="margin-top:8px;">
+        El guion se puede revisar y editar antes de comenzar la producción.
+      </div>
+    `;
+
+    mp4Root.appendChild(scriptPanel);
+  }
+
+  const scriptInput = document.getElementById("drd-mp4-ai-script");
+  const goalDisplay = document.getElementById("drd-mp4-ai-goal");
+
+  // Recepción de transferencia
+  window.addEventListener("dorardrd:mp4-transfer", async function (event) {
+
+    const data = event.detail || {};
+
+    const file = data.file;
+    const script = data.script || "";
+    const goal = data.goal || "Mejorar video";
+
+    if (!file) {
+      alert("No se recibió el video original.");
+      return;
+    }
+
+    const editor = window.DoradoRDMP4;
+
+    if (!editor || typeof editor.addFile !== "function") {
+      alert("El motor MP4 no está disponible.");
+      return;
+    }
+
+    try {
+
+      // Evitar agregar dos veces el mismo archivo
+      const alreadyAdded = typeof editor.getClips === "function"
+        ? editor.getClips().some(clip => clip.file === file)
+        : false;
+
+      if (!alreadyAdded) {
+        await editor.addFile(file);
+      }
+
+      // Colocar guion en el editor
+      if (scriptInput) {
+        scriptInput.value = script;
+      }
+
+      // Mostrar objetivo
+      if (goalDisplay) {
+        goalDisplay.textContent =
+          "🎯 Objetivo de producción: " + goal;
+      }
+
+      // Desplazarse al editor
+      mp4Root.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    } catch (error) {
+
+      console.error("Error al recibir video y guion:", error);
+
+      alert(
+        "No se pudo transferir el video al Editor MP4. " +
+        "Revisa la consola para conocer el error."
+      );
+
+    }
+
+  });
+
+})();
+
 })();
 </script>
 
