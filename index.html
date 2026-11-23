@@ -820,10 +820,9 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   <h3>🎞️ Exportación de video · Motor MP4</h3>
 
   <p class="drd-mp4-small">
-    Editor centralizado de DoradoRD Analytics. Carga videos, organiza escenas,
-    recorta clips, agrega una pista de audio y exporta un MP4. El guion recibido
-    sirve como referencia de producción; el render actual todavía no aplica
-    automáticamente narración, subtítulos ni escenas generadas por IA.
+    Editor centralizado de DoradoRD Analytics. Carga videos, organiza las escenas,
+    recorta los clips, agrega una pista de audio y exporta tu video final en formato
+    vertical 9:16.
   </p>
 
   <div class="drd-mp4-box">
@@ -875,7 +874,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       id="drd-mp4-render"
       class="drd-mp4-primary"
     >
-      🎬 Exportar MP4
+      ⬇️ Exportar MP4
+    </button>
+
+    <button
+      type="button"
+      id="drd-mp4-generate"
+      class="drd-mp4-primary"
+    >
+      🎬 Generar video
     </button>
 
     <button
@@ -1293,9 +1300,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       "application/wasm"
     );
 
+    const workerURL = await toBlobURL(
+      "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.worker.js",
+      "text/javascript"
+    );
+
     await ffmpeg.load({
       coreURL,
-      wasmURL
+      wasmURL,
+      workerURL
     });
 
     ffmpegInstance = ffmpeg;
@@ -1602,9 +1615,23 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       renderVideo();
     },
 
+    generate(scriptText) {
+      const text = String(scriptText || "").trim();
+      if (!clips.length) {
+        setStatus("Carga o transfiere al menos un video antes de generar la producción.");
+        return false;
+      }
+      if (text) {
+        setStatus("Guion recibido (" + text.length + " caracteres). Iniciando render real con recortes, orden de escenas, formato vertical y audio seleccionado. La narración y los subtítulos automáticos aún no se aplican al MP4.");
+      } else {
+        setStatus("Iniciando render real con los recortes, orden de escenas, formato vertical y audio seleccionado.");
+      }
+      renderVideo();
+      return true;
+    },
+
     getClips() {
       return clips.map(clip => ({
-        file: clip.file,
         name: clip.name,
         start: clip.start,
         end: clip.end,
@@ -1651,8 +1678,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
            style="margin-bottom:10px;">
         Objetivo de producción pendiente
       </div>
-      <div id="drd-mp4-ai-meta" class="drd-small" style="margin-bottom:10px;">
-        Configuración de producción pendiente
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;align-items:center;">
+        <label for="drd-mp4-ai-script-file" class="drd-btn secondary" style="cursor:pointer;">📄 Cargar guion TXT</label>
+        <input id="drd-mp4-ai-script-file" type="file" accept=".txt,text/plain" style="display:none;">
+        <button type="button" id="drd-mp4-ai-script-clear" class="drd-btn secondary">🧹 Limpiar guion</button>
       </div>
 
       <textarea
@@ -1678,7 +1708,42 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   const scriptInput = document.getElementById("drd-mp4-ai-script");
   const goalDisplay = document.getElementById("drd-mp4-ai-goal");
-  const metaDisplay = document.getElementById("drd-mp4-ai-meta");
+  const scriptFileInput = document.getElementById("drd-mp4-ai-script-file");
+  const scriptClearButton = document.getElementById("drd-mp4-ai-script-clear");
+
+  if (scriptFileInput && scriptInput) {
+    scriptFileInput.addEventListener("change", async () => {
+      const file = scriptFileInput.files && scriptFileInput.files[0];
+      if (!file) return;
+      try {
+        scriptInput.value = await file.text();
+        if (goalDisplay) goalDisplay.textContent = "📄 Guion cargado: " + file.name;
+      } catch (err) {
+        alert("No se pudo leer el archivo de guion. Selecciona un TXT válido.");
+      } finally {
+        scriptFileInput.value = "";
+      }
+    });
+  }
+
+  if (scriptClearButton && scriptInput) {
+    scriptClearButton.addEventListener("click", () => {
+      scriptInput.value = "";
+      if (goalDisplay) goalDisplay.textContent = "Guion limpiado. Puedes pegar o cargar otro texto.";
+    });
+  }
+
+  const generateButton = document.getElementById("drd-mp4-generate");
+  if (generateButton) {
+    generateButton.addEventListener("click", () => {
+      const editor = window.DoradoRDMP4;
+      if (!editor || typeof editor.generate !== "function") {
+        alert("El motor de producción MP4 no está listo.");
+        return;
+      }
+      editor.generate(scriptInput ? scriptInput.value.trim() : "");
+    });
+  }
 
   // Recepción de transferencia
   window.addEventListener("dorardrd:mp4-transfer", async function (event) {
@@ -1709,8 +1774,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         : false;
 
       if (!alreadyAdded) {
-        const added = await editor.addFile(file);
-        if (added === false) throw new Error("El editor rechazó el archivo de video.");
+        await editor.addFile(file);
       }
 
       // Colocar guion en el editor
@@ -1720,14 +1784,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       // Mostrar objetivo
       if (goalDisplay) {
-        goalDisplay.textContent = "🎯 Objetivo de producción: " + goal;
-      }
-      if (metaDisplay) {
-        metaDisplay.textContent =
-          "Formato: " + (data.format || "No indicado") +
-          " · Duración objetivo: " + (data.duration || "No indicada") +
-          " · Estilo: " + (data.style || "No indicado") +
-          (data.instructions ? " · Instrucciones: " + data.instructions : "");
+        goalDisplay.textContent =
+          "🎯 Objetivo de producción: " + goal;
       }
 
       // Desplazarse al editor
@@ -1755,7 +1813,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 </script>
 
 
-<!-- Se eliminó el segundo editor MP4 duplicado; se conserva el motor principal. -->
 
 <script>
 (function(){
@@ -1773,61 +1830,93 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   function selectedVideo(){
     if(activeLocalVideo) return null;
     const value = $("video-select").value;
-    if(!value || !Array.isArray(window.videos)) return null;
+    if (!value || !Array.isArray(window.videos)) return null;
     return window.videos.find(v => String(window.videoKey(v)) === value) || null;
-  }
+    
+/* ==========================================
+   DORADOR D ANALYTICS
+   TRANSFERENCIA ESTUDIO IA -> EDITOR MP4
+========================================== */
 
-  /* Transferencia Estudio IA -> Editor MP4 */
-  const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
-  const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
+const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
+const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
 
-  if(sendToMP4Button && !sendToMP4Button.dataset.connected){
-    sendToMP4Button.dataset.connected = "true";
-    sendToMP4Button.addEventListener("click", function(){
-      const editor = window.DoradoRDMP4;
-      if(!editor || typeof editor.addFile !== "function"){
-        if(transferStatus) transferStatus.textContent =
-          "❌ El Editor MP4 no está disponible. Espera a que termine de cargar.";
-        return;
+if (sendToMP4Button && !sendToMP4Button.dataset.connected) {
+
+  sendToMP4Button.dataset.connected = "true";
+
+  sendToMP4Button.addEventListener("click", function () {
+
+    const editor = window.DoradoRDMP4;
+
+    // Verificar motor MP4
+    if (!editor || typeof editor.addFile !== "function") {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "❌ El Editor MP4 no está disponible. Verifica que el motor esté cargado.";
       }
 
-      const videoFile = localFile;
-      if(!videoFile){
-        if(transferStatus) transferStatus.textContent =
-          "⚠️ Carga el video original desde tu computadora y pulsa «Usar este video para trabajar». Los videos de TikTok seleccionados por API no contienen el MP4.";
-        return;
+      return;
+    }
+
+    // Obtener video local
+    const videoFile = localFile;
+
+    if (!videoFile) {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "⚠️ Primero selecciona o carga el video original desde tu computadora. Los videos de TikTok seleccionados por API no contienen el archivo MP4 descargado.";
       }
 
-      const outputElement = document.getElementById("drd-ai-output");
-      const currentScript = (outputText && outputText.trim()) ||
-        (outputElement && outputElement.innerText.trim()) || "";
-      if(!currentScript){
-        if(transferStatus) transferStatus.textContent =
-          "⚠️ Primero crea, analiza o mejora el guion.";
-        return;
+      return;
+    }
+
+    // Obtener el guion actual
+    const outputElement = document.getElementById("drd-ai-output");
+
+    const currentScript =
+      (outputText && outputText.trim()) ||
+      (outputElement && outputElement.innerText.trim()) ||
+      "";
+
+    if (!currentScript) {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "⚠️ Primero crea o mejora el guion antes de enviarlo.";
       }
 
-      const getSelectText = id => {
-        const el = document.getElementById(id);
-        return el && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : "";
-      };
+      return;
+    }
 
-      const detail = {
-        file: videoFile,
-        script: currentScript,
-        goal: getSelectText("drd-ai-goal") || "Mejorar video",
-        format: getSelectText("drd-ai-format") || "TikTok vertical 9:16",
-        duration: getSelectText("drd-ai-duration") || "30 segundos",
-        style: getSelectText("drd-ai-style") || "Cinematográfico",
-        instructions: document.getElementById("drd-ai-instructions")?.value?.trim() || "",
-        source: "DoradoRD Estudio IA",
-        timestamp: Date.now()
-      };
+    // Obtener objetivo seleccionado
+    const goalElement = document.getElementById("drd-ai-goal");
 
-      window.dispatchEvent(new CustomEvent("dorardrd:mp4-transfer", {detail}));
-      if(transferStatus) transferStatus.textContent =
-        "✅ Video, guion y configuración enviados al Editor MP4.";
-    });
+    const selectedGoal = goalElement
+      ? goalElement.options[goalElement.selectedIndex].text
+      : "Mejorar video";
+
+    // Enviar datos al editor MP4
+    window.dispatchEvent(
+      new CustomEvent("dorardrd:mp4-transfer", {
+        detail: {
+          file: videoFile,
+          script: currentScript,
+          goal: selectedGoal,
+          source: "DoradoRD Estudio IA",
+          timestamp: Date.now()
+        }
+      })
+    );
+
+    if (transferStatus) {
+      transferStatus.textContent =
+        "✅ Video y guion enviados al Editor MP4.";
+    }
+
+  });
+
+}
+
   }
 
   function refreshLibrary(){
