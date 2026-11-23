@@ -1273,64 +1273,38 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   async function loadFFmpeg() {
     if (ffmpegInstance) return ffmpegInstance;
 
-    setStatus("Preparando FFmpeg. Descargando los componentes del motor...");
+    setStatus("Preparando FFmpeg con Worker local de DoradoRD...");
 
-    // CDN primario y alternativo. Reporta exactamente qué archivo no se pudo cargar.
-    async function importWithFallback(primary, fallback) {
-      try { return await import(primary); }
-      catch (primaryError) {
-        try { return await import(fallback); }
-        catch (fallbackError) {
-          throw new Error("No se pudo cargar la librería FFmpeg desde los CDN. " +
-            "Primario: " + (primaryError.message || primaryError) + " | Alternativo: " +
-            (fallbackError.message || fallbackError));
-        }
-      }
-    }
-
-    async function fetchBlobWithFallback(urls, mimeType, label) {
-      let lastError;
-      for (const url of urls) {
-        try {
-          const response = await fetch(url, { cache: "force-cache" });
-          if (!response.ok) throw new Error("HTTP " + response.status + " en " + url);
-          const blob = await response.blob();
-          if (!blob.size) throw new Error("Archivo vacío recibido desde " + url);
-          return URL.createObjectURL(new Blob([blob], { type: mimeType }));
-        } catch (error) {
-          lastError = error;
-        }
-      }
-      throw new Error("No se pudo descargar " + label + ". " +
-        (lastError && lastError.message ? lastError.message : String(lastError)) +
-        ". Verifica conexión, CORS o bloqueo del CDN.");
-    }
-
-
-    const { FFmpeg } = await importWithFallback(
-      "https://esm.sh/@ffmpeg/ffmpeg@0.12.10",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js"
-    );
-
-
+    const { FFmpeg } = await import("https://esm.sh/@ffmpeg/ffmpeg@0.12.10");
     const ffmpeg = new FFmpeg();
-    const corePaths = [
-      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd"
-    ];
-    // FFmpeg en modo single-thread; la libreria administra su worker interno.
-    const coreURL = await fetchBlobWithFallback(
-      corePaths.map(path => path + "/ffmpeg-core.js"), "text/javascript", "ffmpeg-core.js"
-    );
-    const wasmURL = await fetchBlobWithFallback(
-      corePaths.map(path => path + "/ffmpeg-core.wasm"), "application/wasm", "ffmpeg-core.wasm"
-    );
+
+    // Importante: el Worker esencial se carga desde GitHub Pages, no desde esm.sh.
+    // Este archivo debe existir en /doradord-analytics/ffmpeg/worker.js.
+    const localBase = new URL("./ffmpeg/", window.location.href);
+    const classWorkerURL = new URL("worker.js", localBase).href;
+    const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+
+    async function fetchBlobURL(url, mimeType, label) {
+      const response = await fetch(url, { cache: "force-cache" });
+      if (!response.ok) throw new Error("No se pudo descargar " + label + " (HTTP " + response.status + ") desde " + url);
+      const blob = await response.blob();
+      if (!blob.size) throw new Error("El archivo " + label + " llegó vacío.");
+      return URL.createObjectURL(new Blob([blob], { type: mimeType }));
+    }
+
+    // Validar que Worker local esté disponible antes de cargar FFmpeg.
+    const workerCheck = await fetch(classWorkerURL, { cache: "no-cache" });
+    if (!workerCheck.ok) {
+      throw new Error("No se encontró el Worker local (" + classWorkerURL + "). Sube el archivo ffmpeg/worker.js al repositorio antes de exportar.");
+    }
+
+    const coreURL = await fetchBlobURL(coreBase + "/ffmpeg-core.js", "text/javascript", "ffmpeg-core.js");
+    const wasmURL = await fetchBlobURL(coreBase + "/ffmpeg-core.wasm", "application/wasm", "ffmpeg-core.wasm");
 
     try {
-      await ffmpeg.load({ coreURL, wasmURL });
+      await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
     } catch (error) {
-      throw new Error("FFmpeg descargó sus archivos, pero no pudo inicializarse: " +
-        (error && error.message ? error.message : String(error)));
+      throw new Error("FFmpeg no pudo inicializarse con el Worker local: " + (error && error.message ? error.message : String(error)));
     }
 
     ffmpegInstance = ffmpeg;
