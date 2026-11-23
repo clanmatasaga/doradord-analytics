@@ -483,52 +483,74 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </div>
       </div>
 
-      <!-- GENERACION -->
-      <div class="drd-card">
-        <h3>✨ Crear contenido mejorado</h3>
+     <!-- GENERACION -->
+<div class="drd-card">
+  <h3>✨ Crear contenido mejorado</h3>
 
-        <label class="drd-label">Objetivo de la nueva versión</label>
-        <select id="drd-ai-goal">
-          <option value="retention">Aumentar retención</option>
-          <option value="comments">Provocar comentarios</option>
-          <option value="shares">Aumentar compartidos</option>
-          <option value="story">Mejorar storytelling</option>
-          <option value="hook">Crear un comienzo más fuerte</option>
-        </select>
+  <label class="drd-label">Objetivo de la nueva versión</label>
+  <select id="drd-ai-goal">
+    <option value="retention">Aumentar retención</option>
+    <option value="comments">Provocar comentarios</option>
+    <option value="shares">Aumentar compartidos</option>
+    <option value="story">Mejorar storytelling</option>
+    <option value="hook">Crear un comienzo más fuerte</option>
+  </select>
 
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-script">
-            ✍️ Crear guion
-          </button>
-          <button class="drd-btn warning" id="drd-ai-improve">
-            🚀 Mejorar video
-          </button>
-        </div>
+  <div class="drd-actions">
+    <button class="drd-btn primary" id="drd-ai-script">
+      ✍️ Crear guion
+    </button>
 
-        <div class="drd-actions">
-          <button class="drd-btn secondary" id="drd-ai-cover-create">
-            🎨 Nueva portada
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-production">
-            🎬 Preparar producción
-          </button>
-        </div>
+    <button class="drd-btn warning" id="drd-ai-improve">
+      🚀 Mejorar video
+    </button>
+  </div>
 
-        <div class="drd-output" id="drd-ai-output">
-          Aquí aparecerán los guiones, mejoras, propuestas de portada
-          y planes de producción.
-        </div>
+  <div class="drd-actions">
+    <button class="drd-btn secondary" id="drd-ai-cover-create">
+      🎨 Nueva portada
+    </button>
 
-        <div class="drd-actions">
-          <button class="drd-btn secondary" id="drd-ai-copy">
-            📋 Copiar resultado
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-download-script">
-            ⬇ Descargar texto
-          </button>
-        </div>
-      </div>
+    <button class="drd-btn secondary" id="drd-ai-production">
+      🎬 Preparar producción
+    </button>
+  </div>
 
+  <div class="drd-output" id="drd-ai-output">
+    Aquí aparecerán los guiones, mejoras, propuestas de portada
+    y planes de producción.
+  </div>
+
+  <div class="drd-actions">
+    <button class="drd-btn secondary" id="drd-ai-copy">
+      📋 Copiar resultado
+    </button>
+
+    <button class="drd-btn secondary" id="drd-ai-download-script">
+      ⬇ Descargar texto
+    </button>
+  </div>
+
+  <!-- NUEVA CONEXIÓN CON EDITOR MP4 -->
+  <div class="drd-actions" style="margin-top:15px;">
+    <button
+      class="drd-btn primary"
+      id="drd-ai-send-mp4"
+      style="width:100%;"
+    >
+      🎬 ENVIAR AL EDITOR MP4
+    </button>
+  </div>
+
+  <div
+    id="drd-ai-mp4-transfer-status"
+    class="drd-small"
+    style="margin-top:8px;"
+  >
+    El video y el guion mejorado se enviarán al editor de producción.
+  </div>
+
+</div>
       <!-- PUBLICACION -->
       <div class="drd-card" id="publish-center">
         <h3>📤 Centro de publicación</h3>
