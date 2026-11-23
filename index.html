@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -1318,23 +1318,16 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd",
       "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd"
     ];
-    const workerPaths = [
-      "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.worker.js",
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.worker.js"
-    ];
-
+    // FFmpeg en modo single-thread; la libreria administra su worker interno.
     const coreURL = await fetchBlobWithFallback(
       corePaths.map(path => path + "/ffmpeg-core.js"), "text/javascript", "ffmpeg-core.js"
     );
     const wasmURL = await fetchBlobWithFallback(
       corePaths.map(path => path + "/ffmpeg-core.wasm"), "application/wasm", "ffmpeg-core.wasm"
     );
-    const workerURL = await fetchBlobWithFallback(
-      workerPaths, "text/javascript", "Worker FFmpeg"
-    );
 
     try {
-      await ffmpeg.load({ coreURL, wasmURL, workerURL });
+      await ffmpeg.load({ coreURL, wasmURL });
     } catch (error) {
       throw new Error("FFmpeg descargó sus archivos, pero no pudo inicializarse: " +
         (error && error.message ? error.message : String(error)));
