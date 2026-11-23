@@ -586,32 +586,998 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </div>
       </div>
 
-      <!-- FUTURO RENDER -->
-      <div class="drd-card">
-        <h3>🎞️ Exportación de video</h3>
+      <!-- =========================================================
+     DORADORRD ANALYTICS · MOTOR ÚNICO DE PRODUCCIÓN MP4
+     Reemplaza el módulo anterior de Exportación de video.
+     ========================================================= -->
 
-        <p class="drd-small">
-          El futuro motor de producción generará clips, narración,
-          música, subtítulos, transiciones y portada.
-        </p>
+<style>
+#drd-mp4-editor {
+  background: #10191e;
+  border: 1px solid #29404b;
+  border-radius: 17px;
+  margin: 24px 0;
+  padding: 22px;
+  color: #eef6f4;
+  box-sizing: border-box;
+}
 
-        <div class="drd-status" id="drd-ai-export-status">
-          Motor de generación y renderizado MP4 pendiente de integrar.
-        </div>
+#drd-mp4-editor * {
+  box-sizing: border-box;
+}
 
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-render">
-            🎬 Generar video final
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-download-video" disabled>
-            ⬇ Descargar MP4
-          </button>
-        </div>
-      </div>
+#drd-mp4-editor h3 {
+  margin: 0 0 10px;
+  font-size: 21px;
+}
 
+#drd-mp4-editor .drd-mp4-small {
+  color: #9fb5aa;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#drd-mp4-editor .drd-mp4-box {
+  background: #0a1116;
+  border: 1px solid #263841;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 14px;
+}
+
+#drd-mp4-editor .drd-mp4-label {
+  display: block;
+  color: #d9e7e2;
+  font-size: 13px;
+  margin: 10px 0 6px;
+}
+
+#drd-mp4-editor input[type="file"] {
+  display: block;
+  width: 100%;
+  color: #b8c9c5;
+  background: #0b1318;
+  border: 1px solid #29404b;
+  border-radius: 9px;
+  padding: 10px;
+}
+
+#drd-mp4-editor input[type="number"] {
+  width: 100%;
+  background: #0b1318;
+  border: 1px solid #29404b;
+  color: #fff;
+  border-radius: 8px;
+  padding: 9px;
+}
+
+#drd-mp4-editor button {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: opacity .2s ease;
+}
+
+#drd-mp4-editor button:hover {
+  opacity: .85;
+}
+
+#drd-mp4-editor button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+#drd-mp4-editor .drd-mp4-primary {
+  background: #00c878;
+  color: #07150f;
+}
+
+#drd-mp4-editor .drd-mp4-secondary {
+  background: #20333c;
+  color: #eef6f4;
+}
+
+#drd-mp4-editor .drd-mp4-danger {
+  background: #632b31;
+  color: #fff;
+}
+
+#drd-mp4-editor .drd-mp4-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#drd-mp4-editor .drd-mp4-clip {
+  background: #111c22;
+  border: 1px solid #2a404a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+#drd-mp4-editor .drd-mp4-clip-title {
+  font-weight: 700;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+#drd-mp4-editor .drd-mp4-clip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#drd-mp4-editor .drd-mp4-clip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+#drd-mp4-editor .drd-mp4-clip-actions button {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+#drd-mp4-editor .drd-mp4-status {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #0a1116;
+  border: 1px solid #263841;
+  color: #a9c3b8;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+#drd-mp4-editor .drd-mp4-preview {
+  display: block;
+  width: 100%;
+  max-height: 600px;
+  background: #000;
+  margin-top: 14px;
+  border-radius: 12px;
+}
+
+#drd-mp4-editor .drd-mp4-download {
+  display: inline-block;
+  margin-top: 14px;
+  color: #00e676;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+#drd-mp4-editor .drd-mp4-progress {
+  height: 9px;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #20333c;
+  margin-top: 12px;
+}
+
+#drd-mp4-editor .drd-mp4-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: #00c878;
+  transition: width .2s;
+}
+
+@media (max-width: 600px) {
+  #drd-mp4-editor {
+    padding: 14px;
+  }
+
+  #drd-mp4-editor .drd-mp4-clip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<section id="drd-mp4-editor">
+
+  <h3>🎞️ Exportación de video · Motor MP4</h3>
+
+  <p class="drd-mp4-small">
+    Editor centralizado de DoradoRD Analytics. Carga videos, organiza las escenas,
+    recorta los clips, agrega una pista de audio y exporta tu video final en formato
+    vertical 9:16.
+  </p>
+
+  <div class="drd-mp4-box">
+
+    <label class="drd-mp4-label">
+      🎬 Añadir videos desde tu computadora
+    </label>
+
+    <input
+      type="file"
+      id="drd-mp4-files"
+      accept="video/*"
+      multiple
+    >
+
+    <label class="drd-mp4-label">
+      🎵 Música o audio de fondo (opcional)
+    </label>
+
+    <input
+      type="file"
+      id="drd-mp4-audio"
+      accept="audio/*"
+    >
+
+    <div class="drd-mp4-small" id="drd-mp4-audio-name">
+      No hay pista de audio seleccionada.
     </div>
+
   </div>
+
+  <div class="drd-mp4-box">
+
+    <strong>📚 Clips seleccionados</strong>
+
+    <p class="drd-mp4-small">
+      Usa las flechas para organizar el orden de las escenas.
+      Ajusta el inicio y final de cada clip.
+    </p>
+
+    <div id="drd-mp4-list"></div>
+
+  </div>
+
+  <div class="drd-mp4-actions">
+
+    <button
+      type="button"
+      id="drd-mp4-render"
+      class="drd-mp4-primary"
+    >
+      🎬 Exportar MP4
+    </button>
+
+    <button
+      type="button"
+      id="drd-mp4-clear"
+      class="drd-mp4-danger"
+    >
+      🗑️ Limpiar editor
+    </button>
+
+  </div>
+
+  <div class="drd-mp4-progress">
+    <div
+      id="drd-mp4-progress-bar"
+      class="drd-mp4-progress-bar"
+    ></div>
+  </div>
+
+  <div
+    id="drd-mp4-status"
+    class="drd-mp4-status"
+  >
+    Añade uno o más videos para comenzar.
+    Formato de salida: 1080 × 1920 · 9:16.
+  </div>
+
+  <video
+    id="drd-mp4-preview"
+    class="drd-mp4-preview"
+    controls
+    playsinline
+    style="display:none"
+  ></video>
+
+  <a
+    id="drd-mp4-download"
+    class="drd-mp4-download"
+    style="display:none"
+    download="DoradoRD_video_final.mp4"
+  >
+    ⬇️ Descargar video MP4
+  </a>
+
 </section>
+
+<script>
+(function ()  {
+  "use strict";
+
+  const root = document.getElementById("drd-mp4-editor");
+  if (!root || root.dataset.initialized === "true") return;
+  root.dataset.initialized = "true";
+
+  const $ = id => document.getElementById(id);
+
+  const filesInput = $("drd-mp4-files");
+  const audioInput = $("drd-mp4-audio");
+  const list = $("drd-mp4-list");
+  const status = $("drd-mp4-status");
+  const renderBtn = $("drd-mp4-render");
+  const clearBtn = $("drd-mp4-clear");
+  const preview = $("drd-mp4-preview");
+  const download = $("drd-mp4-download");
+  const progressBar = $("drd-mp4-progress-bar");
+  const audioName = $("drd-mp4-audio-name");
+
+  let clips = [];
+  let audioFile = null;
+  let outputUrl = null;
+  let ffmpegInstance = null;
+  let rendering = false;
+
+  function setStatus(message) {
+    status.textContent = message;
+  }
+
+  function setProgress(value) {
+    const percent = Math.max(0, Math.min(100, Number(value) || 0));
+    progressBar.style.width = percent + "%";
+  }
+
+  function formatTime(value) {
+    const n = Math.max(0, Number(value) || 0);
+    return n.toFixed(2);
+  }
+
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, char => {
+      const map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      };
+      return map[char];
+    });
+  }
+
+  function createClip(file) {
+    return {
+      id: "clip_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+      file,
+      name: file.name,
+      duration: 0,
+      start: 0,
+      end: 0,
+      url: URL.createObjectURL(file)
+    };
+  }
+
+  function revokeClipURL(clip) {
+    if (clip && clip.url) {
+      URL.revokeObjectURL(clip.url);
+      clip.url = null;
+    }
+  }
+
+  function revokeOutput() {
+    if (outputUrl) {
+      URL.revokeObjectURL(outputUrl);
+      outputUrl = null;
+    }
+
+    preview.pause();
+    preview.removeAttribute("src");
+    preview.load();
+
+    preview.style.display = "none";
+    download.style.display = "none";
+    download.removeAttribute("href");
+  }
+
+  function renderList() {
+    if (!clips.length) {
+      list.innerHTML = `
+        <div class="drd-mp4-small" style="padding:12px">
+          Todavía no has añadido clips.
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = clips.map((clip, index) => {
+      const duration = clip.duration || 0;
+
+      return `
+        <div class="drd-mp4-clip" data-clip-id="${escapeHTML(clip.id)}">
+
+          <div class="drd-mp4-clip-title">
+            ${index + 1}. ${escapeHTML(clip.name)}
+          </div>
+
+          <div class="drd-mp4-small">
+            Duración original:
+            ${duration ? formatTime(duration) + " segundos" : "Leyendo video..."}
+          </div>
+
+          <div class="drd-mp4-clip-grid">
+
+            <div>
+              <label class="drd-mp4-label">
+                Inicio (segundos)
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                class="drd-mp4-start"
+                value="${formatTime(clip.start)}"
+              >
+            </div>
+
+            <div>
+              <label class="drd-mp4-label">
+                Final (segundos)
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                class="drd-mp4-end"
+                value="${formatTime(clip.end)}"
+                placeholder="${duration ? formatTime(duration) : "Duración"}"
+              >
+            </div>
+
+          </div>
+
+          <div class="drd-mp4-clip-actions">
+
+            <button
+              type="button"
+              class="drd-mp4-secondary drd-mp4-up"
+              ${index === 0 ? "disabled" : ""}
+            >
+              ⬆ Subir
+            </button>
+
+            <button
+              type="button"
+              class="drd-mp4-secondary drd-mp4-down"
+              ${index === clips.length - 1 ? "disabled" : ""}
+            >
+              ⬇ Bajar
+            </button>
+
+            <button
+              type="button"
+              class="drd-mp4-danger drd-mp4-remove"
+            >
+              ✖ Eliminar
+            </button>
+
+            <button
+              type="button"
+              class="drd-mp4-secondary drd-mp4-preview"
+            >
+              ▶ Ver clip
+            </button>
+
+          </div>
+
+        </div>
+      `;
+    }).join("");
+
+    list.querySelectorAll(".drd-mp4-clip").forEach((card, index) => {
+      const clip = clips[index];
+
+      const startInput = card.querySelector(".drd-mp4-start");
+      const endInput = card.querySelector(".drd-mp4-end");
+
+      startInput.addEventListener("change", () => {
+        let value = Math.max(0, Number(startInput.value) || 0);
+
+        if (clip.duration) {
+          value = Math.min(value, clip.duration);
+        }
+
+        clip.start = value;
+
+        if (clip.end && clip.end <= clip.start) {
+          clip.end = clip.duration || clip.start + 1;
+        }
+
+        renderList();
+      });
+
+      endInput.addEventListener("change", () => {
+        let value = Math.max(0, Number(endInput.value) || 0);
+
+        if (clip.duration) {
+          value = Math.min(value, clip.duration);
+        }
+
+        clip.end = value;
+        renderList();
+      });
+
+      card.querySelector(".drd-mp4-up").addEventListener("click", () => {
+        if (index <= 0) return;
+
+        const temp = clips[index - 1];
+        clips[index - 1] = clips[index];
+        clips[index] = temp;
+
+        renderList();
+      });
+
+      card.querySelector(".drd-mp4-down").addEventListener("click", () => {
+        if (index >= clips.length - 1) return;
+
+        const temp = clips[index + 1];
+        clips[index + 1] = clips[index];
+        clips[index] = temp;
+
+        renderList();
+      });
+
+      card.querySelector(".drd-mp4-remove").addEventListener("click", () => {
+        revokeClipURL(clip);
+        clips.splice(index, 1);
+        renderList();
+      });
+
+      card.querySelector(".drd-mp4-preview").addEventListener("click", () => {
+        preview.src = clip.url;
+        preview.style.display = "block";
+
+        const start = Math.max(0, clip.start || 0);
+        preview.currentTime = start;
+
+        preview.play().catch(() => {});
+      });
+    });
+  }
+
+  function readVideoDuration(clip) {
+    return new Promise(resolve => {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.muted = true;
+      video.src = clip.url;
+
+      video.onloadedmetadata = () => {
+        const duration = Number(video.duration) || 0;
+
+        clip.duration = duration;
+
+        if (!clip.end || clip.end <= 0) {
+          clip.end = duration;
+        }
+
+        video.removeAttribute("src");
+        video.load();
+
+        resolve(duration);
+      };
+
+      video.onerror = () => {
+        resolve(0);
+      };
+    });
+  }
+
+  filesInput.addEventListener("change", async () => {
+    const selectedFiles = Array.from(filesInput.files || []);
+
+    if (!selectedFiles.length) return;
+
+    const added = selectedFiles
+      .filter(file => file.type.startsWith("video/"))
+      .map(createClip);
+
+    clips.push(...added);
+
+    renderList();
+
+    setStatus("Leyendo duración de los videos...");
+
+    for (const clip of added) {
+      await readVideoDuration(clip);
+    }
+
+    renderList();
+
+    setStatus(
+      clips.length + " clip(s) cargado(s). " +
+      "Puedes organizarlos, recortarlos y exportarlos."
+    );
+
+    filesInput.value = "";
+  });
+
+  audioInput.addEventListener("change", () => {
+    audioFile = audioInput.files && audioInput.files[0]
+      ? audioInput.files[0]
+      : null;
+
+    audioName.textContent = audioFile
+      ? "Audio seleccionado: " + audioFile.name
+      : "No hay pista de audio seleccionada.";
+  });
+
+  clearBtn.addEventListener("click", () => {
+    if (rendering) return;
+
+    clips.forEach(revokeClipURL);
+    clips = [];
+
+    audioFile = null;
+    audioInput.value = "";
+    filesInput.value = "";
+
+    audioName.textContent = "No hay pista de audio seleccionada.";
+
+    revokeOutput();
+    renderList();
+    setProgress(0);
+
+    setStatus("Editor limpio. Puedes añadir nuevos videos.");
+  });
+
+  async function loadFFmpeg() {
+    if (ffmpegInstance) return ffmpegInstance;
+
+    setStatus(
+      "Preparando FFmpeg. La primera carga puede tardar debido a la descarga del motor..."
+    );
+
+    const { FFmpeg } = await import(
+      "https://esm.sh/@ffmpeg/ffmpeg@0.12.10"
+    );
+
+    const { toBlobURL } = await import(
+      "https://esm.sh/@ffmpeg/util@0.12.1"
+    );
+
+    const ffmpeg = new FFmpeg();
+
+    const baseURL =
+      "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
+
+    const coreURL = await toBlobURL(
+      baseURL + "/ffmpeg-core.js",
+      "text/javascript"
+    );
+
+    const wasmURL = await toBlobURL(
+      baseURL + "/ffmpeg-core.wasm",
+      "application/wasm"
+    );
+
+    await ffmpeg.load({
+      coreURL,
+      wasmURL
+    });
+
+    ffmpegInstance = ffmpeg;
+
+    return ffmpeg;
+  }
+
+  function safeFileName(index, extension) {
+    return "dorado_clip_" + index + "." + extension;
+  }
+
+  async function removeFFmpegFile(ffmpeg, filename) {
+    try {
+      await ffmpeg.deleteFile(filename);
+    } catch (e) {}
+  }
+
+  async function renderVideo() {
+    if (rendering) return;
+
+    if (!clips.length) {
+      setStatus("Primero añade al menos un video al editor.");
+      return;
+    }
+
+    for (let i = 0; i < clips.length; i++) {
+      const clip = clips[i];
+
+      if (!clip.duration) {
+        setStatus("No se pudo leer la duración de: " + clip.name);
+        return;
+      }
+
+      const start = Math.max(0, Number(clip.start) || 0);
+      const end = clip.end > 0 ? clip.end : clip.duration;
+
+      if (end <= start) {
+        setStatus(
+          "Revisa el clip " + (i + 1) +
+          ". El tiempo final debe ser mayor al tiempo inicial."
+        );
+        return;
+      }
+    }
+
+    rendering = true;
+    renderBtn.disabled = true;
+    clearBtn.disabled = true;
+    setProgress(0);
+    revokeOutput();
+
+    let ffmpeg;
+
+    const temporaryFiles = [];
+
+    try {
+      ffmpeg = await loadFFmpeg();
+
+      const total = clips.length;
+
+      const normalizedFiles = [];
+
+      for (let i = 0; i < total; i++) {
+        const clip = clips[i];
+
+        setStatus(
+          "Procesando clip " + (i + 1) + " de " + total +
+          ": " + clip.name
+        );
+
+        const inputExtension =
+          (clip.name.split(".").pop() || "mp4")
+            .replace(/[^a-z0-9]/gi, "")
+            .toLowerCase();
+
+        const inputName = safeFileName(i, inputExtension);
+        const outputName = "dorado_normalized_" + i + ".mp4";
+
+        temporaryFiles.push(inputName, outputName);
+
+        await ffmpeg.writeFile(
+          inputName,
+          new Uint8Array(await clip.file.arrayBuffer())
+        );
+
+        const start = Math.max(0, Number(clip.start) || 0);
+        const end = clip.end > 0 ? clip.end : clip.duration;
+        const duration = end - start;
+
+        const result = await ffmpeg.exec([
+          "-ss", String(start),
+          "-i", inputName,
+          "-t", String(duration),
+          "-vf",
+          "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1",
+          "-an",
+          "-c:v", "libx264",
+          "-preset", "ultrafast",
+          "-crf", "23",
+          "-pix_fmt", "yuv420p",
+          "-movflags", "+faststart",
+          outputName
+        ]);
+
+        if (result !== 0) {
+          throw new Error("FFmpeg falló al procesar el clip " + (i + 1));
+        }
+
+        normalizedFiles.push(outputName);
+
+        setProgress(((i + 1) / total) * 65);
+      }
+
+      setStatus("Uniendo escenas en un solo video...");
+
+      const concatFile = "dorado_concat.txt";
+      temporaryFiles.push(concatFile);
+
+      const concatContent = normalizedFiles
+        .map(name => "file '" + name + "'")
+        .join("\n");
+
+      await ffmpeg.writeFile(
+        concatFile,
+        new TextEncoder().encode(concatContent)
+      );
+
+      const joinedFile = "dorado_joined.mp4";
+      temporaryFiles.push(joinedFile);
+
+      const joinResult = await ffmpeg.exec([
+        "-f", "concat",
+        "-safe", "0",
+        "-i", concatFile,
+        "-c", "copy",
+        joinedFile
+      ]);
+
+      if (joinResult !== 0) {
+        throw new Error("No se pudieron unir los clips.");
+      }
+
+      setProgress(75);
+
+      let finalFile = "DoradoRD_video_final.mp4";
+      temporaryFiles.push(finalFile);
+
+      if (audioFile) {
+        setStatus("Integrando pista de audio...");
+
+        const audioExtension =
+          (audioFile.name.split(".").pop() || "mp3")
+            .replace(/[^a-z0-9]/gi, "")
+            .toLowerCase();
+
+        const audioInputName = "dorado_music." + audioExtension;
+        temporaryFiles.push(audioInputName);
+
+        await ffmpeg.writeFile(
+          audioInputName,
+          new Uint8Array(await audioFile.arrayBuffer())
+        );
+
+        const audioResult = await ffmpeg.exec([
+          "-i", joinedFile,
+          "-i", audioInputName,
+          "-map", "0:v:0",
+          "-map", "1:a:0",
+          "-c:v", "copy",
+          "-c:a", "aac",
+          "-b:a", "192k",
+          "-shortest",
+          "-movflags", "+faststart",
+          finalFile
+        ]);
+
+        if (audioResult !== 0) {
+          throw new Error("No se pudo integrar el audio.");
+        }
+      } else {
+        setStatus("Preparando MP4 final sin pista de audio externa...");
+
+        const copyResult = await ffmpeg.exec([
+          "-i", joinedFile,
+          "-c", "copy",
+          "-movflags", "+faststart",
+          finalFile
+        ]);
+
+        if (copyResult !== 0) {
+          throw new Error("No se pudo crear el MP4 final.");
+        }
+      }
+
+      setProgress(95);
+
+      const data = await ffmpeg.readFile(finalFile);
+
+      const videoBlob = new Blob(
+        [data.buffer],
+        { type: "video/mp4" }
+      );
+
+      outputUrl = URL.createObjectURL(videoBlob);
+
+      preview.src = outputUrl;
+      preview.style.display = "block";
+      preview.load();
+
+      download.href = outputUrl;
+      download.download = "DoradoRD_video_final.mp4";
+      download.style.display = "inline-block";
+
+      setProgress(100);
+
+      setStatus(
+        "✅ Video terminado correctamente. " +
+        "Formato 1080 × 1920 (9:16). " +
+        "Puedes visualizarlo y descargarlo."
+      );
+
+    } catch (error) {
+      console.error("DoradoRD MP4 error:", error);
+
+      setProgress(0);
+
+      setStatus(
+        "❌ Error durante la exportación: " +
+        (error && error.message ? error.message : String(error)) +
+        ". Si vuelve a ocurrir, intenta con clips más cortos o menos videos."
+      );
+
+    } finally {
+      if (ffmpeg && temporaryFiles.length) {
+        for (const filename of temporaryFiles) {
+          await removeFFmpegFile(ffmpeg, filename);
+        }
+      }
+
+      rendering = false;
+      renderBtn.disabled = false;
+      clearBtn.disabled = false;
+    }
+  }
+
+  renderBtn.addEventListener("click", renderVideo);
+
+  renderList();
+
+  /*
+    PUENTE PREPARADO PARA ESTUDIO IA
+    Permite que otra parte de DoradoRD pueda enviar archivos
+    locales al editor sin duplicar el motor de renderizado.
+  */
+
+  window.DoradoRDMP4 = {
+    addFile(file) {
+      if (!file || !file.type.startsWith("video/")) {
+        return false;
+      }
+
+      const clip = createClip(file);
+      clips.push(clip);
+      readVideoDuration(clip).then(renderList);
+      renderList();
+
+      setStatus("Video recibido desde otro módulo de DoradoRD.");
+      return true;
+    },
+
+    addFiles(files) {
+      const incoming = Array.from(files || [])
+        .filter(file => file && file.type.startsWith("video/"));
+
+      incoming.forEach(file => {
+          const clip = createClip(file);
+          clips.push(clip);
+          readVideoDuration(clip).then(renderList);
+        });
+
+      renderList();
+
+      if (incoming.length) {
+        setStatus(incoming.length + " video(s) recibido(s) desde otro módulo.");
+      }
+
+      return incoming.length;
+    },
+
+    setAudio(file) {
+      if (!file || !file.type.startsWith("audio/")) return false;
+      audioFile = file;
+      audioName.textContent = "Audio seleccionado: " + file.name;
+      return true;
+    },
+
+    clear() {
+      if (rendering) return false;
+      clearBtn.click();
+      return true;
+    },
+
+    export() {
+      renderVideo();
+    },
+
+    getClips() {
+      return clips.map(clip => ({
+        name: clip.name,
+        start: clip.start,
+        end: clip.end,
+        duration: clip.duration
+      }));
+    }
+  };
+
+})();
+</script>
 
 
 <!-- EDITOR MP4 v1: módulo independiente, sin modificar las funciones existentes -->
