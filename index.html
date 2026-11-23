@@ -1741,6 +1741,91 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     const value = $("video-select").value;
     if (!value || !Array.isArray(window.videos)) return null;
     return window.videos.find(v => String(window.videoKey(v)) === value) || null;
+    
+/* ==========================================
+   DORADOR D ANALYTICS
+   TRANSFERENCIA ESTUDIO IA -> EDITOR MP4
+========================================== */
+
+const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
+const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
+
+if (sendToMP4Button && !sendToMP4Button.dataset.connected) {
+
+  sendToMP4Button.dataset.connected = "true";
+
+  sendToMP4Button.addEventListener("click", function () {
+
+    const editor = window.DoradoRDMP4;
+
+    // Verificar motor MP4
+    if (!editor || typeof editor.addFile !== "function") {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "❌ El Editor MP4 no está disponible. Verifica que el motor esté cargado.";
+      }
+
+      return;
+    }
+
+    // Obtener video local
+    const videoFile = localFile;
+
+    if (!videoFile) {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "⚠️ Primero selecciona o carga el video original desde tu computadora. Los videos de TikTok seleccionados por API no contienen el archivo MP4 descargado.";
+      }
+
+      return;
+    }
+
+    // Obtener el guion actual
+    const outputElement = document.getElementById("drd-ai-output");
+
+    const currentScript =
+      (outputText && outputText.trim()) ||
+      (outputElement && outputElement.innerText.trim()) ||
+      "";
+
+    if (!currentScript) {
+      if (transferStatus) {
+        transferStatus.textContent =
+          "⚠️ Primero crea o mejora el guion antes de enviarlo.";
+      }
+
+      return;
+    }
+
+    // Obtener objetivo seleccionado
+    const goalElement = document.getElementById("drd-ai-goal");
+
+    const selectedGoal = goalElement
+      ? goalElement.options[goalElement.selectedIndex].text
+      : "Mejorar video";
+
+    // Enviar datos al editor MP4
+    window.dispatchEvent(
+      new CustomEvent("dorardrd:mp4-transfer", {
+        detail: {
+          file: videoFile,
+          script: currentScript,
+          goal: selectedGoal,
+          source: "DoradoRD Estudio IA",
+          timestamp: Date.now()
+        }
+      })
+    );
+
+    if (transferStatus) {
+      transferStatus.textContent =
+        "✅ Video y guion enviados al Editor MP4.";
+    }
+
+  });
+
+}
+
   }
 
   function refreshLibrary(){
