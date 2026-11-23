@@ -483,11 +483,13 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </div>
       </div>
 
-     <!-- GENERACION -->
+     
+<!-- GENERACION -->
 <div class="drd-card">
   <h3>✨ Crear contenido mejorado</h3>
 
   <label class="drd-label">Objetivo de la nueva versión</label>
+
   <select id="drd-ai-goal">
     <option value="retention">Aumentar retención</option>
     <option value="comments">Provocar comentarios</option>
@@ -531,26 +533,37 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     </button>
   </div>
 
-  <!-- NUEVA CONEXIÓN CON EDITOR MP4 -->
-  <div class="drd-actions" style="margin-top:15px;">
+  <!-- CONEXION CON EDITOR MP4 -->
+  <div class="drd-card" style="margin-top:16px;border:1px solid #3b82f6;">
+
+    <h3>🎞️ Producción del nuevo video</h3>
+
+    <p class="drd-small">
+      Envía el video original y el guion mejorado directamente
+      al editor MP4 para preparar la nueva versión.
+    </p>
+
     <button
       class="drd-btn primary"
       id="drd-ai-send-mp4"
+      type="button"
       style="width:100%;"
     >
-      🎬 ENVIAR AL EDITOR MP4
+      🚀 ENVIAR VIDEO Y GUION AL EDITOR MP4
     </button>
-  </div>
 
-  <div
-    id="drd-ai-mp4-transfer-status"
-    class="drd-small"
-    style="margin-top:8px;"
-  >
-    El video y el guion mejorado se enviarán al editor de producción.
+    <div
+      id="drd-ai-mp4-transfer-status"
+      class="drd-small"
+      style="margin-top:10px;"
+    >
+      Esperando video y guion.
+    </div>
+
   </div>
 
 </div>
+
       <!-- PUBLICACION -->
       <div class="drd-card" id="publish-center">
         <h3>📤 Centro de publicación</h3>
