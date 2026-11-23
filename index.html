@@ -1278,11 +1278,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     const { FFmpeg } = await import("https://esm.sh/@ffmpeg/ffmpeg@0.12.10");
     const ffmpeg = new FFmpeg();
 
-    // Importante: el Worker esencial se carga desde GitHub Pages, no desde esm.sh.
+    // El Worker esencial se carga desde GitHub Pages, no desde esm.sh.
     // Este archivo debe existir en /doradord-analytics/ffmpeg/worker.js.
     const localBase = new URL("./ffmpeg/", window.location.href);
     const classWorkerURL = new URL("worker.js", localBase).href;
-    const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+
+    // IMPORTANTE: el Worker de FFmpeg 0.12.10 es de tipo "module",
+    // por eso el Core debe ser la versión ESM (no UMD).
+    const coreBase = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm";
 
     async function fetchBlobURL(url, mimeType, label) {
       const response = await fetch(url, { cache: "force-cache" });
@@ -1309,12 +1312,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
     ffmpegInstance = ffmpeg;
     return ffmpeg;
-  }
-
-  function safeFileName(index, extension) {
-    return "dorado_clip_" + index + "." + extension;
-  }
-
+}
   async function removeFFmpegFile(ffmpeg, filename) {
     try {
       await ffmpeg.deleteFile(filename);
