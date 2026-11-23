@@ -820,9 +820,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   <h3>🎞️ Exportación de video · Motor MP4</h3>
 
   <p class="drd-mp4-small">
-    Editor centralizado de DoradoRD Analytics. Carga videos, organiza las escenas,
-    recorta los clips, agrega una pista de audio y exporta tu video final en formato
-    vertical 9:16.
+    Editor centralizado de DoradoRD Analytics. Carga videos, organiza escenas,
+    recorta clips, agrega una pista de audio y exporta un MP4. El guion recibido
+    sirve como referencia de producción; el render actual todavía no aplica
+    automáticamente narración, subtítulos ni escenas generadas por IA.
   </p>
 
   <div class="drd-mp4-box">
@@ -1603,6 +1604,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
     getClips() {
       return clips.map(clip => ({
+        file: clip.file,
         name: clip.name,
         start: clip.start,
         end: clip.end,
@@ -1649,6 +1651,9 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
            style="margin-bottom:10px;">
         Objetivo de producción pendiente
       </div>
+      <div id="drd-mp4-ai-meta" class="drd-small" style="margin-bottom:10px;">
+        Configuración de producción pendiente
+      </div>
 
       <textarea
         id="drd-mp4-ai-script"
@@ -1673,6 +1678,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   const scriptInput = document.getElementById("drd-mp4-ai-script");
   const goalDisplay = document.getElementById("drd-mp4-ai-goal");
+  const metaDisplay = document.getElementById("drd-mp4-ai-meta");
 
   // Recepción de transferencia
   window.addEventListener("dorardrd:mp4-transfer", async function (event) {
@@ -1703,7 +1709,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         : false;
 
       if (!alreadyAdded) {
-        await editor.addFile(file);
+        const added = await editor.addFile(file);
+        if (added === false) throw new Error("El editor rechazó el archivo de video.");
       }
 
       // Colocar guion en el editor
@@ -1713,8 +1720,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       // Mostrar objetivo
       if (goalDisplay) {
-        goalDisplay.textContent =
-          "🎯 Objetivo de producción: " + goal;
+        goalDisplay.textContent = "🎯 Objetivo de producción: " + goal;
+      }
+      if (metaDisplay) {
+        metaDisplay.textContent =
+          "Formato: " + (data.format || "No indicado") +
+          " · Duración objetivo: " + (data.duration || "No indicada") +
+          " · Estilo: " + (data.style || "No indicado") +
+          (data.instructions ? " · Instrucciones: " + data.instructions : "");
       }
 
       // Desplazarse al editor
@@ -1742,113 +1755,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 </script>
 
 
-<!-- EDITOR MP4 v1: módulo independiente, sin modificar las funciones existentes -->
-<style>
-#drd-mp4-editor{background:#10191e;border:1px solid #29404b;border-radius:17px;margin:24px 0;padding:22px;color:#eef6f4}
-#drd-mp4-editor .mp4-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#0b1217;border:1px solid #263640;border-radius:11px;padding:12px;margin:10px 0}
-#drd-mp4-editor .mp4-row video{width:90px;height:120px;object-fit:cover;background:#000;border-radius:8px}
-#drd-mp4-editor .mp4-meta{flex:1;min-width:180px}
-#drd-mp4-editor .mp4-meta strong{display:block;overflow-wrap:anywhere;margin-bottom:8px}
-#drd-mp4-editor input[type=number]{width:100px}
-#drd-mp4-editor .mp4-status{white-space:pre-line;background:#0b1217;border:1px solid #263640;padding:12px;border-radius:9px;margin-top:12px;color:#b9d4c7;font-size:13px}
-#drd-mp4-editor button{margin:4px;padding:9px 12px;border-radius:8px;border:1px solid #315743;background:#163526;color:#b9f4d0;font-weight:bold}
-#drd-mp4-editor button:disabled{opacity:.45;cursor:not-allowed}
-#drd-mp4-editor input[type=file]{max-width:100%}
-@media(max-width:600px){#drd-mp4-editor{padding:14px}#drd-mp4-editor .mp4-row video{width:70px;height:100px}}
-</style>
-<section id="drd-mp4-editor">
-  <h2>🎞️ Motor de producción MP4 · Versión 1</h2>
-  <p style="color:#9fb5aa;line-height:1.6">Carga clips, ordena escenas, define recortes y exporta un video vertical. El render se procesa en tu navegador; FFmpeg se descarga al iniciar la primera exportación.</p>
-  <label style="display:block;margin:12px 0 6px;font-size:13px">Añadir clips de video</label>
-  <input id="drd-mp4-files" type="file" accept="video/*" multiple>
-  <div style="margin-top:12px">
-    <label style="display:block;margin:12px 0 6px;font-size:13px">Música o audio opcional (se mezcla como pista final)</label>
-    <input id="drd-mp4-audio" type="file" accept="audio/*">
-  </div>
-  <div id="drd-mp4-list" style="margin-top:14px"></div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
-    <button id="drd-mp4-render">🎬 Exportar MP4</button>
-    <button id="drd-mp4-clear">🗑️ Limpiar clips</button>
-  </div>
-  <div class="mp4-status" id="drd-mp4-status">Añade uno o más clips para comenzar. Exportación vertical 1080 × 1920 (9:16).</div>
-  <video id="drd-mp4-preview" controls style="display:none;width:100%;max-height:450px;background:#000;margin-top:12px;border-radius:10px"></video>
-  <a id="drd-mp4-download" style="display:none;color:#00e676;font-weight:bold;display:none;margin-top:12px" download="DoradoRD_video_final.mp4">⬇ Descargar MP4 terminado</a>
-</section>
-<script>
-(function(){
-  const filesInput=document.getElementById('drd-mp4-files');
-  const audioInput=document.getElementById('drd-mp4-audio');
-  const list=document.getElementById('drd-mp4-list');
-  const status=document.getElementById('drd-mp4-status');
-  const renderBtn=document.getElementById('drd-mp4-render');
-  const clearBtn=document.getElementById('drd-mp4-clear');
-  const preview=document.getElementById('drd-mp4-preview');
-  const download=document.getElementById('drd-mp4-download');
-  let clips=[],audioFile=null,outputUrl=null,ffmpegInstance=null,rendering=false;
-  const formatTime=n=>{n=Math.max(0,Number(n)||0);return n.toFixed(2)};
-  function renderList(){
-    list.innerHTML='';
-    clips.forEach((clip,i)=>{
-      const row=document.createElement('div');row.className='mp4-row';
-      const thumb=document.createElement('video');thumb.src=clip.url;thumb.muted=true;thumb.preload='metadata';
-      const meta=document.createElement('div');meta.className='mp4-meta';
-      const name=document.createElement('strong');name.textContent=(i+1)+'. '+clip.file.name;
-      const duration=document.createElement('small');duration.textContent='Duración original: '+(clip.duration?clip.duration.toFixed(2)+' s':'cargando...');duration.style.color='#8da49a';
-      const trimWrap=document.createElement('div');trimWrap.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px';
-      const start=document.createElement('label');start.textContent='Inicio (s) ';const startInput=document.createElement('input');startInput.type='number';startInput.min='0';startInput.step='0.1';startInput.value=clip.start;startInput.setAttribute('aria-label','Inicio de recorte');start.appendChild(startInput);
-      const end=document.createElement('label');end.textContent='Final (s) ';const endInput=document.createElement('input');endInput.type='number';endInput.min='0';endInput.step='0.1';endInput.value=clip.end;endInput.setAttribute('aria-label','Final de recorte');end.appendChild(endInput);
-      startInput.addEventListener('change',()=>{clip.start=Math.max(0,Number(startInput.value)||0);if(clip.duration&&clip.start>=clip.end)clip.start=Math.max(0,clip.end-0.1);startInput.value=clip.start;});
-      endInput.addEventListener('change',()=>{clip.end=Math.min(clip.duration||Number(endInput.value),Math.max(0,Number(endInput.value)||0));if(clip.end<=clip.start)clip.end=Math.min(clip.duration,clip.start+0.1);endInput.value=clip.end;});
-      trimWrap.append(start,end);
-      const controls=document.createElement('div');
-      const up=document.createElement('button');up.textContent='↑';up.title='Mover clip arriba';up.disabled=i===0;up.onclick=()=>{[clips[i-1],clips[i]]=[clips[i],clips[i-1]];renderList();};
-      const down=document.createElement('button');down.textContent='↓';down.title='Mover clip abajo';down.disabled=i===clips.length-1;down.onclick=()=>{[clips[i+1],clips[i]]=[clips[i],clips[i+1]];renderList();};
-      const remove=document.createElement('button');remove.textContent='✕ Quitar';remove.onclick=()=>{URL.revokeObjectURL(clip.url);clips.splice(i,1);renderList();};controls.append(up,down,remove);
-      meta.append(name,duration,trimWrap,controls);row.append(thumb,meta);list.appendChild(row);
-      thumb.onloadedmetadata=()=>{clip.duration=thumb.duration;if(!clip.end||clip.end===0)clip.end=thumb.duration;endInput.value=clip.end;duration.textContent='Duración original: '+thumb.duration.toFixed(2)+' s';};
-    });
-  }
-  filesInput.addEventListener('change',()=>{
-    [...(filesInput.files||[])].forEach(file=>{if(!file.type.startsWith('video/'))return;clips.push({file,url:URL.createObjectURL(file),duration:0,start:0,end:0});});
-    renderList();status.textContent='Clips cargados: '+clips.length+'. Puedes cambiar su orden y recortar inicio/final.';
-  });
-  audioInput.addEventListener('change',()=>{audioFile=audioInput.files?.[0]||null;status.textContent=audioFile?'Audio añadido: '+audioFile.name+' (se mezclará en la exportación).':'Audio opcional no seleccionado.';});
-  clearBtn.addEventListener('click',()=>{clips.forEach(c=>URL.revokeObjectURL(c.url));clips=[];audioFile=null;filesInput.value='';audioInput.value='';renderList();preview.style.display='none';download.style.display='none';if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=null;status.textContent='Lista vacía. Añade clips para comenzar.';});
-  async function loadFFmpeg(){
-    if(ffmpegInstance)return ffmpegInstance;
-    status.textContent='Descargando motor FFmpeg para navegador (solo la primera vez)...';
-    const {FFmpeg}=await import('https://esm.sh/@ffmpeg/ffmpeg@0.12.10');
-    const {toBlobURL}=await import('https://esm.sh/@ffmpeg/util@0.12.1');
-    const ff=new FFmpeg();
-    const base='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-    await ff.load({coreURL:await toBlobURL(base+'/ffmpeg-core.js','text/javascript'),wasmURL:await toBlobURL(base+'/ffmpeg-core.wasm','application/wasm')});
-    ffmpegInstance=ff;return ff;
-  }
-  renderBtn.addEventListener('click',async()=>{
-    if(rendering)return;if(!clips.length){status.textContent='Primero añade clips de video.';return;}
-    if(clips.some(c=>!c.duration||c.end<=c.start)){status.textContent='Revisa los recortes: cada clip debe tener un intervalo válido.';return;}
-    rendering=true;renderBtn.disabled=true;clearBtn.disabled=true;download.style.display='none';
-    try{
-      const ff=await loadFFmpeg();const concatParts=[];
-      for(let i=0;i<clips.length;i++){
-        const c=clips[i],inName='input_'+i+'.mp4',outName='clip_'+i+'.mp4';
-        status.textContent='Procesando escena '+(i+1)+' de '+clips.length+'...';
-        await ff.writeFile(inName,new Uint8Array(await c.file.arrayBuffer()));
-        const start=Math.max(0,c.start),end=Math.min(c.duration,c.end);
-        await ff.exec(['-ss',String(start),'-i',inName,'-t',String(end-start),'-vf','scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1','-c:v','libx264','-preset','ultrafast','-crf','23','-c:a','aac','-ar','44100','-ac','2','-pix_fmt','yuv420p','-movflags','+faststart',outName]);
-        concatParts.push(outName);
-      }
-      const concatText=concatParts.map(n=>"file '"+n+"'").join('\n');await ff.writeFile('list.txt',new TextEncoder().encode(concatText));
-      status.textContent='Uniendo escenas...';
-      if(audioFile){await ff.writeFile('music_track',new Uint8Array(await audioFile.arrayBuffer()));await ff.exec(['-f','concat','-safe','0','-i','list.txt','-i','music_track','-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-shortest','DoradoRD_final.mp4']);}
-      else await ff.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','-movflags','+faststart','DoradoRD_final.mp4']);
-      const data=await ff.readFile('DoradoRD_final.mp4');const blob=new Blob([data.buffer],{type:'video/mp4'});
-      if(outputUrl)URL.revokeObjectURL(outputUrl);outputUrl=URL.createObjectURL(blob);preview.src=outputUrl;preview.style.display='block';download.href=outputUrl;download.style.display='inline-block';download.style.display='block';status.textContent='✓ Exportación finalizada. MP4 creado ('+(blob.size/1024/1024).toFixed(1)+' MB). Revisa el video antes de descargarlo.';
-    }catch(err){console.error('DoradoRD MP4:',err);status.textContent='No se pudo exportar: '+(err?.message||err)+'\nVerifica que el navegador permita cargar FFmpeg y que haya suficiente memoria disponible.';}
-    finally{rendering=false;renderBtn.disabled=false;clearBtn.disabled=false;}
-  });
-})();
-</script>
+<!-- Se eliminó el segundo editor MP4 duplicado; se conserva el motor principal. -->
 
 <script>
 (function(){
@@ -1866,93 +1773,61 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   function selectedVideo(){
     if(activeLocalVideo) return null;
     const value = $("video-select").value;
-    if (!value || !Array.isArray(window.videos)) return null;
+    if(!value || !Array.isArray(window.videos)) return null;
     return window.videos.find(v => String(window.videoKey(v)) === value) || null;
-    
-/* ==========================================
-   DORADOR D ANALYTICS
-   TRANSFERENCIA ESTUDIO IA -> EDITOR MP4
-========================================== */
+  }
 
-const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
-const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
+  /* Transferencia Estudio IA -> Editor MP4 */
+  const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
+  const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
 
-if (sendToMP4Button && !sendToMP4Button.dataset.connected) {
-
-  sendToMP4Button.dataset.connected = "true";
-
-  sendToMP4Button.addEventListener("click", function () {
-
-    const editor = window.DoradoRDMP4;
-
-    // Verificar motor MP4
-    if (!editor || typeof editor.addFile !== "function") {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "❌ El Editor MP4 no está disponible. Verifica que el motor esté cargado.";
+  if(sendToMP4Button && !sendToMP4Button.dataset.connected){
+    sendToMP4Button.dataset.connected = "true";
+    sendToMP4Button.addEventListener("click", function(){
+      const editor = window.DoradoRDMP4;
+      if(!editor || typeof editor.addFile !== "function"){
+        if(transferStatus) transferStatus.textContent =
+          "❌ El Editor MP4 no está disponible. Espera a que termine de cargar.";
+        return;
       }
 
-      return;
-    }
-
-    // Obtener video local
-    const videoFile = localFile;
-
-    if (!videoFile) {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "⚠️ Primero selecciona o carga el video original desde tu computadora. Los videos de TikTok seleccionados por API no contienen el archivo MP4 descargado.";
+      const videoFile = localFile;
+      if(!videoFile){
+        if(transferStatus) transferStatus.textContent =
+          "⚠️ Carga el video original desde tu computadora y pulsa «Usar este video para trabajar». Los videos de TikTok seleccionados por API no contienen el MP4.";
+        return;
       }
 
-      return;
-    }
-
-    // Obtener el guion actual
-    const outputElement = document.getElementById("drd-ai-output");
-
-    const currentScript =
-      (outputText && outputText.trim()) ||
-      (outputElement && outputElement.innerText.trim()) ||
-      "";
-
-    if (!currentScript) {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "⚠️ Primero crea o mejora el guion antes de enviarlo.";
+      const outputElement = document.getElementById("drd-ai-output");
+      const currentScript = (outputText && outputText.trim()) ||
+        (outputElement && outputElement.innerText.trim()) || "";
+      if(!currentScript){
+        if(transferStatus) transferStatus.textContent =
+          "⚠️ Primero crea, analiza o mejora el guion.";
+        return;
       }
 
-      return;
-    }
+      const getSelectText = id => {
+        const el = document.getElementById(id);
+        return el && el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : "";
+      };
 
-    // Obtener objetivo seleccionado
-    const goalElement = document.getElementById("drd-ai-goal");
+      const detail = {
+        file: videoFile,
+        script: currentScript,
+        goal: getSelectText("drd-ai-goal") || "Mejorar video",
+        format: getSelectText("drd-ai-format") || "TikTok vertical 9:16",
+        duration: getSelectText("drd-ai-duration") || "30 segundos",
+        style: getSelectText("drd-ai-style") || "Cinematográfico",
+        instructions: document.getElementById("drd-ai-instructions")?.value?.trim() || "",
+        source: "DoradoRD Estudio IA",
+        timestamp: Date.now()
+      };
 
-    const selectedGoal = goalElement
-      ? goalElement.options[goalElement.selectedIndex].text
-      : "Mejorar video";
-
-    // Enviar datos al editor MP4
-    window.dispatchEvent(
-      new CustomEvent("dorardrd:mp4-transfer", {
-        detail: {
-          file: videoFile,
-          script: currentScript,
-          goal: selectedGoal,
-          source: "DoradoRD Estudio IA",
-          timestamp: Date.now()
-        }
-      })
-    );
-
-    if (transferStatus) {
-      transferStatus.textContent =
-        "✅ Video y guion enviados al Editor MP4.";
-    }
-
-  });
-
-}
-
+      window.dispatchEvent(new CustomEvent("dorardrd:mp4-transfer", {detail}));
+      if(transferStatus) transferStatus.textContent =
+        "✅ Video, guion y configuración enviados al Editor MP4.";
+    });
   }
 
   function refreshLibrary(){
