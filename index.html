@@ -1377,7 +1377,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
             .replace(/[^a-z0-9]/gi, "")
             .toLowerCase();
 
-        const inputName = safeFileName(i, inputExtension);
+        const inputName = "dorado_input_" + i + "." + (inputExtension || "mp4");
         const outputName = "dorado_normalized_" + i + ".mp4";
 
         temporaryFiles.push(inputName, outputName);
