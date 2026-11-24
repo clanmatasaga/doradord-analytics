@@ -938,14 +938,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
     <button
       type="button"
-      id="drd-mp4-render"
-      class="drd-mp4-primary"
-    >
-      ⬇️ Exportar MP4
-    </button>
-
-    <button
-      type="button"
       id="drd-mp4-generate"
       class="drd-mp4-primary"
     >
@@ -1008,7 +1000,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   const audioInput = $("drd-mp4-audio");
   const list = $("drd-mp4-list");
   const status = $("drd-mp4-status");
-  const renderBtn = $("drd-mp4-render");
   const clearBtn = $("drd-mp4-clear");
   const preview = $("drd-mp4-preview");
   const download = $("drd-mp4-download");
@@ -1464,7 +1455,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     }
 
     rendering = true;
-    renderBtn.disabled = true;
     clearBtn.disabled = true;
     setProgress(0);
     revokeOutput();
@@ -1674,12 +1664,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       }
 
       rendering = false;
-      renderBtn.disabled = false;
       clearBtn.disabled = false;
     }
   }
 
-  renderBtn.addEventListener("click", renderVideo);
 
   renderList();
 
