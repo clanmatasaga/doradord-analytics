@@ -388,6 +388,9 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <select id="drd-ai-video-select">
           <option value="">Esperando biblioteca de TikTok...</option>
         </select>
+        <div class="drd-small" id="drd-ai-tiktok-state" style="margin-top:8px">
+          Elige un video de tu Biblioteca. TikTok proporciona sus datos y portada, pero no el archivo MP4 original mediante la conexión actual.
+        </div>
 
         <div class="drd-actions">
           <button class="drd-btn secondary" id="drd-ai-watch">
@@ -418,8 +421,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         <label class="drd-label">Modo de trabajo</label>
         <select id="drd-ai-mode">
-          <option value="manual">Manual — revisar cada paso</option>
-          <option value="automatic">Automático — preparar producción</option>
+          <option value="manual">Automático con revisión manual</option>
+          <option value="automatic">Automático inteligente</option>
         </select>
 
         <label class="drd-label">Formato final</label>
@@ -454,7 +457,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           placeholder="Ej.: Usa un comienzo impactante, narración en español dominicano, cortes rápidos y suspenso..."></textarea>
 
         <div class="drd-status" id="drd-ai-mode-status">
-          Modo manual activo. Tú controlas cada paso.
+          Modo automático con revisión manual: la IA propone los mejores fragmentos y puedes ajustar cada corte antes de exportar.
         </div>
       </div>
 
@@ -836,16 +839,16 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <section id="drd-mp4-editor">
 
-  <h3>🎬 Editor Inteligente de Clips · Motor FFmpeg integrado</h3>
+  <h3>🎞️ Montaje, revisión y exportación</h3>
 
   <p class="drd-mp4-small">
-    Trabaja en automático inteligente o con revisión manual. Analiza el material con la IA disponible, ajusta escenas, añade música y exporta el MP4. El motor FFmpeg permanece integrado aquí; ya no existe como editor independiente.
+    Esta es la etapa de producción del mismo Editor Inteligente. La IA prepara los fragmentos y aquí puedes revisarlos, añadir audio, ajustar subtítulos y exportar el MP4 final. No es un editor independiente.
   </p>
 
   <div class="drd-mp4-box">
 
     <label class="drd-mp4-label">
-      🎬 Añadir videos desde tu computadora
+      🎬 Añadir clips complementarios desde tu computadora (opcional)
     </label>
 
     <input
@@ -872,35 +875,18 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   </div>
 
   <div class="drd-mp4-box">
-    <strong>⚙️ Configuración de producción</strong>
+    <strong>⚙️ Opciones adicionales de exportación</strong>
     <div class="drd-mp4-config-grid">
       <div>
-        <label class="drd-mp4-label" for="drd-mp4-mode">🧠 Modo de edición</label>
-        <select id="drd-mp4-mode">
-          <option value="smart">Automático inteligente</option>
-          <option value="review" selected>Automático con revisión manual</option>
-        </select>
-      </div>
-      <div>
-        <label class="drd-mp4-label" for="drd-mp4-format">📐 Formato final</label>
-        <select id="drd-mp4-format">
-          <option value="vertical" selected>Vertical 9:16 · TikTok</option>
-          <option value="horizontal">Horizontal 16:9</option>
-          <option value="square">Cuadrado 1:1</option>
-        </select>
-      </div>
-      <div>
-        <label class="drd-mp4-label" for="drd-mp4-duration">⏱️ Duración objetivo (segundos)</label>
-        <input type="number" id="drd-mp4-duration" min="1" step="1" value="30">
-      </div>
-      <div>
-        <label class="drd-mp4-label" for="drd-mp4-count">🎬 Cantidad de MP4 independientes</label>
+        <label class="drd-mp4-label" for="drd-mp4-count">🎬 Cantidad de versiones MP4</label>
         <select id="drd-mp4-count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option></select>
       </div>
     </div>
-    <label class="drd-mp4-label" for="drd-mp4-instructions">🧠 Instrucciones avanzadas de edición</label>
-    <textarea id="drd-mp4-instructions" placeholder="Ej.: abre con la escena más impactante, cortes dinámicos, zoom suave, evita repetir escenas... "></textarea>
     <label class="drd-mp4-label" for="drd-mp4-captions">💬 Subtítulos (texto opcional)</label>
+    <input type="hidden" id="drd-mp4-mode" value="review">
+    <input type="hidden" id="drd-mp4-format" value="vertical">
+    <input type="hidden" id="drd-mp4-duration" value="30">
+    <textarea id="drd-mp4-instructions" style="display:none" aria-hidden="true"></textarea>
     <textarea id="drd-mp4-captions" placeholder="Escribe el texto que quieres ver como subtítulo. No se sincroniza automáticamente por voz todavía."></textarea>
     <div class="drd-mp4-small">El texto de subtítulos se muestra en la vista previa. El MP4 todavía no lleva subtítulos incrustados ni generados automáticamente.</div>
     <div id="drd-mp4-output-links"></div>
@@ -908,7 +894,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       Revisión manual activa: analiza el video y revisa los fragmentos antes de exportar.
     </div>
     <div class="drd-mp4-small" style="margin-top:8px">
-      Nota técnica: el análisis actual del Worker entrega informe y transcripción, pero no marcas de tiempo de escenas. Por eso los puntos de corte se revisan en la lista de clips; no se inventan momentos destacados. Los subtítulos escritos se muestran en vista previa, pero todavía no se incrustan en el MP4.
+      Los cortes propuestos por IA son aproximados y editables. Los subtítulos escritos se muestran en vista previa, pero todavía no se incrustan automáticamente en el MP4.
     </div>
   </div>
 
@@ -1031,8 +1017,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   if (modeInput && modeHelp) {
     modeInput.addEventListener("change", () => {
       modeHelp.textContent = modeInput.value === "smart"
-        ? "Automático inteligente (base): exporta la secuencia cargada con la duración y el formato elegidos. La selección autónoma de los mejores momentos por IA todavía requiere que el Worker devuelva una línea de tiempo con marcas de tiempo; el endpoint actual /ai/analyze entrega un informe y transcripción, no esa lista de segmentos."
-        : "Automático con revisión manual: usa el análisis IA como referencia y permite corregir el orden y los puntos de inicio/final de cada clip antes de exportar.";
+        ? "Automático inteligente: la IA propone y ordena los mejores fragmentos del video. Revisa el resultado y pulsa Exportar MP4 cuando estés listo."
+        : "Automático con revisión manual: la IA propone los fragmentos y puedes ajustar los tiempos, cambiar el orden o eliminar escenas antes de exportar.";
     });
   }
   if (preview && coverButton) {
@@ -1152,6 +1138,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
             Duración original:
             ${duration ? formatTime(duration) + " segundos" : "Leyendo video..."}
           </div>
+          ${clip.aiReason ? `<div class="drd-mp4-small" style="color:#aee6c5;margin-top:6px">IA · ${escapeHTML(clip.aiReason)}${Number.isFinite(clip.aiScore) ? " · Puntuación " + Math.round(clip.aiScore) + "/100" : ""}</div>` : ""}
 
           <div class="drd-mp4-clip-grid">
 
@@ -1735,6 +1722,36 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       return incoming.length;
     },
 
+    async setTimeline(file, segments) {
+      if (!file || !file.type || !file.type.startsWith("video/")) return false;
+      if (rendering) throw new Error("No se puede cambiar la línea de tiempo durante una exportación.");
+      const valid = (Array.isArray(segments) ? segments : [])
+        .map(segment => ({
+          start: Math.max(0, Number(segment.start) || 0),
+          end: Math.max(0, Number(segment.end) || 0),
+          reason: String(segment.reason || "Fragmento seleccionado por IA").slice(0, 240),
+          score: Number.isFinite(Number(segment.score)) ? Math.max(0, Math.min(100, Number(segment.score))) : null
+        }))
+        .filter(segment => segment.end > segment.start + 0.5)
+        .sort((a, b) => a.start - b.start);
+      if (!valid.length) return false;
+      clips.forEach(revokeClipURL);
+      clips = [];
+      valid.forEach(segment => {
+        const clip = createClip(file);
+        clip.start = segment.start;
+        clip.end = segment.end;
+        clip.aiReason = segment.reason;
+        clip.aiScore = segment.score;
+        clips.push(clip);
+      });
+      renderList();
+      await Promise.all(clips.map(readVideoDuration));
+      renderList();
+      setStatus("La IA preparó " + clips.length + " fragmento(s). " + (modeInput && modeInput.value === "smart" ? "Modo automático inteligente: la selección está lista para exportar." : "Revisa los cortes y ajusta los fragmentos antes de exportar."));
+      return true;
+    },
+
     setAudio(file) {
       if (!file || !file.type.startsWith("audio/")) return false;
       audioFile = file;
@@ -1774,10 +1791,13 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
     getClips() {
       return clips.map(clip => ({
+        file: clip.file,
         name: clip.name,
         start: clip.start,
         end: clip.end,
-        duration: clip.duration
+        duration: clip.duration,
+        aiReason: clip.aiReason || "",
+        aiScore: clip.aiScore
       }));
     }
   };
@@ -2000,12 +2020,16 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     });
     const selectedKey = window.selectedVideo ? String(window.videoKey(window.selectedVideo)) : previous;
     if (selectedKey && [...select.options].some(o=>o.value===selectedKey)) select.value=selectedKey;
+    const state = $("tiktok-state");
+    if (state && select.value) state.textContent = "Video de Biblioteca seleccionado. La API ofrece datos y portada; para editar necesitas el archivo MP4 original.";
   }
 
   function syncSelection(){
     const chosen=window.selectedVideo;
     const key=chosen?String(window.videoKey(chosen)):"";
     if(key && [...$("video-select").options].some(o=>o.value===key)) $("video-select").value=key;
+    const state = $("tiktok-state");
+    if (state && chosen) state.textContent = "✓ Video de Biblioteca seleccionado: " + (chosen.title || chosen.video_description || "Video de TikTok") + ". Para editar necesitas el archivo MP4 original.";
   }
 
   window.DoradoRDAIRefreshLibrary=refreshLibrary;
@@ -2125,6 +2149,8 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   /* ===== CONEXIÓN CON IA (WORKER + GEMINI) ===== */
   const AI_WORKER = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
   let lastAnalysis = "";
+  let lastFrames = [];
+  let lastSourceDuration = 0;
   let aiBusy = false;
 
   function aiToken(){ return sessionStorage.getItem("doradord_session") || ""; }
@@ -2188,6 +2214,40 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     return new Blob([wav], { type: "audio/wav" });
   }
 
+  async function createAITimeline(frames, sourceDuration){
+    if (!activeLocalVideo || !localFile) return;
+    const token = aiToken();
+    if (!token) throw new Error("Conecta TikTok para autorizar el análisis con IA.");
+    if (!Array.isArray(frames) || !frames.length || !sourceDuration) {
+      throw new Error("No hay fotogramas suficientes para proponer cortes.");
+    }
+    const targetDuration = Math.max(1, Number($("duration").value) || 30);
+    const payload = {
+      title: workVideoTitle(),
+      analysis: lastAnalysis,
+      sourceDuration,
+      targetDuration,
+      style: $("style").value,
+      instructions: $("instructions").value.trim(),
+      frames
+    };
+    $("analysis-status").textContent = "La IA está seleccionando los mejores momentos y preparando la línea de tiempo...";
+    const response = await fetch(AI_WORKER + "/ai/timeline", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "No se pudo crear la línea de tiempo (HTTP " + response.status + ").");
+    const editor = window.DoradoRDMP4;
+    if (!editor || typeof editor.setTimeline !== "function") {
+      throw new Error("El motor de edición integrado no está disponible.");
+    }
+    const applied = await editor.setTimeline(localFile, result.segments || []);
+    if (!applied) throw new Error("La IA no devolvió fragmentos utilizables.");
+    $("analysis-status").textContent = "✓ Análisis y selección de escenas completados. " + result.segments.length + " fragmentos propuestos · " + (result.engine || "Gemini") + ". " + ( $("mode").value === "automatic" ? "Modo inteligente listo para exportar." : "Revisa y ajusta los cortes antes de exportar." );
+  }
+
   async function runAIAnalysis(coverOnly){
     if (aiBusy) return;
     if (!hasWorkVideo()) {
@@ -2210,8 +2270,12 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       if (activeLocalVideo && localFile) {
         form.append("source", "upload");
         $("analysis-status").textContent = "Extrayendo fotogramas del video...";
-        const { frames, duration } = await extractFrames(localFile, coverOnly ? 1 : 8);
-        form.append("frames", JSON.stringify(frames));
+        const { frames, duration } = await extractFrames(localFile, coverOnly ? 1 : 16);
+        if (!coverOnly) {
+          lastFrames = frames;
+          lastSourceDuration = duration;
+        }
+        form.append("frames", JSON.stringify(frames.slice(0, 8)));
         form.append("metadata", JSON.stringify({ duration, size: localFile.size, name: localFile.name }));
         if (!coverOnly) {
           try {
@@ -2251,6 +2315,16 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
         "✓ Análisis completado. Fotogramas analizados: " + data.framesAnalyzed +
         " · Audio transcrito: " + (data.audioTranscribed ? "sí" : "no") +
         " · Motor: " + (data.engine || "gemini") + note;
+
+      if (!coverOnly && activeLocalVideo && localFile) {
+        try {
+          await createAITimeline(lastFrames, lastSourceDuration);
+        } catch (timelineError) {
+          $("analysis-status").textContent += "\n⚠ No se pudo crear la selección automática de escenas: " + timelineError.message + ". Puedes seguir editando los cortes manualmente.";
+        }
+      } else if (!coverOnly && !activeLocalVideo) {
+        $("analysis-status").textContent += "\nℹ Video de Biblioteca seleccionado: TikTok entrega portada y métricas, pero no el MP4 original. Para crear cortes y exportar, carga el archivo MP4 original.";
+      }
     } catch (error) {
       $("analysis-status").textContent = "No se pudo analizar: " + error.message;
     } finally {
@@ -2298,7 +2372,9 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       lastAnalysis="";
       if(typeof window.selectVideo==="function") window.selectVideo(v,false);
       $("analysis-status").textContent=
-        "Video seleccionado: "+currentTitle()+". Pulsa «Analizar video completo».";
+        "Video seleccionado: "+currentTitle()+". Pulsa «Analizar video completo» para revisar sus datos y portada.";
+      const libraryState = $("tiktok-state");
+      if (libraryState) libraryState.textContent = "✓ Video de TikTok seleccionado: " + currentTitle() + ". Para editar escenas y exportar necesitas el archivo MP4 original; la API actual no lo entrega.";
     }
   });
 
@@ -2336,10 +2412,30 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
 
   $("mode").addEventListener("change",()=>{
     const automatic=$("mode").value==="automatic";
+    const mp4Mode = document.getElementById("drd-mp4-mode");
+    if (mp4Mode) mp4Mode.value = automatic ? "smart" : "review";
     $("mode-status").textContent=automatic?
-      "Modo automático seleccionado. La automatización real se activará cuando conectemos el sistema de producción.":
-      "Modo manual activo. Tú controlas cada paso.";
+      "Modo automático inteligente: la IA selecciona y organiza los mejores fragmentos del MP4 cargado.":
+      "Modo automático con revisión manual: la IA propone los cortes y tú puedes corregirlos antes de exportar.";
+    const help = document.getElementById("drd-mp4-mode-help");
+    if (help) help.textContent = automatic ?
+      "Automático inteligente: la IA propone y ordena los mejores fragmentos del video. Revisa el resultado y pulsa Exportar MP4 cuando estés listo.":
+      "Automático con revisión manual: la IA propone los fragmentos y puedes ajustar los tiempos, cambiar el orden o eliminar escenas antes de exportar.";
   });
+
+  // Mantener una sola configuración efectiva entre el panel IA y el motor FFmpeg.
+  const syncProductionSettings = () => {
+    const format = $("format").value;
+    const mp4Format = document.getElementById("drd-mp4-format");
+    const duration = document.getElementById("drd-mp4-duration");
+    const instructions = document.getElementById("drd-mp4-instructions");
+    if (mp4Format) mp4Format.value = format === "landscape" ? "horizontal" : format;
+    if (duration) duration.value = String(Math.max(1, Number($("duration").value) || 30));
+    if (instructions) instructions.value = $("instructions").value;
+  };
+  ["format", "duration", "instructions"].forEach(id => $(id).addEventListener("change", syncProductionSettings));
+  $("instructions").addEventListener("input", syncProductionSettings);
+  syncProductionSettings();
 
   $("analyze").addEventListener("click", () => runAIAnalysis(false));
   $("cover").addEventListener("click", () => runAIAnalysis(true));
