@@ -2572,6 +2572,74 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   refreshLibrary();
 })();
 </script>
+<!-- REPARACIÓN INDEPENDIENTE DEL BOTÓN AGNES: no depende del módulo Estudio IA -->
+<script>
+(function(){
+  const oldButton = document.getElementById("drd-ai-agnes-generate");
+  if (!oldButton) return;
+  // Reemplaza el botón para descartar listeners anteriores que pudieran quedar inactivos.
+  const button = oldButton.cloneNode(true);
+  oldButton.replaceWith(button);
+  const status = document.getElementById("drd-ai-agnes-status");
+  const promptEl = document.getElementById("drd-ai-agnes-prompt");
+  const secondsEl = document.getElementById("drd-ai-agnes-seconds");
+  const ratioEl = document.getElementById("drd-ai-agnes-ratio");
+  const preview = document.getElementById("drd-ai-agnes-preview");
+  const download = document.getElementById("drd-ai-agnes-download");
+  const worker = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
+  let polling = false;
+  function setStatus(message){ if(status) status.textContent=message; }
+  function token(){ return sessionStorage.getItem("doradord_session") || ""; }
+  async function pollVideo(id, auth){
+    if(polling) return;
+    polling=true;
+    try{
+      for(let n=1;n<=40;n++){
+        await new Promise(resolve=>setTimeout(resolve,7500));
+        setStatus("⏳ Agnes está procesando el clip... consulta "+n+" de 40.");
+        const res=await fetch(worker+"/ai/video/status?video_id="+encodeURIComponent(id),{headers:{Authorization:"Bearer "+auth}});
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(data.error||"Error HTTP "+res.status);
+        const state=String(data.status||data.result?.status||"").toLowerCase();
+        const url=data.video_url||data.url||data.result?.url||data.result?.video_url||data.result?.output?.url;
+        if(url){
+          preview.src=url; preview.style.display="block"; preview.load();
+          download.href=url; download.style.display="inline-block";
+        }
+        if(url && (["completed","complete","success","succeeded","finished","done"].includes(state)||!state)){
+          setStatus("✅ Video listo. Puedes reproducirlo y descargarlo."); return;
+        }
+        if(["failed","error","cancelled","canceled"].includes(state)) throw new Error("Agnes reportó estado: "+state);
+      }
+      setStatus("⚠️ La generación continúa en Agnes. Puedes esperar o revisar el estado más tarde.");
+    }catch(e){setStatus("❌ Error consultando el video: "+e.message);}
+    finally{polling=false;}
+  }
+  button.addEventListener("click",async function(){
+    const auth=token();
+    const prompt=(promptEl?.value||"").trim();
+    if(!auth){setStatus("⚠️ Conecta TikTok primero; se requiere una sesión activa.");return;}
+    if(!prompt){setStatus("✍️ Escribe una descripción del video antes de generar.");promptEl?.focus();return;}
+    button.disabled=true;
+    if(preview){preview.pause();preview.removeAttribute("src");preview.style.display="none";}
+    if(download){download.removeAttribute("href");download.style.display="none";}
+    setStatus("📤 Enviando descripción a Agnes AI...");
+    try{
+      const res=await fetch(worker+"/ai/video/generate",{
+        method:"POST",headers:{Authorization:"Bearer "+auth,"Content-Type":"application/json"},
+        body:JSON.stringify({prompt,seconds:secondsEl?.value||"8",aspect_ratio:ratioEl?.value||"9:16"})
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(data.error||data.details?.message||"Respuesta HTTP "+res.status);
+      if(!data.video_id) throw new Error("Cloudflare no devolvió el ID del video.");
+      setStatus("✅ Agnes aceptó la solicitud. ID: "+data.video_id+". Esperando el resultado...");
+      pollVideo(data.video_id,auth);
+    }catch(e){setStatus("❌ No se pudo iniciar: "+e.message);}
+    finally{button.disabled=false;}
+  });
+  setStatus("Botón Agnes conectado. Escribe tu descripción y genera el clip.");
+})();
+</script>
 <!-- FIN DORADOR RD AI STUDIO -->
 
 <!-- LABORATORIO VIRAL -->
