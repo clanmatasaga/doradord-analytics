@@ -564,6 +564,25 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 </div>
 
+      <!-- GENERADOR DE VIDEO AGNES AI -->
+      <div class="drd-card" id="drd-ai-agnes-card" style="grid-column:1/-1;border-color:#38704b;background:linear-gradient(145deg,#11251a,#111b27);">
+        <h3>🎬 Generador de video · Agnes AI</h3>
+        <p class="drd-small">Genera un clip directamente desde una descripción de texto. Motor Agnes AI · agnes-video-2.5-flash. Requiere sesión de TikTok conectada.</p>
+        <label class="drd-label" for="drd-ai-agnes-prompt">Descripción detallada del video</label>
+        <textarea id="drd-ai-agnes-prompt" maxlength="5000" placeholder="Describe la escena, personajes, ambiente, movimientos de cámara, iluminación y estilo visual..."></textarea>
+        <div class="drd-mp4-config-grid" style="margin-top:12px;grid-template-columns:repeat(3,minmax(0,1fr));">
+          <div><label class="drd-label" for="drd-ai-agnes-seconds">Duración</label><select id="drd-ai-agnes-seconds">
+            <option value="4">4 segundos</option><option value="5">5 segundos</option><option value="6">6 segundos</option><option value="7">7 segundos</option><option value="8" selected>8 segundos</option><option value="9">9 segundos</option><option value="10">10 segundos</option><option value="11">11 segundos</option><option value="12">12 segundos</option>
+          </select></div>
+          <div><label class="drd-label" for="drd-ai-agnes-ratio">Formato</label><select id="drd-ai-agnes-ratio"><option value="9:16" selected>Vertical 9:16</option><option value="16:9">Horizontal 16:9</option><option value="1:1">Cuadrado 1:1</option></select></div>
+          <div><label class="drd-label">Motor</label><div class="drd-status" style="margin:0">Agnes AI · 720P</div></div>
+        </div>
+        <button type="button" class="drd-btn primary" id="drd-ai-agnes-generate" style="width:100%;margin-top:14px;">✨ Generar video con Agnes AI</button>
+        <div class="drd-status" id="drd-ai-agnes-status">Listo para recibir tu descripción. El clip puede tardar varios minutos.</div>
+        <video id="drd-ai-agnes-preview" class="drd-preview" controls playsinline style="display:none;max-height:520px;"></video>
+        <a id="drd-ai-agnes-download" class="drd-btn secondary" href="#" download="DoradoRD_Agnes_video.mp4" style="display:none;text-align:center;text-decoration:none;">⬇ Descargar video generado</a>
+      </div>
+
       <!-- PUBLICACION -->
       <div class="drd-card" id="publish-center">
         <h3>📤 Centro de publicación</h3>
@@ -938,6 +957,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
     <button
       type="button"
+      id="drd-mp4-render"
+      class="drd-mp4-primary"
+    >
+      ⬇️ Exportar MP4
+    </button>
+
+    <button
+      type="button"
       id="drd-mp4-generate"
       class="drd-mp4-primary"
     >
@@ -1000,6 +1027,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   const audioInput = $("drd-mp4-audio");
   const list = $("drd-mp4-list");
   const status = $("drd-mp4-status");
+  const renderBtn = $("drd-mp4-render");
   const clearBtn = $("drd-mp4-clear");
   const preview = $("drd-mp4-preview");
   const download = $("drd-mp4-download");
@@ -1455,6 +1483,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     }
 
     rendering = true;
+    renderBtn.disabled = true;
     clearBtn.disabled = true;
     setProgress(0);
     revokeOutput();
@@ -1664,10 +1693,12 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       }
 
       rendering = false;
+      renderBtn.disabled = false;
       clearBtn.disabled = false;
     }
   }
 
+  renderBtn.addEventListener("click", renderVideo);
 
   renderList();
 
@@ -2482,6 +2513,61 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     $("export-status").textContent=
       "La producción está configurada, pero aún falta conectar los servicios de generación de video, audio, subtítulos y renderizado.";
   });
+
+
+  // ===== GENERACIÓN DE VIDEO AGNES AI (Worker seguro; clave nunca llega al navegador) =====
+  const agnesGenerateButton = document.getElementById("drd-ai-agnes-generate");
+  const agnesStatus = document.getElementById("drd-ai-agnes-status");
+  const agnesPreview = document.getElementById("drd-ai-agnes-preview");
+  const agnesDownload = document.getElementById("drd-ai-agnes-download");
+  let agnesPolling = false;
+
+  function agnesToken(){ return sessionStorage.getItem("doradord_session") || ""; }
+  function agnesSetStatus(text){ if(agnesStatus) agnesStatus.textContent=text; }
+  async function agnesCheckStatus(videoId, token){
+    if(agnesPolling) return; agnesPolling=true;
+    try {
+      for(let attempt=1; attempt<=40; attempt++){
+        await new Promise(resolve=>setTimeout(resolve,7500));
+        agnesSetStatus("⏳ Agnes está procesando el video... consulta "+attempt+" de 40.");
+        const response=await fetch(AI_WORKER+"/ai/video/status?video_id="+encodeURIComponent(videoId),{headers:{Authorization:"Bearer "+token}});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(data.error||"No se pudo consultar el estado ("+response.status+").");
+        const state=String(data.status||data.result?.status||"").toLowerCase();
+        const videoUrl=data.video_url||data.result?.url||data.result?.video_url||data.result?.output?.url||null;
+        if(videoUrl && (["completed","complete","success","succeeded","finished","done"].includes(state)||!state)){
+          agnesPreview.src=videoUrl; agnesPreview.style.display="block"; agnesPreview.load();
+          agnesDownload.href=videoUrl; agnesDownload.style.display="inline-block";
+          agnesSetStatus("✅ Video generado. Ya puedes reproducirlo y descargarlo."); return;
+        }
+        if(["failed","error","cancelled","canceled"].includes(state)) throw new Error("Agnes reportó estado: "+state);
+        if(videoUrl){agnesPreview.src=videoUrl;agnesPreview.style.display="block";agnesPreview.load();agnesDownload.href=videoUrl;agnesDownload.style.display="inline-block";}
+      }
+      agnesSetStatus("⚠️ La generación sigue en proceso. No se canceló; vuelve a consultar el estado desde el botón Generar solo si el clip no aparece.");
+    } catch(error){ agnesSetStatus("❌ Error consultando Agnes: "+error.message); }
+    finally{ agnesPolling=false; }
+  }
+  if(agnesGenerateButton && !agnesGenerateButton.dataset.connected){
+    agnesGenerateButton.dataset.connected="true";
+    agnesGenerateButton.addEventListener("click",async()=>{
+      if(aiBusy) { agnesSetStatus("⏳ Espera a que termine la otra tarea de IA."); return; }
+      const prompt=document.getElementById("drd-ai-agnes-prompt").value.trim();
+      const token=agnesToken();
+      if(!token){agnesSetStatus("⚠️ Conecta TikTok primero; se necesita una sesión activa.");return;}
+      if(!prompt){agnesSetStatus("Escribe una descripción antes de generar.");return;}
+      agnesGenerateButton.disabled=true; agnesPreview.style.display="none"; agnesDownload.style.display="none";
+      agnesSetStatus("📤 Enviando prompt a Agnes AI...");
+      try{
+        const response=await fetch(AI_WORKER+"/ai/video/generate",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({prompt,seconds:document.getElementById("drd-ai-agnes-seconds").value,aspect_ratio:document.getElementById("drd-ai-agnes-ratio").value})});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(data.error||"Error HTTP "+response.status);
+        if(!data.video_id) throw new Error("El Worker no devolvió ID de video.");
+        agnesSetStatus("✅ Solicitud aceptada por Agnes. ID: "+data.video_id+". Esperando el resultado...");
+        agnesCheckStatus(data.video_id,token);
+      }catch(error){agnesSetStatus("❌ No se pudo iniciar: "+error.message);}
+      finally{agnesGenerateButton.disabled=false;}
+    });
+  }
 
   refreshLibrary();
 })();
