@@ -719,6 +719,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   color: #fff;
 }
 
+#drd-mp4-editor .drd-mp4-config-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#drd-mp4-editor textarea, #drd-mp4-editor select { width:100%; background:#0b1318; border:1px solid #29404b; color:#eef6f4; border-radius:8px; padding:10px; font:inherit; }
+#drd-mp4-editor textarea { min-height:90px; resize:vertical; }
+#drd-mp4-editor .drd-mp4-output-link { display:inline-block; margin:8px 8px 0 0; padding:9px 12px; background:#123327; border:1px solid #00c878; color:#dfffee; border-radius:9px; font-weight:700; text-decoration:none; }
+#drd-mp4-editor .drd-mp4-preview-wrap { position:relative; }
+#drd-mp4-editor .drd-mp4-caption-preview { position:absolute; left:5%; right:5%; bottom:12%; text-align:center; color:white; font-weight:900; font-size:clamp(16px,4vw,28px); text-shadow:2px 2px 4px #000,-1px -1px 2px #000; pointer-events:none; display:none; white-space:pre-wrap; }
+@media(max-width:600px){#drd-mp4-editor .drd-mp4-config-grid{grid-template-columns:1fr;}}
+
 #drd-mp4-editor .drd-mp4-actions {
   display: flex;
   flex-wrap: wrap;
@@ -769,6 +777,29 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Reflejo suave mientras el motor procesa: solo visual, no altera el estado */
+#drd-mp4-editor .drd-mp4-status.is-processing::after {
+  content: "";
+  position: absolute;
+  inset: -35% auto -35% -45%;
+  width: 38%;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent, rgba(180,245,255,.07), rgba(255,255,255,.16), rgba(95,220,255,.09), transparent);
+  transform: skewX(-18deg);
+  animation: drdMp4StatusShine 3.8s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes drdMp4StatusShine {
+  0% { left: -48%; opacity: 0; }
+  15% { opacity: .55; }
+  55% { left: 115%; opacity: .4; }
+  100% { left: 115%; opacity: 0; }
 }
 
 #drd-mp4-editor .drd-mp4-preview {
@@ -781,11 +812,26 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 }
 
 #drd-mp4-editor .drd-mp4-download {
-  display: inline-block;
+  display: none;
+  width: fit-content;
   margin-top: 14px;
-  color: #00e676;
-  font-weight: bold;
+  padding: 10px 14px;
+  border: 1px solid #00c878;
+  border-radius: 9px;
+  background: #123327;
+  color: #dfffee;
+  font-weight: 700;
   text-decoration: none;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+#drd-mp4-editor .drd-mp4-download:hover {
+  background: #174633;
+  border-color: #45f0a5;
+  transform: translateY(-1px);
+}
+#drd-mp4-editor .drd-mp4-download:focus-visible {
+  outline: 2px solid #8af7c6;
+  outline-offset: 3px;
 }
 
 #drd-mp4-editor .drd-mp4-progress {
@@ -855,6 +901,27 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   </div>
 
   <div class="drd-mp4-box">
+    <strong>⚙️ Configuración de producción</strong>
+    <div class="drd-mp4-config-grid">
+      <div>
+        <label class="drd-mp4-label" for="drd-mp4-duration">⏱️ Duración objetivo (segundos)</label>
+        <input type="number" id="drd-mp4-duration" min="1" step="1" value="30">
+      </div>
+      <div>
+        <label class="drd-mp4-label" for="drd-mp4-count">🎬 Cantidad de MP4 independientes</label>
+        <select id="drd-mp4-count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option></select>
+      </div>
+    </div>
+    <label class="drd-mp4-label" for="drd-mp4-instructions">🧠 Instrucciones avanzadas de edición</label>
+    <textarea id="drd-mp4-instructions" placeholder="Ej.: abre con la escena más impactante, cortes dinámicos, zoom suave, evita repetir escenas... "></textarea>
+    <label class="drd-mp4-label" for="drd-mp4-captions">💬 Subtítulos (texto opcional)</label>
+    <textarea id="drd-mp4-captions" placeholder="Escribe el texto que quieres ver como subtítulo. No se sincroniza automáticamente por voz todavía."></textarea>
+    <div class="drd-mp4-small">El texto de subtítulos se muestra en la vista previa. El MP4 todavía no lleva subtítulos incrustados ni generados automáticamente.</div>
+    <div id="drd-mp4-output-links"></div>
+  </div>
+
+
+  <div class="drd-mp4-box">
 
     <strong>📚 Clips seleccionados</strong>
 
@@ -910,13 +977,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     Formato de salida: 1080 × 1920 · 9:16.
   </div>
 
-  <video
-    id="drd-mp4-preview"
-    class="drd-mp4-preview"
-    controls
-    playsinline
-    style="display:none"
-  ></video>
+  <div class="drd-mp4-preview-wrap">
+    <video id="drd-mp4-preview" class="drd-mp4-preview" controls playsinline style="display:none"></video>
+    <div id="drd-mp4-caption-preview" class="drd-mp4-caption-preview"></div>
+  </div>
+  <button type="button" id="drd-mp4-cover" class="drd-mp4-secondary" style="display:none;margin-top:10px">🖼️ Crear portada desde fotograma</button>
 
   <a
     id="drd-mp4-download"
@@ -949,6 +1014,42 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   const download = $("drd-mp4-download");
   const progressBar = $("drd-mp4-progress-bar");
   const audioName = $("drd-mp4-audio-name");
+  const durationInput = $("drd-mp4-duration");
+  const outputCountInput = $("drd-mp4-count");
+  const instructionsInput = $("drd-mp4-instructions");
+  const captionsInput = $("drd-mp4-captions");
+  const captionPreview = $("drd-mp4-caption-preview");
+  const outputLinks = $("drd-mp4-output-links");
+  const coverButton = $("drd-mp4-cover");
+  const outputVariants = [];
+  let batchMode = false;
+  let currentVariant = 0;
+  let variantCount = 1;
+
+  if (captionsInput && captionPreview) {
+    captionsInput.addEventListener("input", () => {
+      const caption = captionsInput.value.trim();
+      captionPreview.textContent = caption;
+      captionPreview.style.display = caption && preview.style.display !== "none" ? "block" : "none";
+    });
+  }
+  if (preview && coverButton) {
+    preview.addEventListener("loadeddata", () => { coverButton.style.display = "inline-block"; });
+    coverButton.addEventListener("click", () => {
+      if (!preview.videoWidth || !preview.videoHeight) { setStatus("Carga o reproduce un video para poder capturar su portada."); return; }
+      const canvas = document.createElement("canvas");
+      canvas.width = preview.videoWidth; canvas.height = preview.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob) { setStatus("No se pudo generar la imagen de portada."); return; }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a"); link.href = url; link.download = "DoradoRD_portada.jpg";
+        link.click(); setTimeout(() => URL.revokeObjectURL(url), 1500);
+        setStatus("Portada JPG capturada desde el fotograma actual. Puedes descargarla.");
+      }, "image/jpeg", 0.92);
+    });
+  }
 
   let clips = [];
   let audioFile = null;
@@ -958,6 +1059,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   function setStatus(message) {
     status.textContent = message;
+    const text = String(message || "").toLowerCase();
+    const processing = /procesando|preparando|integrando|uniendo|descargando|inicializando|cargando|render|exportando/.test(text)
+      && !/terminado correctamente|error durante|falló|fallo/.test(text);
+    status.classList.toggle("is-processing", processing);
   }
 
   function setProgress(value) {
@@ -1004,7 +1109,9 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   function revokeOutput() {
     if (outputUrl) {
-      URL.revokeObjectURL(outputUrl);
+      // Durante la exportación múltiple se conservan URLs previas para que
+      // los enlaces de descarga de cada MP4 sigan funcionando.
+      if (!batchMode) URL.revokeObjectURL(outputUrl);
       outputUrl = null;
     }
 
@@ -1013,6 +1120,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     preview.load();
 
     preview.style.display = "none";
+    if (captionPreview) captionPreview.style.display = "none";
+    if (coverButton) coverButton.style.display = "none";
     download.style.display = "none";
     download.removeAttribute("href");
   }
@@ -1347,6 +1456,13 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       }
     }
 
+    const requestedDuration = Math.max(1, Number(durationInput && durationInput.value) || 1);
+    const totalAvailable = clips.reduce((sum, clip) => sum + Math.max(0, (clip.end > 0 ? clip.end : clip.duration) - Math.max(0, clip.start || 0)), 0);
+    if (requestedDuration > totalAvailable + 0.05) {
+      setStatus("⚠️ La duración solicitada (" + requestedDuration + " s) supera el material seleccionado (" + totalAvailable.toFixed(1) + " s). Añade más video o reduce los segundos.");
+      return;
+    }
+
     rendering = true;
     renderBtn.disabled = true;
     clearBtn.disabled = true;
@@ -1470,6 +1586,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           "-i", audioInputName,
           "-map", "0:v:0",
           "-map", "1:a:0",
+          "-t", String(Math.max(1, Number(durationInput && durationInput.value) || 1)),
           "-c:v", "copy",
           "-c:a", "aac",
           "-b:a", "192k",
@@ -1486,6 +1603,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         const copyResult = await ffmpeg.exec([
           "-i", joinedFile,
+          "-t", String(Math.max(1, Number(durationInput && durationInput.value) || 1)),
           "-c", "copy",
           "-movflags", "+faststart",
           finalFile
@@ -1512,8 +1630,22 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       preview.load();
 
       download.href = outputUrl;
-      download.download = "DoradoRD_video_final.mp4";
+      const variantName = batchMode ? "DoradoRD_video_" + (currentVariant + 1) + ".mp4" : "DoradoRD_video_final.mp4";
+      download.download = variantName;
       download.style.display = "inline-block";
+      if (batchMode && outputLinks) {
+        const link = document.createElement("a");
+        link.className = "drd-mp4-output-link";
+        link.href = outputUrl;
+        link.download = variantName;
+        link.textContent = "⬇ Descargar video " + (currentVariant + 1);
+        outputLinks.appendChild(link);
+      }
+      if (captionPreview && captionsInput && captionsInput.value.trim()) {
+        captionPreview.textContent = captionsInput.value.trim();
+        captionPreview.style.display = "block";
+      }
+      if (coverButton) coverButton.style.display = "inline-block";
 
       setProgress(100);
 
@@ -1608,7 +1740,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       renderVideo();
     },
 
-    generate(scriptText) {
+    async generate(scriptText) {
       const text = String(scriptText || "").trim();
       if (!clips.length) {
         setStatus("Carga o transfiere al menos un video antes de generar la producción.");
@@ -1619,8 +1751,13 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       } else {
         setStatus("Iniciando render real con los recortes, orden de escenas, formato vertical y audio seleccionado.");
       }
-      renderVideo();
+      await renderVideo();
       return true;
+    },
+
+    setBatchOptions(enabled, index) {
+      batchMode = !!enabled;
+      currentVariant = Math.max(0, Number(index) || 0);
     },
 
     getClips() {
@@ -1728,13 +1865,24 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
   const generateButton = document.getElementById("drd-mp4-generate");
   if (generateButton) {
-    generateButton.addEventListener("click", () => {
+    generateButton.addEventListener("click", async () => {
       const editor = window.DoradoRDMP4;
-      if (!editor || typeof editor.generate !== "function") {
-        alert("El motor de producción MP4 no está listo.");
-        return;
+      if (!editor || typeof editor.generate !== "function") { alert("El motor de producción MP4 no está listo."); return; }
+      const count = Math.min(3, Math.max(1, Number(outputCountInput && outputCountInput.value) || 1));
+      const seconds = Math.max(1, Number(durationInput && durationInput.value) || 1);
+      const instructionText = instructionsInput ? instructionsInput.value.trim() : "";
+      const scriptText = scriptInput ? scriptInput.value.trim() : "";
+      const linksContainer = document.getElementById("drd-mp4-output-links");
+      if (linksContainer) linksContainer.innerHTML = "";
+      if (count > 1) {
+        alert("Se crearán " + count + " exportaciones MP4 independientes con la misma selección de clips. El motor actual aún no aplica variaciones de edición basadas en IA; por ahora serán exportaciones de la misma secuencia y duración configurada.");
       }
-      editor.generate(scriptInput ? scriptInput.value.trim() : "");
+      if (instructionText) setStatus("Instrucciones recibidas para la producción (" + instructionText.length + " caracteres). El motor FFmpeg actual no las aplica automáticamente; exportará los recortes configurados.");
+      for (let i = 0; i < count; i++) {
+        editor.setBatchOptions(count > 1, i);
+        await editor.generate(scriptText);
+      }
+      editor.setBatchOptions(false, 0);
     });
   }
 
