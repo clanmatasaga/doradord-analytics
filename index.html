@@ -153,7 +153,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <nav class="main-nav" aria-label="Navegación principal">
   <a href="#dashboard">⌂ Dashboard</a>
-  <a href="#drd-ai-studio">✨ Estudio IA</a>
+  <a href="#drd-ai-studio">🎬 Editor Inteligente</a>
   <a href="#viralLab">⚡ Laboratorio</a>
   <a href="#videoLibrary">🎥 Videos</a>
   <a href="#publish-center">📤 Publicar</a>
@@ -367,15 +367,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <section id="drd-ai-studio">
   <div class="drd-header">
-    <h2>🐉 DoradoRD AI Studio</h2>
+    <h2>🎬 DoradoRD · Editor Inteligente de Clips</h2>
     <p>
-      Centro de análisis, creación, edición y futura publicación
-      inteligente de contenido para TikTok.
+      Selecciona un video, analízalo con los motores IA disponibles, organiza los clips, edita y exporta tu MP4 desde un solo espacio.
     </p>
     <span class="drd-pill">ANÁLISIS IA</span>
-    <span class="drd-pill">CREACIÓN</span>
-    <span class="drd-pill">PORTADAS</span>
-    <span class="drd-pill">PUBLICACIÓN</span>
+    <span class="drd-pill">EDICIÓN MP4</span>
+    <span class="drd-pill">DOS MODOS DE TRABAJO</span>
+    <span class="drd-pill">CENTRO DE PUBLICACIÓN</span>
   </div>
 
   <div class="drd-content">
@@ -409,8 +408,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </div>
 
         <p class="drd-small" style="margin-top:10px">
-          El archivo seleccionado se utilizará como material de trabajo.
-          Al pulsar «Analizar», se envían a la IA solo fotogramas y audio extraídos en tu navegador, no el archivo completo.
+          El archivo MP4 local se utilizará para analizar y editar. La selección desde TikTok solo aporta metadatos y portada: la API conectada no entrega el MP4 original. Al analizar, se envían al Worker los fotogramas y el audio extraídos en el navegador, no el archivo completo.
         </p>
       </div>
 
@@ -533,55 +531,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     </button>
   </div>
 
-  <!-- CONEXION CON EDITOR MP4 -->
-  <div class="drd-card" style="margin-top:16px;border:1px solid #3b82f6;">
-
-    <h3>🎞️ Producción del nuevo video</h3>
-
-    <p class="drd-small">
-      Envía el video original y el guion mejorado directamente
-      al editor MP4 para preparar la nueva versión.
-    </p>
-
-    <button
-      class="drd-btn primary"
-      id="drd-ai-send-mp4"
-      type="button"
-      style="width:100%;"
-    >
-      🚀 ENVIAR VIDEO Y GUION AL EDITOR MP4
-    </button>
-
-    <div
-      id="drd-ai-mp4-transfer-status"
-      class="drd-small"
-      style="margin-top:10px;"
-    >
-      Esperando video y guion.
-    </div>
-
-  </div>
 
 </div>
-
-      <!-- GENERADOR DE VIDEO AGNES AI -->
-      <div class="drd-card" id="drd-ai-agnes-card" style="grid-column:1/-1;border-color:#38704b;background:linear-gradient(145deg,#11251a,#111b27);">
-        <h3>🎬 Generador de video · Agnes AI</h3>
-        <p class="drd-small">Genera un clip directamente desde una descripción de texto. Motor Agnes AI · agnes-video-2.5-flash. Requiere sesión de TikTok conectada.</p>
-        <label class="drd-label" for="drd-ai-agnes-prompt">Descripción detallada del video</label>
-        <textarea id="drd-ai-agnes-prompt" maxlength="5000" placeholder="Describe la escena, personajes, ambiente, movimientos de cámara, iluminación y estilo visual..."></textarea>
-        <div class="drd-mp4-config-grid" style="margin-top:12px;grid-template-columns:repeat(3,minmax(0,1fr));">
-          <div><label class="drd-label" for="drd-ai-agnes-seconds">Duración</label><select id="drd-ai-agnes-seconds">
-            <option value="4">4 segundos</option><option value="5">5 segundos</option><option value="6">6 segundos</option><option value="7">7 segundos</option><option value="8" selected>8 segundos</option><option value="9">9 segundos</option><option value="10">10 segundos</option><option value="11">11 segundos</option><option value="12">12 segundos</option>
-          </select></div>
-          <div><label class="drd-label" for="drd-ai-agnes-ratio">Formato</label><select id="drd-ai-agnes-ratio"><option value="9:16" selected>Vertical 9:16</option><option value="16:9">Horizontal 16:9</option><option value="1:1">Cuadrado 1:1</option></select></div>
-          <div><label class="drd-label">Motor</label><div class="drd-status" style="margin:0">Agnes AI · 720P</div></div>
-        </div>
-        <button type="button" class="drd-btn primary" id="drd-ai-agnes-generate" style="width:100%;margin-top:14px;">✨ Generar video con Agnes AI</button>
-        <div class="drd-status" id="drd-ai-agnes-status">Listo para recibir tu descripción. El clip puede tardar varios minutos.</div>
-        <video id="drd-ai-agnes-preview" class="drd-preview" controls playsinline style="display:none;max-height:520px;"></video>
-        <a id="drd-ai-agnes-download" class="drd-btn secondary" href="#" download="DoradoRD_Agnes_video.mp4" style="display:none;text-align:center;text-decoration:none;">⬇ Descargar video generado</a>
-      </div>
 
       <!-- PUBLICACION -->
       <div class="drd-card" id="publish-center">
@@ -630,8 +581,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         </select>
 
         <div class="drd-status" id="drd-ai-publish-status">
-          Publicación directa aún no conectada. Ningún video se enviará a TikTok desde este módulo.
+          El video final aparecerá aquí automáticamente después de exportarlo. La publicación directa aún requiere integración oficial de TikTok.
         </div>
+        <video id="drd-publish-final-preview" controls playsinline style="display:none;width:100%;max-height:420px;background:#000;border-radius:10px;margin-top:12px"></video>
+        <a id="drd-publish-final-download" class="drd-btn secondary" href="#" download="DoradoRD_video_final.mp4" style="display:none;text-align:center;text-decoration:none">⬇ Descargar video listo para publicar</a>
 
         <div class="drd-actions">
           <button class="drd-btn primary" id="drd-ai-publish-ready">
@@ -647,6 +600,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <style>
 #drd-mp4-editor {
+  grid-column: 1 / -1;
   background: #10191e;
   border: 1px solid #29404b;
   border-radius: 17px;
@@ -882,12 +836,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <section id="drd-mp4-editor">
 
-  <h3>🎞️ Exportación de video · Motor MP4</h3>
+  <h3>🎬 Editor Inteligente de Clips · Motor FFmpeg integrado</h3>
 
   <p class="drd-mp4-small">
-    Editor centralizado de DoradoRD Analytics. Carga videos, organiza las escenas,
-    recorta los clips, agrega una pista de audio y exporta tu video final en formato
-    vertical 9:16.
+    Trabaja en automático inteligente o con revisión manual. Analiza el material con la IA disponible, ajusta escenas, añade música y exporta el MP4. El motor FFmpeg permanece integrado aquí; ya no existe como editor independiente.
   </p>
 
   <div class="drd-mp4-box">
@@ -923,6 +875,21 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     <strong>⚙️ Configuración de producción</strong>
     <div class="drd-mp4-config-grid">
       <div>
+        <label class="drd-mp4-label" for="drd-mp4-mode">🧠 Modo de edición</label>
+        <select id="drd-mp4-mode">
+          <option value="smart">Automático inteligente</option>
+          <option value="review" selected>Automático con revisión manual</option>
+        </select>
+      </div>
+      <div>
+        <label class="drd-mp4-label" for="drd-mp4-format">📐 Formato final</label>
+        <select id="drd-mp4-format">
+          <option value="vertical" selected>Vertical 9:16 · TikTok</option>
+          <option value="horizontal">Horizontal 16:9</option>
+          <option value="square">Cuadrado 1:1</option>
+        </select>
+      </div>
+      <div>
         <label class="drd-mp4-label" for="drd-mp4-duration">⏱️ Duración objetivo (segundos)</label>
         <input type="number" id="drd-mp4-duration" min="1" step="1" value="30">
       </div>
@@ -937,6 +904,12 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     <textarea id="drd-mp4-captions" placeholder="Escribe el texto que quieres ver como subtítulo. No se sincroniza automáticamente por voz todavía."></textarea>
     <div class="drd-mp4-small">El texto de subtítulos se muestra en la vista previa. El MP4 todavía no lleva subtítulos incrustados ni generados automáticamente.</div>
     <div id="drd-mp4-output-links"></div>
+    <div class="drd-mp4-small" id="drd-mp4-mode-help" style="margin-top:10px">
+      Revisión manual activa: analiza el video y revisa los fragmentos antes de exportar.
+    </div>
+    <div class="drd-mp4-small" style="margin-top:8px">
+      Nota técnica: el análisis actual del Worker entrega informe y transcripción, pero no marcas de tiempo de escenas. Por eso los puntos de corte se revisan en la lista de clips; no se inventan momentos destacados. Los subtítulos escritos se muestran en vista previa, pero todavía no se incrustan en el MP4.
+    </div>
   </div>
 
 
@@ -993,7 +966,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     class="drd-mp4-status"
   >
     Añade uno o más videos para comenzar.
-    Formato de salida: 1080 × 1920 · 9:16.
+    Formato de salida según la configuración: 9:16, 16:9 o 1:1.
   </div>
 
   <div class="drd-mp4-preview-wrap">
@@ -1034,6 +1007,9 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   const progressBar = $("drd-mp4-progress-bar");
   const audioName = $("drd-mp4-audio-name");
   const durationInput = $("drd-mp4-duration");
+  const formatInput = $("drd-mp4-format");
+  const modeInput = $("drd-mp4-mode");
+  const modeHelp = $("drd-mp4-mode-help");
   const outputCountInput = $("drd-mp4-count");
   const instructionsInput = $("drd-mp4-instructions");
   const captionsInput = $("drd-mp4-captions");
@@ -1050,6 +1026,13 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       const caption = captionsInput.value.trim();
       captionPreview.textContent = caption;
       captionPreview.style.display = caption && preview.style.display !== "none" ? "block" : "none";
+    });
+  }
+  if (modeInput && modeHelp) {
+    modeInput.addEventListener("change", () => {
+      modeHelp.textContent = modeInput.value === "smart"
+        ? "Automático inteligente (base): exporta la secuencia cargada con la duración y el formato elegidos. La selección autónoma de los mejores momentos por IA todavía requiere que el Worker devuelva una línea de tiempo con marcas de tiempo; el endpoint actual /ai/analyze entrega un informe y transcripción, no esa lista de segmentos."
+        : "Automático con revisión manual: usa el análisis IA como referencia y permite corregir el orden y los puntos de inicio/final de cada clip antes de exportar.";
     });
   }
   if (preview && coverButton) {
@@ -1531,7 +1514,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           "-i", inputName,
           "-t", String(duration),
           "-vf",
-          "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,setsar=1",
+          (function(){
+            const format = formatInput ? formatInput.value : "vertical";
+            const dims = format === "horizontal" ? [1920,1080] : format === "square" ? [1080,1080] : [1080,1920];
+            return "scale="+dims[0]+":"+dims[1]+":force_original_aspect_ratio=increase,crop="+dims[0]+":"+dims[1]+",fps=30,setsar=1";
+          })(),
           "-an",
           "-c:v", "libx264",
           "-preset", "ultrafast",
@@ -1668,11 +1655,17 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       setProgress(100);
 
-      setStatus(
-        "✅ Video terminado correctamente. " +
-        "Formato 1080 × 1920 (9:16). " +
-        "Puedes visualizarlo y descargarlo."
-      );
+      const selectedFormat = formatInput ? formatInput.value : "vertical";
+      const formatLabel = selectedFormat === "horizontal" ? "1920 × 1080 (16:9)" : selectedFormat === "square" ? "1080 × 1080 (1:1)" : "1080 × 1920 (9:16)";
+      setStatus("✅ Video terminado correctamente. Formato " + formatLabel + ". Puedes visualizarlo y descargarlo.");
+      window.DoradoRDFinalVideoBlob = videoBlob;
+      window.DoradoRDFinalVideoURL = outputUrl;
+      const publishStatus = document.getElementById("drd-ai-publish-status");
+      const publishPreview = document.getElementById("drd-publish-final-preview");
+      const publishDownload = document.getElementById("drd-publish-final-download");
+      if (publishPreview) { publishPreview.src = outputUrl; publishPreview.style.display = "block"; publishPreview.load(); }
+      if (publishDownload) { publishDownload.href = outputUrl; publishDownload.download = variantName; publishDownload.style.display = "inline-block"; }
+      if (publishStatus) publishStatus.textContent = "✅ Video final transferido automáticamente al Centro de Publicación. Revisa descripción, hashtags y privacidad. La publicación directa aún requiere integración oficial de TikTok.";
 
     } catch (error) {
       console.error("DoradoRD MP4 error:", error);
@@ -1992,91 +1985,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     const value = $("video-select").value;
     if (!value || !Array.isArray(window.videos)) return null;
     return window.videos.find(v => String(window.videoKey(v)) === value) || null;
-    
-/* ==========================================
-   DORADOR D ANALYTICS
-   TRANSFERENCIA ESTUDIO IA -> EDITOR MP4
-========================================== */
-
-const sendToMP4Button = document.getElementById("drd-ai-send-mp4");
-const transferStatus = document.getElementById("drd-ai-mp4-transfer-status");
-
-if (sendToMP4Button && !sendToMP4Button.dataset.connected) {
-
-  sendToMP4Button.dataset.connected = "true";
-
-  sendToMP4Button.addEventListener("click", function () {
-
-    const editor = window.DoradoRDMP4;
-
-    // Verificar motor MP4
-    if (!editor || typeof editor.addFile !== "function") {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "❌ El Editor MP4 no está disponible. Verifica que el motor esté cargado.";
-      }
-
-      return;
-    }
-
-    // Obtener video local
-    const videoFile = localFile;
-
-    if (!videoFile) {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "⚠️ Primero selecciona o carga el video original desde tu computadora. Los videos de TikTok seleccionados por API no contienen el archivo MP4 descargado.";
-      }
-
-      return;
-    }
-
-    // Obtener el guion actual
-    const outputElement = document.getElementById("drd-ai-output");
-
-    const currentScript =
-      (outputText && outputText.trim()) ||
-      (outputElement && outputElement.innerText.trim()) ||
-      "";
-
-    if (!currentScript) {
-      if (transferStatus) {
-        transferStatus.textContent =
-          "⚠️ Primero crea o mejora el guion antes de enviarlo.";
-      }
-
-      return;
-    }
-
-    // Obtener objetivo seleccionado
-    const goalElement = document.getElementById("drd-ai-goal");
-
-    const selectedGoal = goalElement
-      ? goalElement.options[goalElement.selectedIndex].text
-      : "Mejorar video";
-
-    // Enviar datos al editor MP4
-    window.dispatchEvent(
-      new CustomEvent("dorardrd:mp4-transfer", {
-        detail: {
-          file: videoFile,
-          script: currentScript,
-          goal: selectedGoal,
-          source: "DoradoRD Estudio IA",
-          timestamp: Date.now()
-        }
-      })
-    );
-
-    if (transferStatus) {
-      transferStatus.textContent =
-        "✅ Video y guion enviados al Editor MP4.";
-    }
-
-  });
-
-}
-
   }
 
   function refreshLibrary(){
@@ -2107,11 +2015,17 @@ if (sendToMP4Button && !sendToMP4Button.dataset.connected) {
     $("local-state").textContent=localFile?"Video local cargado; puedes volver a seleccionarlo.":"";
   };
 
+  let localFileSentToEditor = null;
+
   function selectLocalVideo(){
     if(!localFile) return;
     activeLocalVideo=true;
-    $("local-state").textContent="✓ Video local seleccionado para trabajar";
-    $("analysis-status").textContent="Video local activo: "+localFile.name+". Pulsa «Analizar video completo» para el análisis con IA.";
+    if (window.DoradoRDMP4 && localFileSentToEditor !== localFile) {
+      const accepted = window.DoradoRDMP4.addFile(localFile);
+      if (accepted) localFileSentToEditor = localFile;
+    }
+    $("local-state").textContent="✓ Video local seleccionado y enviado al editor integrado";
+    $("analysis-status").textContent="Video local activo: "+localFile.name+". Ya está disponible en la línea de clips. Pulsa «Analizar video completo» para el análisis con IA.";
     writeOutput("");
   }
 
@@ -2498,7 +2412,9 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     const privacy=$("privacy").value;
     const approval=$("approval").checked;
     const auto=$("auto-enabled").checked;
+    const hasFinalVideo = !!window.DoradoRDFinalVideoBlob;
     $("publish-status").textContent=
+      (hasFinalVideo ? "VIDEO FINAL ADJUNTO\n" : "FALTA EXPORTAR EL VIDEO\n") +
       "PUBLICACIÓN PREPARADA\n"+
       "Modo: "+mode+"\n"+
       "Privacidad: "+privacy+"\n"+
@@ -2515,129 +2431,8 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   });
 
 
-  // ===== GENERACIÓN DE VIDEO AGNES AI (Worker seguro; clave nunca llega al navegador) =====
-  const agnesGenerateButton = document.getElementById("drd-ai-agnes-generate");
-  const agnesStatus = document.getElementById("drd-ai-agnes-status");
-  const agnesPreview = document.getElementById("drd-ai-agnes-preview");
-  const agnesDownload = document.getElementById("drd-ai-agnes-download");
-  let agnesPolling = false;
-
-  function agnesToken(){ return sessionStorage.getItem("doradord_session") || ""; }
-  function agnesSetStatus(text){ if(agnesStatus) agnesStatus.textContent=text; }
-  async function agnesCheckStatus(videoId, token){
-    if(agnesPolling) return; agnesPolling=true;
-    try {
-      for(let attempt=1; attempt<=40; attempt++){
-        await new Promise(resolve=>setTimeout(resolve,7500));
-        agnesSetStatus("⏳ Agnes está procesando el video... consulta "+attempt+" de 40.");
-        const response=await fetch(AI_WORKER+"/ai/video/status?video_id="+encodeURIComponent(videoId),{headers:{Authorization:"Bearer "+token}});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok) throw new Error(data.error||"No se pudo consultar el estado ("+response.status+").");
-        const state=String(data.status||data.result?.status||"").toLowerCase();
-        const videoUrl=data.video_url||data.result?.url||data.result?.video_url||data.result?.output?.url||null;
-        if(videoUrl && (["completed","complete","success","succeeded","finished","done"].includes(state)||!state)){
-          agnesPreview.src=videoUrl; agnesPreview.style.display="block"; agnesPreview.load();
-          agnesDownload.href=videoUrl; agnesDownload.style.display="inline-block";
-          agnesSetStatus("✅ Video generado. Ya puedes reproducirlo y descargarlo."); return;
-        }
-        if(["failed","error","cancelled","canceled"].includes(state)) throw new Error("Agnes reportó estado: "+state);
-        if(videoUrl){agnesPreview.src=videoUrl;agnesPreview.style.display="block";agnesPreview.load();agnesDownload.href=videoUrl;agnesDownload.style.display="inline-block";}
-      }
-      agnesSetStatus("⚠️ La generación sigue en proceso. No se canceló; vuelve a consultar el estado desde el botón Generar solo si el clip no aparece.");
-    } catch(error){ agnesSetStatus("❌ Error consultando Agnes: "+error.message); }
-    finally{ agnesPolling=false; }
-  }
-  if(agnesGenerateButton && !agnesGenerateButton.dataset.connected){
-    agnesGenerateButton.dataset.connected="true";
-    agnesGenerateButton.addEventListener("click",async()=>{
-      if(aiBusy) { agnesSetStatus("⏳ Espera a que termine la otra tarea de IA."); return; }
-      const prompt=document.getElementById("drd-ai-agnes-prompt").value.trim();
-      const token=agnesToken();
-      if(!token){agnesSetStatus("⚠️ Conecta TikTok primero; se necesita una sesión activa.");return;}
-      if(!prompt){agnesSetStatus("Escribe una descripción antes de generar.");return;}
-      agnesGenerateButton.disabled=true; agnesPreview.style.display="none"; agnesDownload.style.display="none";
-      agnesSetStatus("📤 Enviando prompt a Agnes AI...");
-      try{
-        const response=await fetch(AI_WORKER+"/ai/video/generate",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({prompt,seconds:document.getElementById("drd-ai-agnes-seconds").value,aspect_ratio:document.getElementById("drd-ai-agnes-ratio").value})});
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok) throw new Error(data.error||"Error HTTP "+response.status);
-        if(!data.video_id) throw new Error("El Worker no devolvió ID de video.");
-        agnesSetStatus("✅ Solicitud aceptada por Agnes. ID: "+data.video_id+". Esperando el resultado...");
-        agnesCheckStatus(data.video_id,token);
-      }catch(error){agnesSetStatus("❌ No se pudo iniciar: "+error.message);}
-      finally{agnesGenerateButton.disabled=false;}
-    });
-  }
 
   refreshLibrary();
-})();
-</script>
-<!-- REPARACIÓN INDEPENDIENTE DEL BOTÓN AGNES: no depende del módulo Estudio IA -->
-<script>
-(function(){
-  const oldButton = document.getElementById("drd-ai-agnes-generate");
-  if (!oldButton) return;
-  // Reemplaza el botón para descartar listeners anteriores que pudieran quedar inactivos.
-  const button = oldButton.cloneNode(true);
-  oldButton.replaceWith(button);
-  const status = document.getElementById("drd-ai-agnes-status");
-  const promptEl = document.getElementById("drd-ai-agnes-prompt");
-  const secondsEl = document.getElementById("drd-ai-agnes-seconds");
-  const ratioEl = document.getElementById("drd-ai-agnes-ratio");
-  const preview = document.getElementById("drd-ai-agnes-preview");
-  const download = document.getElementById("drd-ai-agnes-download");
-  const worker = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
-  let polling = false;
-  function setStatus(message){ if(status) status.textContent=message; }
-  function token(){ return sessionStorage.getItem("doradord_session") || ""; }
-  async function pollVideo(id, auth){
-    if(polling) return;
-    polling=true;
-    try{
-      for(let n=1;n<=40;n++){
-        await new Promise(resolve=>setTimeout(resolve,7500));
-        setStatus("⏳ Agnes está procesando el clip... consulta "+n+" de 40.");
-        const res=await fetch(worker+"/ai/video/status?video_id="+encodeURIComponent(id),{headers:{Authorization:"Bearer "+auth}});
-        const data=await res.json().catch(()=>({}));
-        if(!res.ok) throw new Error(data.error||"Error HTTP "+res.status);
-        const state=String(data.status||data.result?.status||"").toLowerCase();
-        const url=data.video_url||data.url||data.result?.url||data.result?.video_url||data.result?.output?.url;
-        if(url){
-          preview.src=url; preview.style.display="block"; preview.load();
-          download.href=url; download.style.display="inline-block";
-        }
-        if(url && (["completed","complete","success","succeeded","finished","done"].includes(state)||!state)){
-          setStatus("✅ Video listo. Puedes reproducirlo y descargarlo."); return;
-        }
-        if(["failed","error","cancelled","canceled"].includes(state)) throw new Error("Agnes reportó estado: "+state);
-      }
-      setStatus("⚠️ La generación continúa en Agnes. Puedes esperar o revisar el estado más tarde.");
-    }catch(e){setStatus("❌ Error consultando el video: "+e.message);}
-    finally{polling=false;}
-  }
-  button.addEventListener("click",async function(){
-    const auth=token();
-    const prompt=(promptEl?.value||"").trim();
-    if(!auth){setStatus("⚠️ Conecta TikTok primero; se requiere una sesión activa.");return;}
-    if(!prompt){setStatus("✍️ Escribe una descripción del video antes de generar.");promptEl?.focus();return;}
-    button.disabled=true;
-    if(preview){preview.pause();preview.removeAttribute("src");preview.style.display="none";}
-    if(download){download.removeAttribute("href");download.style.display="none";}
-    setStatus("📤 Enviando descripción a Agnes AI...");
-    try{
-      const res=await fetch(worker+"/ai/video/generate",{
-        method:"POST",headers:{Authorization:"Bearer "+auth,"Content-Type":"application/json"},
-        body:JSON.stringify({prompt,seconds:secondsEl?.value||"8",aspect_ratio:ratioEl?.value||"9:16"})
-      });
-      const data=await res.json().catch(()=>({}));
-      if(!res.ok) throw new Error(data.error||data.details?.message||"Respuesta HTTP "+res.status);
-      if(!data.video_id) throw new Error("Cloudflare no devolvió el ID del video.");
-      setStatus("✅ Agnes aceptó la solicitud. ID: "+data.video_id+". Esperando el resultado...");
-      pollVideo(data.video_id,auth);
-    }catch(e){setStatus("❌ No se pudo iniciar: "+e.message);}
-    finally{button.disabled=false;}
-  });
-  setStatus("Botón Agnes conectado. Escribe tu descripción y genera el clip.");
 })();
 </script>
 <!-- FIN DORADOR RD AI STUDIO -->
