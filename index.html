@@ -2074,6 +2074,20 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <div id="drd-mp4-ai-edit-status" class="drd-status" role="status" aria-live="polite" style="margin-top:9px;">Carga un MP4 y escribe las instrucciones para modificarlo con IA.</div>
       </div>
 
+      <div id="drd-makemyclip-panel" style="margin-top:14px;padding:12px;border:1px solid #36515f;border-radius:10px;background:#101c23;">
+        <strong>🛠️ Motor local MakeMyClip</strong>
+        <div class="drd-small" style="margin:6px 0 10px;">Edita el MP4 original en tu computadora. El análisis y la selección de escenas siguen usando el Estudio IA; MakeMyClip ejecuta los cortes y la exportación local.</div>
+        <label for="drd-mmc-library-select" class="drd-small" style="display:block;margin:8px 0 5px;">MP4 guardado en Biblioteca</label>
+        <select id="drd-mmc-library-select" style="width:100%;padding:10px;border-radius:8px;"><option value="">Cargando Biblioteca MP4…</option></select>
+        <label for="drd-mmc-token" class="drd-small" style="display:block;margin:10px 0 5px;">Código local del puente (aparece al ejecutar INICIAR.bat)</label>
+        <input id="drd-mmc-token" type="password" autocomplete="off" placeholder="Pega aquí el código local" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">
+          <button type="button" id="drd-mmc-check" class="drd-btn secondary">🔌 Comprobar conexión</button>
+          <button type="button" id="drd-mmc-run" class="drd-btn primary" style="flex:1;">🎬 Analizar y editar con MakeMyClip</button>
+        </div>
+        <div id="drd-mmc-status" class="drd-status" role="status" aria-live="polite" style="margin-top:9px;">Inicia primero el puente local de MakeMyClip en Windows.</div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px;">
         <div>
           <label for="drd-mp4-ai-mode" class="drd-small">Modo de producción</label>
@@ -2104,11 +2118,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px;">
         <button type="button" id="drd-mp4-ai-generate" class="drd-btn primary" style="flex:1;min-width:220px;">
-          🎬 Generar video con Agnes AI
+          Generación IA externa desactivada
         </button>
       </div>
       <div id="drd-mp4-ai-generation-status" class="drd-status" role="status" aria-live="polite" style="margin-top:10px;">
-        Genera el video completo desde tu guion con Agnes AI. Después se incorpora al editor MP4 y al Centro de Publicación.
+        Agnes AI está desactivado. El flujo actual utiliza un MP4 existente y el motor local MakeMyClip.
       </div>
       <video id="drd-mp4-ai-generated-preview" controls playsinline style="display:none;width:100%;max-height:440px;background:#000;border-radius:10px;margin-top:12px;"></video>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
@@ -2213,6 +2227,94 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     catch (_) { return ""; }
   }
 
+  // Integración local MakeMyClip: no utiliza Agnes ni ejecuta comandos arbitrarios.
+  (function connectMakeMyClipBridge(){
+    const base = "http://127.0.0.1:47831";
+    const tokenInput = document.getElementById("drd-mmc-token");
+    const librarySelect = document.getElementById("drd-mmc-library-select");
+    const checkButton = document.getElementById("drd-mmc-check");
+    const runButton = document.getElementById("drd-mmc-run");
+    const status = document.getElementById("drd-mmc-status");
+    if (!tokenInput || !librarySelect || !checkButton || !runButton || !status) return;
+    const setStatus = message => { status.textContent = message; };
+    const getToken = () => tokenInput.value.trim();
+    const headers = extra => Object.assign({Authorization:"Bearer "+getToken()}, extra || {});
+    async function refreshLibrary(){
+      try {
+        if (typeof window.DoradoRDMP4LibraryList !== "function") throw new Error("La Biblioteca MP4 no está disponible.");
+        const items = await window.DoradoRDMP4LibraryList();
+        librarySelect.innerHTML = "";
+        const first = document.createElement("option"); first.value = "";
+        first.textContent = items.length ? "Selecciona un MP4 de tu Biblioteca" : "Biblioteca MP4 vacía";
+        librarySelect.appendChild(first);
+        items.forEach(item => { const option=document.createElement("option"); option.value=item.id; option.textContent=item.name+" · "+(item.size/1048576).toFixed(1)+" MB"; librarySelect.appendChild(option); });
+      } catch (error) { setStatus("⚠️ "+error.message); }
+    }
+    async function checkBridge(){
+      const response = await fetch(base+"/health", {cache:"no-store"});
+      if (!response.ok) throw new Error("El puente local no responde.");
+      if (!getToken()) throw new Error("Pega el código local que muestra INICIAR.bat.");
+      const auth = await fetch(base+"/api/status", {headers:headers(),cache:"no-store"});
+      const data = await auth.json().catch(()=>({}));
+      if (!auth.ok || !data.ok) throw new Error(data.error || "Código local incorrecto.");
+      return data;
+    }
+    checkButton.addEventListener("click", async()=>{
+      checkButton.disabled=true; setStatus("Comprobando MakeMyClip local…");
+      try { const info=await checkBridge(); setStatus("✓ Conectado: "+info.editor+". Listo para editar localmente."); }
+      catch(error){ setStatus("❌ "+error.message+". Comprueba que INICIAR.bat siga abierto."); }
+      finally { checkButton.disabled=false; }
+    });
+    runButton.addEventListener("click", async()=>{
+      if (runButton.disabled) return;
+      runButton.disabled=true; const oldText=runButton.textContent;
+      try {
+        setStatus("Comprobando el puente local…"); await checkBridge();
+        let file=null;
+        if (librarySelect.value && typeof window.DoradoRDMP4LibraryGet === "function") {
+          const record=await window.DoradoRDMP4LibraryGet(librarySelect.value);
+          file=new File([record.blob], record.name, {type:"video/mp4",lastModified:Date.now()});
+        } else if (existingMP4File) file=existingMP4File;
+        if (!file) throw new Error("Selecciona un MP4 de la Biblioteca o cárgalo en «Modificar un MP4 existente».");
+        if (file.size > 600*1024*1024) throw new Error("El MP4 supera el límite inicial de 600 MB.");
+        if (typeof window.DoradoRDAIAnalyzeLocalFile !== "function") throw new Error("El análisis IA de Estudio IA no está disponible.");
+        setStatus("Analizando el MP4 con Estudio IA para seleccionar las mejores escenas…");
+        const ratio = aiRatioSelect ? aiRatioSelect.value : "9:16";
+        await window.DoradoRDAIAnalyzeLocalFile(file, {instructions:existingMP4EditInstructions?existingMP4EditInstructions.value.trim():"",mode:"review",ratio});
+        const segments=window.DoradoRDAILastSegments;
+        if (!Array.isArray(segments) || !segments.length) throw new Error("La IA no devolvió fragmentos válidos. Revisa el análisis y vuelve a intentar.");
+        setStatus("Enviando el MP4 a MakeMyClip y ejecutando cortes FFmpeg localmente…");
+        const upload=await fetch(base+"/api/import",{method:"POST",headers:headers({"Content-Type":"video/mp4","X-Dorado-Filename":file.name}),body:file});
+        const uploaded=await upload.json().catch(()=>({}));
+        if (!upload.ok || !uploaded.ok) throw new Error(uploaded.error || "No se pudo transferir el MP4 al motor local.");
+        const edit=await fetch(base+"/api/edit",{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify({sourceName:uploaded.sourceName,segments:segments.map(x=>({startSec:x.start,endSec:x.end})),ratio})});
+        const result=await edit.json().catch(()=>({}));
+        if (!edit.ok || !result.ok) throw new Error(result.error || "MakeMyClip no pudo exportar el MP4.");
+        setStatus("Descargando el MP4 final desde MakeMyClip…");
+        const download=await fetch(base+"/api/download/"+encodeURIComponent(result.jobId),{headers:headers()});
+        if (!download.ok) throw new Error("No se pudo recuperar el MP4 final.");
+        const blob=await download.blob();
+        const finalName=result.outputName || "DoradoRD_MakeMyClip.mp4";
+        const finalFile=new File([blob],finalName,{type:"video/mp4",lastModified:Date.now()});
+        window.DoradoRDFinalVideoBlob=blob; window.DoradoRDFinalVideoFile=finalFile;
+        if (window.DoradoRDFinalVideoURL) URL.revokeObjectURL(window.DoradoRDFinalVideoURL);
+        window.DoradoRDFinalVideoURL=URL.createObjectURL(blob);
+        if (typeof window.DoradoRDMP4LibrarySave === "function") await window.DoradoRDMP4LibrarySave(finalFile);
+        const preview=document.getElementById("drd-publish-final-preview");
+        const link=document.getElementById("drd-publish-final-download");
+        const publish=document.getElementById("drd-ai-publish-status");
+        if (preview) { preview.src=window.DoradoRDFinalVideoURL; preview.style.display="block"; preview.load(); }
+        if (link) { link.href=window.DoradoRDFinalVideoURL; link.download=finalName; link.style.display="inline-block"; }
+        if (publish) publish.textContent="✓ MP4 MakeMyClip listo y guardado en Biblioteca. Ya está disponible en Centro de Publicación; todavía no se ha publicado en TikTok.";
+        setStatus("✓ Edición completada. MP4 guardado en Biblioteca y Centro de Publicación. "+(result.note||""));
+        await refreshLibrary();
+      } catch(error) { setStatus("❌ "+(error.message||String(error))); }
+      finally { runButton.disabled=false; runButton.textContent=oldText; }
+    });
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", refreshLibrary, {once:true});
+    else refreshLibrary();
+  })();
+
   function waitForAgnes(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -2288,6 +2390,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   }
 
   if (aiGenerateButton) {
+    aiGenerateButton.disabled = true;
+    aiGenerateButton.title = "Agnes AI desactivado. Usa el motor local MakeMyClip.";
     aiGenerateButton.addEventListener("click", async () => {
       if (aiVideoBusy) return;
       const scriptText = scriptInput ? scriptInput.value.trim() : "";
@@ -2750,6 +2854,11 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     if (!editor || typeof editor.setTimeline !== "function") {
       throw new Error("El motor de edición integrado no está disponible.");
     }
+    window.DoradoRDAILastSegments = (result.segments || []).map(segment => ({
+      start: Number(segment.start), end: Number(segment.end),
+      score: Number(segment.score) || 50, reason: String(segment.reason || "")
+    }));
+    window.DoradoRDAILastSourceFile = localFile;
     const applied = await editor.setTimeline(localFile, result.segments || []);
     if (!applied) throw new Error("La IA no devolvió fragmentos utilizables.");
     $("analysis-status").textContent = "✓ Análisis y selección de escenas completados. " + result.segments.length + " fragmentos propuestos · " + (result.engine || "Cloudflare Workers AI") + ". " + ( $("mode").value === "automatic" ? "Iniciando exportación automática." : "Revisa y ajusta los cortes antes de exportar." );
@@ -3855,6 +3964,15 @@ document.addEventListener("DOMContentLoaded",()=>initializeDashboard());
   function status(message){const el=$("drd-ai-publish-status");if(el)el.textContent=message;}
   async function saveToLibrary(file){if(!file||!file.size)throw new Error("No hay un MP4 válido para guardar.");if(file.type&&file.type!=="video/mp4")throw new Error("La biblioteca acepta archivos MP4.");const record={id:crypto.randomUUID(),name:file.name||("DoradoRD_"+Date.now()+".mp4"),size:file.size,type:"video/mp4",createdAt:Date.now(),blob:file};await dbPut(record);await renderLibrary(record.id);return record;}
   window.DoradoRDMP4LibrarySave=saveToLibrary;
+  // Puente de lectura para el editor integrado: devuelve solo metadatos o el Blob solicitado.
+  window.DoradoRDMP4LibraryList = async function(){
+    return (await dbAll()).map(r=>({id:r.id,name:r.name,size:r.size,createdAt:r.createdAt,type:r.type}));
+  };
+  window.DoradoRDMP4LibraryGet = async function(id){
+    const record=await dbGet(String(id||''));
+    if(!record||!record.blob) throw new Error('El MP4 seleccionado no existe en la Biblioteca local.');
+    return {id:record.id,name:record.name,size:record.size,type:record.type,blob:record.blob};
+  };
   async function selectRecord(id){selectedVideo=id?await dbGet(id):null;const info=$("drd-mp4-library-info");if(info)info.textContent=selectedVideo?"✓ Seleccionado: "+selectedVideo.name+" · "+sizeLabel(selectedVideo.size)+". Listo para transferir.":"Selecciona un MP4 para enviarlo a TikTok.";}
   async function renderLibrary(preselect){const select=$("drd-mp4-library-select");if(!select)return;const info=$("drd-mp4-library-info");try{const records=await dbAll();select.innerHTML="";const first=document.createElement("option");first.value="";first.textContent=records.length?"Selecciona un MP4 de tu biblioteca":"Biblioteca MP4 vacía";select.appendChild(first);records.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.name+" · "+sizeLabel(r.size);select.appendChild(o);});const wanted=preselect||(selectedVideo&&selectedVideo.id);select.value=wanted&&records.some(r=>r.id===wanted)?wanted:"";await selectRecord(select.value);if(!records.length&&info)info.textContent="Importa un MP4 o genera uno en el editor para guardarlo aquí.";}catch(e){if(info)info.textContent="No se pudo abrir la biblioteca: "+e.message;}}
   function headers(extra){const token=session();if(!token)throw new Error("Conecta TikTok nuevamente antes de enviar videos.");return Object.assign({Authorization:"Bearer "+token},extra||{});}
