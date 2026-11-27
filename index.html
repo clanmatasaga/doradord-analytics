@@ -1830,6 +1830,14 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   */
 
   window.DoradoRDMP4 = {
+    setFormat(format) {
+      if (!formatInput) return false;
+      const allowed = ["vertical", "horizontal", "square"];
+      if (!allowed.includes(format)) return false;
+      formatInput.value = format;
+      return true;
+    },
+
     addFile(file) {
       if (!file || !file.type.startsWith("video/")) {
         return false;
@@ -2001,7 +2009,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       ></textarea>
 
       <div class="drd-small" style="margin-top:8px;">
-        El guion se puede revisar y editar antes de comenzar la producción.
+        El guion se convierte en escenas visuales generadas con IA. Se monta un video WEBM y luego el editor lo exporta a MP4. La cuota de imágenes es gratuita y limitada por día.
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px;">
@@ -2034,15 +2042,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px;">
         <button type="button" id="drd-mp4-ai-generate" class="drd-btn primary" style="flex:1;min-width:220px;">
-          🎬 Crear video desde este guion
+          🎞️ Crear video gratis desde este guion
         </button>
       </div>
       <div id="drd-mp4-ai-generation-status" class="drd-status" role="status" aria-live="polite" style="margin-top:10px;">
-        Edita o carga tu guion y pulsa «Crear video desde este guion».
+        Genera imágenes con Workers AI y conviértelas en un video. Después expórtalo a MP4 desde el editor.
       </div>
       <video id="drd-mp4-ai-generated-preview" controls playsinline style="display:none;width:100%;max-height:440px;background:#000;border-radius:10px;margin-top:12px;"></video>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-        <a id="drd-mp4-ai-generated-download" class="drd-btn secondary" href="#" download="DoradoRD_video_IA.mp4" style="display:none;text-decoration:none;">
+        <a id="drd-mp4-ai-generated-download" class="drd-btn secondary" href="#" download="DoradoRD_video_desde_guion.webm" style="display:none;text-decoration:none;">
           ⬇ Descargar video generado
         </a>
       </div>
@@ -2078,7 +2086,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     });
   }
 
-  // GENERACIÓN DE VIDEO IA A PARTIR DEL GUION (Worker DoradoRD)
+  // GENERACIÓN GRATUITA: GUION -> IMÁGENES FLUX -> VIDEO WEBM -> EDITOR MP4
   const aiGenerateButton = document.getElementById("drd-mp4-ai-generate");
   const aiGenerationStatus = document.getElementById("drd-mp4-ai-generation-status");
   const aiGeneratedPreview = document.getElementById("drd-mp4-ai-generated-preview");
@@ -2099,80 +2107,96 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     catch (_) { return ""; }
   }
 
-  async function pollDoradoAIVideo(videoId, token) {
-    const maxChecks = 40;
-    for (let check = 1; check <= maxChecks; check++) {
-      await new Promise(resolve => setTimeout(resolve, 7500));
-      setAIGenerationStatus("⏳ Generando video con IA… consulta " + check + " de " + maxChecks + ". Puedes dejar esta pestaña abierta.");
-      const response = await fetch(aiVideoWorker + "/ai/video/status?video_id=" + encodeURIComponent(videoId), {
-        method: "GET",
-        headers: { "Authorization": "Bearer " + token }
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const error = new Error(data.error || "No se pudo consultar el estado (HTTP " + response.status + ").");
-        error.status = response.status;
-        error.details = data;
-        throw error;
-      }
-      const state = String(data.status || data.result?.status || "").toLowerCase();
-      const videoUrl = data.video_url || data.url || data.result?.url || data.result?.video_url || data.result?.output?.url;
-      if (videoUrl && aiGeneratedPreview) {
-        aiGeneratedPreview.src = videoUrl;
-        aiGeneratedPreview.style.display = "block";
-        aiGeneratedPreview.load();
-        if (aiGeneratedDownload) {
-          aiGeneratedDownload.href = videoUrl;
-          aiGeneratedDownload.style.display = "inline-flex";
-        }
-      }
-      if (videoUrl && (["completed", "complete", "success", "succeeded", "finished", "done"].includes(state) || !state)) {
-        return videoUrl;
-      }
-      if (["failed", "error", "cancelled", "canceled"].includes(state)) {
-        throw new Error("El motor informó que la generación terminó con estado: " + state + ".");
-      }
+  function splitScriptIntoScenes(text, count) {
+    let parts = String(text || "").split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+    if (parts.length < count) {
+      parts = String(text || "").split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
     }
-    throw new Error("La generación sigue en proceso. No se recibió el video dentro del tiempo de espera; puedes volver a consultar el estado más tarde.");
+    if (parts.length < count) {
+      const words = String(text || "").split(/\s+/).filter(Boolean);
+      const chunk = Math.ceil(words.length / count);
+      parts = [];
+      for (let i = 0; i < words.length; i += chunk) parts.push(words.slice(i, i + chunk).join(" "));
+    }
+    while (parts.length < count) parts.push(parts[parts.length - 1] || text);
+    return parts.slice(0, count);
   }
 
-  async function attachGeneratedVideoToDorado(videoUrl) {
-    // Intentar traer el MP4 como archivo local para conectarlo al editor y al Centro de Publicación.
-    try {
-      const response = await fetch(videoUrl);
-      if (!response.ok) throw new Error("No se pudo descargar el MP4 generado (HTTP " + response.status + ").");
-      const blob = await response.blob();
-      if (!blob.size) throw new Error("El MP4 generado está vacío.");
-      const videoBlob = new Blob([blob], { type: "video/mp4" });
-      const file = new File([videoBlob], "DoradoRD_video_IA.mp4", { type: "video/mp4" });
-      window.DoradoRDFinalVideoBlob = videoBlob;
-      window.DoradoRDFinalVideoURL = URL.createObjectURL(videoBlob);
-
-      const publishPreview = document.getElementById("drd-publish-final-preview");
-      const publishDownload = document.getElementById("drd-publish-final-download");
-      const publishStatus = document.getElementById("drd-ai-publish-status");
-      if (publishPreview) {
-        publishPreview.src = window.DoradoRDFinalVideoURL;
-        publishPreview.style.display = "block";
-        publishPreview.load();
-      }
-      if (publishDownload) {
-        publishDownload.href = window.DoradoRDFinalVideoURL;
-        publishDownload.download = file.name;
-        publishDownload.style.display = "inline-block";
-      }
-      if (publishStatus) publishStatus.textContent = "✅ Video generado transferido automáticamente al Centro de Publicación. Revisa descripción, hashtags y privacidad antes de preparar la publicación.";
-
-      if (window.DoradoRDMP4 && typeof window.DoradoRDMP4.addFile === "function") {
-        window.DoradoRDMP4.addFile(file);
-      }
-      return true;
-    } catch (error) {
-      console.warn("No se pudo importar automáticamente el MP4 generado:", error);
-      const publishStatus = document.getElementById("drd-ai-publish-status");
-      if (publishStatus) publishStatus.textContent = "El video IA está generado y disponible para reproducir/descargar. El navegador no permitió importarlo automáticamente al Centro de Publicación; descarga el MP4 y cárgalo en el editor para continuar.";
-      return false;
+  async function requestSceneImage(sceneText, index, total, ratio, token) {
+    const ratioHint = ratio === "16:9" ? "composición horizontal 16:9" : ratio === "1:1" ? "composición cuadrada 1:1" : "composición vertical 9:16";
+    const prompt = "Fotograma cinematográfico fotorrealista para un video de redes sociales, " + ratioHint + ". Escena " + (index + 1) + " de " + total + ". Representa fielmente esta parte del guion: " + sceneText.slice(0, 1300) + ". Iluminación profesional, composición clara, profundidad visual, sin letras, sin subtítulos, sin logotipos, sin marcas de agua.";
+    const response = await fetch(aiVideoWorker + "/ai/video/scene", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.image) {
+      const reason = [data.error || "No se pudo generar la imagen.", data.code || "", data.details || ""].filter(Boolean).join(" | ");
+      const error = new Error(reason);
+      error.status = response.status;
+      error.details = data;
+      throw error;
     }
+    return "data:" + (data.mime_type || "image/jpeg") + ";base64," + data.image;
+  }
+
+  function loadSceneImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("No se pudo abrir una imagen generada."));
+      image.src = src;
+    });
+  }
+
+  async function makeVideoFromSceneImages(imageSources, seconds, ratio) {
+    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+      throw new Error("Este navegador no permite crear el video. Usa Chrome o Edge actualizado.");
+    }
+    const dimensions = ratio === "16:9" ? [1280, 720] : ratio === "1:1" ? [900, 900] : [720, 1280];
+    const canvas = document.createElement("canvas");
+    canvas.width = dimensions[0];
+    canvas.height = dimensions[1];
+    const ctx = canvas.getContext("2d");
+    const stream = canvas.captureStream(30);
+    const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(type => MediaRecorder.isTypeSupported(type)) || "";
+    const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const chunks = [];
+    recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
+    const stopped = new Promise((resolve, reject) => {
+      recorder.onerror = () => reject(new Error("El navegador no pudo codificar el video."));
+      recorder.onstop = resolve;
+    });
+    const images = [];
+    for (const src of imageSources) images.push(await loadSceneImage(src));
+    const sceneMs = Math.max(1000, (Number(seconds) * 1000) / images.length);
+    recorder.start(250);
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      const started = performance.now();
+      await new Promise(resolve => {
+        function draw(now) {
+          const progress = Math.min(1, (now - started) / sceneMs);
+          const scale = 1.02 + progress * 0.08;
+          const cw = canvas.width, ch = canvas.height;
+          const fit = Math.max(cw / image.width, ch / image.height) * scale;
+          const width = image.width * fit, height = image.height * fit;
+          const drift = (progress - 0.5) * 18;
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, cw, ch);
+          ctx.drawImage(image, (cw - width) / 2 + drift, (ch - height) / 2, width, height);
+          if (progress < 1) requestAnimationFrame(draw); else resolve();
+        }
+        requestAnimationFrame(draw);
+      });
+    }
+    recorder.stop();
+    await stopped;
+    stream.getTracks().forEach(track => track.stop());
+    const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
+    if (!blob.size) throw new Error("El video generado quedó vacío.");
+    return blob;
   }
 
   if (aiGenerateButton) {
@@ -2184,92 +2208,66 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         if (scriptInput) scriptInput.focus();
         return;
       }
+      if (scriptText.length > 4500) {
+        setAIGenerationStatus("⚠️ El guion supera 4.500 caracteres. Resume el texto antes de generar.");
+        return;
+      }
       const token = getDoradoSessionToken();
       if (!token) {
         setAIGenerationStatus("⚠️ Tu sesión no está activa. Conecta TikTok y vuelve a intentarlo.");
         return;
       }
-      if (scriptText.length > 4500) {
-        setAIGenerationStatus("⚠️ El guion supera el límite seguro de 4.500 caracteres para este motor. Resume el texto o elimina instrucciones repetidas antes de generar.");
-        return;
-      }
-      if (aiModeSelect && aiModeSelect.value === "review" && !window.confirm("Modo revisión manual: confirma que el guion está revisado y listo para generar el video.")) return;
+      if (aiModeSelect && aiModeSelect.value === "review" && !window.confirm("Modo revisión manual: confirma que el guion está revisado y listo para producir.")) return;
 
-      const seconds = aiSecondsSelect ? aiSecondsSelect.value : "8";
+      const seconds = aiSecondsSelect ? Number(aiSecondsSelect.value) : 8;
       const ratio = aiRatioSelect ? aiRatioSelect.value : "9:16";
-      const modeText = aiModeSelect && aiModeSelect.value === "review"
-        ? "Modo con revisión manual: respeta el guion y prioriza coherencia entre escenas."
-        : "Modo automático inteligente: interpreta el guion y optimiza visualmente las escenas, el ritmo y la continuidad.";
-      const prompt = "Crea un video original basado en este guion. " + modeText + " Formato " + ratio + ". Duración " + seconds + " segundos. No añadas textos ilegibles, marcas de agua ni escenas que contradigan el guion. Guion:\n\n" + scriptText;
-      if (prompt.length > 5000) {
-        setAIGenerationStatus("⚠️ El texto final supera el máximo de 5.000 caracteres admitido por el Worker. Reduce un poco el guion.");
-        return;
-      }
-
+      const sceneCount = Math.max(2, Math.min(4, Math.ceil(seconds / 3)));
+      const scenes = splitScriptIntoScenes(scriptText, sceneCount);
       aiVideoBusy = true;
       aiGenerateButton.disabled = true;
-      aiGenerateButton.textContent = "⏳ Enviando al motor IA…";
+      aiGenerateButton.textContent = "⏳ Creando escenas…";
       if (aiGeneratedPreview) { aiGeneratedPreview.pause(); aiGeneratedPreview.removeAttribute("src"); aiGeneratedPreview.style.display = "none"; }
       if (aiGeneratedDownload) { aiGeneratedDownload.removeAttribute("href"); aiGeneratedDownload.style.display = "none"; }
-      setAIGenerationStatus("📤 Enviando el guion al motor de generación de video…");
       try {
-        const response = await fetch(aiVideoWorker + "/ai/video/generate", {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + token,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ prompt, seconds, aspect_ratio: ratio })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          const providerDetails = data.details
-            ? (typeof data.details === "string"
-                ? data.details
-                : JSON.stringify(data.details))
-            : "";
-          const diagnostic = [
-            data.error || "El motor rechazó la solicitud.",
-            data.code ? "Código: " + data.code : "",
-            data.http_status ? "HTTP proveedor: " + data.http_status : "HTTP Worker: " + response.status,
-            data.retry_after_seconds ? "Reintentar en " + data.retry_after_seconds + " segundos." : "",
-            providerDetails ? "Detalle del proveedor: " + providerDetails.slice(0, 900) : ""
-          ].filter(Boolean).join(" | ");
-          const error = new Error(diagnostic);
-          error.status = response.status;
-          error.details = data;
-          throw error;
+        const images = [];
+        for (let i = 0; i < scenes.length; i++) {
+          setAIGenerationStatus("🎨 Generando imagen " + (i + 1) + " de " + scenes.length + " con Workers AI (cuota gratuita diaria)…");
+          images.push(await requestSceneImage(scenes[i], i, scenes.length, ratio, token));
         }
-        const videoId = data.video_id || data.id;
-        if (!videoId) throw new Error("El Worker no devolvió el identificador del video.");
-        setAIGenerationStatus("✅ Solicitud aceptada. El motor está creando tu video…");
-        const videoUrl = await pollDoradoAIVideo(videoId, token);
+        setAIGenerationStatus("🎬 Montando las escenas con movimiento y transiciones…");
+        const videoBlob = await makeVideoFromSceneImages(images, seconds, ratio);
+        if (aiGeneratedObjectUrl) URL.revokeObjectURL(aiGeneratedObjectUrl);
+        aiGeneratedObjectUrl = URL.createObjectURL(videoBlob);
+        const videoFile = new File([videoBlob], "DoradoRD_video_desde_guion.webm", { type: videoBlob.type || "video/webm" });
         if (aiGeneratedPreview) {
-          aiGeneratedPreview.src = videoUrl;
+          aiGeneratedPreview.src = aiGeneratedObjectUrl;
           aiGeneratedPreview.style.display = "block";
           aiGeneratedPreview.load();
         }
         if (aiGeneratedDownload) {
-          aiGeneratedDownload.href = videoUrl;
+          aiGeneratedDownload.href = aiGeneratedObjectUrl;
+          aiGeneratedDownload.download = videoFile.name;
+          aiGeneratedDownload.textContent = "⬇ Descargar video de escenas (WEBM)";
           aiGeneratedDownload.style.display = "inline-flex";
         }
-        setAIGenerationStatus("✅ Video generado. Preparando la transferencia al editor MP4 y al Centro de Publicación…");
-        const attached = await attachGeneratedVideoToDorado(videoUrl);
-        setAIGenerationStatus(attached
-          ? "🎉 Video generado y transferido al editor MP4 y al Centro de Publicación. Ya puedes revisarlo, editarlo o preparar su publicación."
-          : "🎉 Video generado. Puedes reproducirlo y descargarlo; la importación automática al editor/publicación no estuvo disponible en este navegador.");
-      } catch (error) {
-        console.error("DoradoRD generación desde guion:", error);
-        const details = error.details || {};
-        if (error.status === 429 || details.code === "AGNES_RATE_LIMITED") {
-          setAIGenerationStatus("⚠️ El motor de video está limitando temporalmente las solicitudes (429). El guion se conservó. Espera el tiempo indicado por el proveedor y vuelve a pulsar Generar.");
+        if (window.DoradoRDMP4 && typeof window.DoradoRDMP4.addFile === "function") {
+          if (typeof window.DoradoRDMP4.setFormat === "function") {
+            window.DoradoRDMP4.setFormat(ratio === "16:9" ? "horizontal" : ratio === "1:1" ? "square" : "vertical");
+          }
+          window.DoradoRDMP4.addFile(videoFile);
+          const publishStatus = document.getElementById("drd-ai-publish-status");
+          if (publishStatus) publishStatus.textContent = "Las escenas generadas se enviaron al editor MP4. Pulsa Exportar video en el editor para convertirlo a MP4 y transferirlo al Centro de Publicación.";
+          setAIGenerationStatus("✅ Video de escenas creado y enviado al editor. Reprodúcelo y pulsa Exportar video para obtener el MP4 final y pasarlo al Centro de Publicación.");
         } else {
-          setAIGenerationStatus("❌ No se pudo generar el video: " + (error.message || "Error desconocido"));
+          setAIGenerationStatus("✅ Video creado. Descárgalo en WEBM; el editor MP4 no está disponible en esta página.");
         }
+      } catch (error) {
+        console.error("DoradoRD generación gratuita desde guion:", error);
+        setAIGenerationStatus("❌ " + (error.message || "No se pudo crear el video."));
       } finally {
         aiVideoBusy = false;
         aiGenerateButton.disabled = false;
-        aiGenerateButton.textContent = "🎬 Crear video desde este guion";
+        aiGenerateButton.textContent = "🎞️ Crear video gratis desde este guion";
       }
     });
   }
