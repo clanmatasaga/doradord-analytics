@@ -2104,15 +2104,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px;">
         <button type="button" id="drd-mp4-ai-generate" class="drd-btn primary" style="flex:1;min-width:220px;">
-          🎞️ Crear video gratis desde este guion
+          🎬 Generar video con Agnes AI
         </button>
       </div>
       <div id="drd-mp4-ai-generation-status" class="drd-status" role="status" aria-live="polite" style="margin-top:10px;">
-        Genera imágenes con Workers AI y conviértelas en un video. Después expórtalo a MP4 desde el editor.
+        Genera el video completo desde tu guion con Agnes AI. Después se incorpora al editor MP4 y al Centro de Publicación.
       </div>
       <video id="drd-mp4-ai-generated-preview" controls playsinline style="display:none;width:100%;max-height:440px;background:#000;border-radius:10px;margin-top:12px;"></video>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-        <a id="drd-mp4-ai-generated-download" class="drd-btn secondary" href="#" download="DoradoRD_video_desde_guion.webm" style="display:none;text-decoration:none;">
+        <a id="drd-mp4-ai-generated-download" class="drd-btn secondary" href="#" download="DoradoRD_video_Agnes.mp4" style="display:none;text-decoration:none;">
           ⬇ Descargar video generado
         </a>
       </div>
@@ -2192,7 +2192,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     }
   });
 
-  // GENERACIÓN GRATUITA: GUION -> IMÁGENES FLUX -> VIDEO WEBM -> EDITOR MP4
+  // GENERACIÓN DE VIDEO COMPLETO CON AGNES AI -> EDITOR MP4
   const aiGenerateButton = document.getElementById("drd-mp4-ai-generate");
   const aiGenerationStatus = document.getElementById("drd-mp4-ai-generation-status");
   const aiGeneratedPreview = document.getElementById("drd-mp4-ai-generated-preview");
@@ -2213,96 +2213,78 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     catch (_) { return ""; }
   }
 
-  function splitScriptIntoScenes(text, count) {
-    let parts = String(text || "").split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
-    if (parts.length < count) {
-      parts = String(text || "").split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
-    }
-    if (parts.length < count) {
-      const words = String(text || "").split(/\s+/).filter(Boolean);
-      const chunk = Math.ceil(words.length / count);
-      parts = [];
-      for (let i = 0; i < words.length; i += chunk) parts.push(words.slice(i, i + chunk).join(" "));
-    }
-    while (parts.length < count) parts.push(parts[parts.length - 1] || text);
-    return parts.slice(0, count);
+  function waitForAgnes(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async function requestSceneImage(sceneText, index, total, ratio, token) {
-    const ratioHint = ratio === "16:9" ? "composición horizontal 16:9" : ratio === "1:1" ? "composición cuadrada 1:1" : "composición vertical 9:16";
-    const prompt = "Fotograma cinematográfico fotorrealista para un video de redes sociales, " + ratioHint + ". Escena " + (index + 1) + " de " + total + ". Representa fielmente esta parte del guion: " + sceneText.slice(0, 1300) + ". Iluminación profesional, composición clara, profundidad visual, sin letras, sin subtítulos, sin logotipos, sin marcas de agua.";
-    const response = await fetch(aiVideoWorker + "/ai/video/scene", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
+  async function readAgnesJson(response, label) {
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.image) {
-      const reason = [data.error || "No se pudo generar la imagen.", data.code || "", data.details || ""].filter(Boolean).join(" | ");
-      const error = new Error(reason);
-      error.status = response.status;
-      error.details = data;
-      throw error;
+    if (!response.ok) {
+      const detail = [data.error, data.code, data.details]
+        .filter(Boolean)
+        .map(value => typeof value === "string" ? value : JSON.stringify(value))
+        .join(" | ");
+      throw new Error(detail || (label + " (HTTP " + response.status + ")"));
     }
-    return "data:" + (data.mime_type || "image/jpeg") + ";base64," + data.image;
+    return data;
   }
 
-  function loadSceneImage(src) {
-    return new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("No se pudo abrir una imagen generada."));
-      image.src = src;
+  async function requestAgnesVideo(prompt, seconds, ratio, token) {
+    const response = await fetch(aiVideoWorker + "/ai/video/generate", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        prompt,
+        seconds: String(seconds),
+        aspect_ratio: ratio
+      })
     });
+    const data = await readAgnesJson(response, "Agnes AI no aceptó la generación");
+    const videoId = data.video_id || data.id;
+    if (!videoId) throw new Error("Agnes AI no devolvió el identificador del trabajo.");
+    return videoId;
   }
 
-  async function makeVideoFromSceneImages(imageSources, seconds, ratio) {
-    if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
-      throw new Error("Este navegador no permite crear el video. Usa Chrome o Edge actualizado.");
+  async function waitForAgnesVideo(videoId, token) {
+    const maxAttempts = 60;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      await waitForAgnes(10000);
+      const response = await fetch(
+        aiVideoWorker + "/ai/video/status?video_id=" + encodeURIComponent(videoId),
+        { headers: { "Authorization": "Bearer " + token } }
+      );
+      const data = await readAgnesJson(response, "No se pudo consultar el estado de Agnes AI");
+      const result = data.result || {};
+      const status = String(data.status || result.status || "processing").toLowerCase();
+      const videoUrl = data.video_url || result.url || result.video_url || null;
+
+      if (["failed", "error", "cancelled", "canceled", "rejected"].includes(status)) {
+        throw new Error("Agnes AI no pudo completar el video. Estado: " + status);
+      }
+      if (videoUrl && ["completed", "complete", "succeeded", "success", "finished", "done"].includes(status)) {
+        return videoUrl;
+      }
+      if (videoUrl && !status) return videoUrl;
+      setAIGenerationStatus("⏳ Agnes AI está creando el video… consulta " + attempt + "/" + maxAttempts + " · estado: " + status);
     }
-    const dimensions = ratio === "16:9" ? [1280, 720] : ratio === "1:1" ? [900, 900] : [720, 1280];
-    const canvas = document.createElement("canvas");
-    canvas.width = dimensions[0];
-    canvas.height = dimensions[1];
-    const ctx = canvas.getContext("2d");
-    const stream = canvas.captureStream(30);
-    const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(type => MediaRecorder.isTypeSupported(type)) || "";
-    const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-    const chunks = [];
-    recorder.ondataavailable = event => { if (event.data && event.data.size) chunks.push(event.data); };
-    const stopped = new Promise((resolve, reject) => {
-      recorder.onerror = () => reject(new Error("El navegador no pudo codificar el video."));
-      recorder.onstop = resolve;
-    });
-    const images = [];
-    for (const src of imageSources) images.push(await loadSceneImage(src));
-    const sceneMs = Math.max(1000, (Number(seconds) * 1000) / images.length);
-    recorder.start(250);
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      const started = performance.now();
-      await new Promise(resolve => {
-        function draw(now) {
-          const progress = Math.min(1, (now - started) / sceneMs);
-          const scale = 1.02 + progress * 0.08;
-          const cw = canvas.width, ch = canvas.height;
-          const fit = Math.max(cw / image.width, ch / image.height) * scale;
-          const width = image.width * fit, height = image.height * fit;
-          const drift = (progress - 0.5) * 18;
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, cw, ch);
-          ctx.drawImage(image, (cw - width) / 2 + drift, (ch - height) / 2, width, height);
-          if (progress < 1) requestAnimationFrame(draw); else resolve();
-        }
-        requestAnimationFrame(draw);
-      });
+    throw new Error("Agnes AI sigue procesando el video después de 10 minutos. Puedes volver a intentarlo más tarde.");
+  }
+
+  async function downloadAgnesVideo(videoId, token) {
+    const response = await fetch(
+      aiVideoWorker + "/ai/video/download?video_id=" + encodeURIComponent(videoId),
+      { headers: { "Authorization": "Bearer " + token } }
+    );
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || data.details || "No se pudo transferir el MP4 desde Agnes AI (HTTP " + response.status + ").");
     }
-    recorder.stop();
-    await stopped;
-    stream.getTracks().forEach(track => track.stop());
-    const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
-    if (!blob.size) throw new Error("El video generado quedó vacío.");
-    return blob;
+    const blob = await response.blob();
+    if (!blob.size) throw new Error("Agnes AI devolvió un archivo de video vacío.");
+    return new Blob([blob], { type: "video/mp4" });
   }
 
   if (aiGenerateButton) {
@@ -2327,24 +2309,37 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       const seconds = aiSecondsSelect ? Number(aiSecondsSelect.value) : 8;
       const ratio = aiRatioSelect ? aiRatioSelect.value : "9:16";
-      const sceneCount = Math.max(2, Math.min(4, Math.ceil(seconds / 3)));
-      const scenes = splitScriptIntoScenes(scriptText, sceneCount);
+      const prompt = "Crea un video completo para redes sociales basado fielmente en este guion. " +
+        "Mantén continuidad visual, ritmo dinámico, escenas coherentes y acabado cinematográfico. " +
+        "No añadas hechos que no aparezcan en el guion. Guion: " + scriptText;
+
       aiVideoBusy = true;
       aiGenerateButton.disabled = true;
-      aiGenerateButton.textContent = "⏳ Creando escenas…";
-      if (aiGeneratedPreview) { aiGeneratedPreview.pause(); aiGeneratedPreview.removeAttribute("src"); aiGeneratedPreview.style.display = "none"; }
-      if (aiGeneratedDownload) { aiGeneratedDownload.removeAttribute("href"); aiGeneratedDownload.style.display = "none"; }
+      aiGenerateButton.textContent = "⏳ Enviando a Agnes AI…";
+      if (aiGeneratedPreview) {
+        aiGeneratedPreview.pause();
+        aiGeneratedPreview.removeAttribute("src");
+        aiGeneratedPreview.style.display = "none";
+      }
+      if (aiGeneratedDownload) {
+        aiGeneratedDownload.removeAttribute("href");
+        aiGeneratedDownload.style.display = "none";
+      }
+
       try {
-        const images = [];
-        for (let i = 0; i < scenes.length; i++) {
-          setAIGenerationStatus("🎨 Generando imagen " + (i + 1) + " de " + scenes.length + " con Workers AI (cuota gratuita diaria)…");
-          images.push(await requestSceneImage(scenes[i], i, scenes.length, ratio, token));
-        }
-        setAIGenerationStatus("🎬 Montando las escenas con movimiento y transiciones…");
-        const videoBlob = await makeVideoFromSceneImages(images, seconds, ratio);
+        setAIGenerationStatus("🎬 Enviando el guion al motor de video Agnes AI…");
+        const videoId = await requestAgnesVideo(prompt, seconds, ratio, token);
+        setAIGenerationStatus("⏳ Agnes AI aceptó el trabajo. Esperando el video completo…");
+        await waitForAgnesVideo(videoId, token);
+        setAIGenerationStatus("📥 Video terminado. Transfiriendo el MP4 al editor integrado…");
+        const videoBlob = await downloadAgnesVideo(videoId, token);
         if (aiGeneratedObjectUrl) URL.revokeObjectURL(aiGeneratedObjectUrl);
         aiGeneratedObjectUrl = URL.createObjectURL(videoBlob);
-        const videoFile = new File([videoBlob], "DoradoRD_video_desde_guion.webm", { type: videoBlob.type || "video/webm" });
+        const videoFile = new File([videoBlob], "DoradoRD_video_Agnes.mp4", {
+          type: "video/mp4",
+          lastModified: Date.now()
+        });
+
         if (aiGeneratedPreview) {
           aiGeneratedPreview.src = aiGeneratedObjectUrl;
           aiGeneratedPreview.style.display = "block";
@@ -2353,35 +2348,32 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         if (aiGeneratedDownload) {
           aiGeneratedDownload.href = aiGeneratedObjectUrl;
           aiGeneratedDownload.download = videoFile.name;
-          aiGeneratedDownload.textContent = "⬇ Descargar video de escenas (WEBM)";
+          aiGeneratedDownload.textContent = "⬇ Descargar video MP4 de Agnes AI";
           aiGeneratedDownload.style.display = "inline-flex";
         }
-        if (window.DoradoRDMP4 && typeof window.DoradoRDMP4.addFile === "function") {
-          if (typeof window.DoradoRDMP4.setFormat === "function") {
-            window.DoradoRDMP4.setFormat(ratio === "16:9" ? "horizontal" : ratio === "1:1" ? "square" : "vertical");
-          }
-          const editor = window.DoradoRDMP4;
-          const received = typeof editor.addFileAndWait === "function"
-            ? await editor.addFileAndWait(videoFile)
-            : editor.addFile(videoFile);
-          if (!received) throw new Error("El editor no aceptó el video generado.");
-          setAIGenerationStatus("🎞️ Escenas listas. Convirtiendo automáticamente a MP4 y enviándolo al Centro de Publicación…");
-          if (typeof editor.export !== "function") throw new Error("El exportador MP4 no está disponible.");
-          const exported = await editor.export();
-          if (!exported || !window.DoradoRDFinalVideoBlob || window.DoradoRDFinalVideoBlob.type !== "video/mp4") {
-            throw new Error("No se completó la exportación MP4. Revisa el estado del editor y vuelve a exportar.");
-          }
-          setAIGenerationStatus("✅ Video generado, convertido a MP4 y transferido al Centro de Publicación. Revisa la vista previa y pulsa Preparar publicación.");
-        } else {
-          setAIGenerationStatus("✅ Video creado. Descárgalo en WEBM; el editor MP4 no está disponible en esta página.");
+
+        const editor = window.DoradoRDMP4;
+        if (!editor || typeof editor.addFileAndWait !== "function" || typeof editor.export !== "function") {
+          throw new Error("El video llegó, pero el editor MP4 integrado no está disponible para finalizarlo.");
         }
+        if (typeof editor.setFormat === "function") {
+          editor.setFormat(ratio === "16:9" ? "horizontal" : ratio === "1:1" ? "square" : "vertical");
+        }
+        const accepted = await editor.addFileAndWait(videoFile);
+        if (!accepted) throw new Error("El editor no aceptó el MP4 generado por Agnes AI.");
+        setAIGenerationStatus("🎞️ Agnes AI terminó el video. Preparando la exportación final y el envío al Centro de Publicación…");
+        const exported = await editor.export();
+        if (!exported || !window.DoradoRDFinalVideoBlob || window.DoradoRDFinalVideoBlob.type !== "video/mp4") {
+          throw new Error("Agnes generó el video, pero la exportación final MP4 no se completó. Revisa el estado del editor.");
+        }
+        setAIGenerationStatus("✅ Video generado con Agnes AI, procesado por el editor MP4 y transferido a Biblioteca MP4 y Centro de Publicación. Aún debes revisar y preparar la publicación.");
       } catch (error) {
-        console.error("DoradoRD generación gratuita desde guion:", error);
-        setAIGenerationStatus("❌ " + (error.message || "No se pudo crear el video."));
+        console.error("DoradoRD generación Agnes AI:", error);
+        setAIGenerationStatus("❌ " + (error.message || "No se pudo generar el video con Agnes AI."));
       } finally {
         aiVideoBusy = false;
         aiGenerateButton.disabled = false;
-        aiGenerateButton.textContent = "🎞️ Crear video gratis desde este guion";
+        aiGenerateButton.textContent = "🎬 Generar video con Agnes AI";
       }
     });
   }
