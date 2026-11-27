@@ -2223,7 +2223,19 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-          const error = new Error(data.error || "El motor rechazó la solicitud (HTTP " + response.status + ").");
+          const providerDetails = data.details
+            ? (typeof data.details === "string"
+                ? data.details
+                : JSON.stringify(data.details))
+            : "";
+          const diagnostic = [
+            data.error || "El motor rechazó la solicitud.",
+            data.code ? "Código: " + data.code : "",
+            data.http_status ? "HTTP proveedor: " + data.http_status : "HTTP Worker: " + response.status,
+            data.retry_after_seconds ? "Reintentar en " + data.retry_after_seconds + " segundos." : "",
+            providerDetails ? "Detalle del proveedor: " + providerDetails.slice(0, 900) : ""
+          ].filter(Boolean).join(" | ");
+          const error = new Error(diagnostic);
           error.status = response.status;
           error.details = data;
           throw error;
