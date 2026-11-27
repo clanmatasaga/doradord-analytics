@@ -413,6 +413,146 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <p class="drd-small" style="margin-top:10px">
           El archivo MP4 local se utilizará para analizar y editar. La selección desde TikTok solo aporta metadatos y portada: la API conectada no entrega el MP4 original. Al analizar, se envían al Worker los fotogramas y el audio extraídos en el navegador, no el archivo completo.
         </p>
+
+
+        <div class="drd-mp4-embedded-heading">
+          <h4>🎞️ Montaje, revisión y exportación</h4>
+          <p>El motor de edición está integrado aquí. Los videos locales y MP4 que envíes desde otros módulos aparecen en esta misma línea de trabajo.</p>
+        </div>
+        <section id="drd-mp4-editor">
+
+  <h3>🎞️ Montaje, revisión y exportación</h3>
+
+  <p class="drd-mp4-small">
+    Esta es la etapa de producción del mismo Editor Inteligente. La IA prepara los fragmentos y aquí puedes revisarlos, añadir audio, ajustar subtítulos y exportar el MP4 final. No es un editor independiente.
+  </p>
+
+  <div class="drd-mp4-box">
+
+    <label class="drd-mp4-label">
+      🎬 Añadir clips complementarios desde tu computadora (opcional)
+    </label>
+
+    <input
+      type="file"
+      id="drd-mp4-files"
+      accept="video/*"
+      multiple
+    >
+
+    <label class="drd-mp4-label">
+      🎵 Música o audio de fondo (opcional)
+    </label>
+
+    <input
+      type="file"
+      id="drd-mp4-audio"
+      accept="audio/*"
+    >
+
+    <div class="drd-mp4-small" id="drd-mp4-audio-name">
+      No hay pista de audio seleccionada.
+    </div>
+
+  </div>
+
+  <div class="drd-mp4-box">
+    <strong>⚙️ Opciones adicionales de exportación</strong>
+    <div class="drd-mp4-config-grid">
+      <div>
+        <label class="drd-mp4-label" for="drd-mp4-count">🎬 Cantidad de versiones MP4</label>
+        <select id="drd-mp4-count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option></select>
+      </div>
+    </div>
+    <label class="drd-mp4-label" for="drd-mp4-captions">💬 Subtítulos (texto opcional)</label>
+    <input type="hidden" id="drd-mp4-mode" value="review">
+    <input type="hidden" id="drd-mp4-format" value="vertical">
+    <input type="hidden" id="drd-mp4-duration" value="30">
+    <textarea id="drd-mp4-instructions" style="display:none" aria-hidden="true"></textarea>
+    <textarea id="drd-mp4-captions" placeholder="Escribe el texto que quieres ver como subtítulo. No se sincroniza automáticamente por voz todavía."></textarea>
+    <div class="drd-mp4-small">El texto de subtítulos se muestra en la vista previa. El MP4 todavía no lleva subtítulos incrustados ni generados automáticamente.</div>
+    <div id="drd-mp4-output-links"></div>
+    <div class="drd-mp4-small" id="drd-mp4-mode-help" style="margin-top:10px">
+      Revisión manual activa: analiza el video y revisa los fragmentos antes de exportar.
+    </div>
+    <div class="drd-mp4-small" style="margin-top:8px">
+      Los cortes propuestos por IA son aproximados y editables. Los subtítulos escritos se muestran en vista previa, pero todavía no se incrustan automáticamente en el MP4.
+    </div>
+  </div>
+
+
+  <div class="drd-mp4-box">
+
+    <strong>📚 Clips seleccionados</strong>
+
+    <p class="drd-mp4-small">
+      Usa las flechas para organizar el orden de las escenas.
+      Ajusta el inicio y final de cada clip.
+    </p>
+
+    <div id="drd-mp4-list"></div>
+
+  </div>
+
+  <div class="drd-mp4-actions">
+
+    <button
+      type="button"
+      id="drd-mp4-render"
+      class="drd-mp4-primary"
+    >
+      ⬇️ Exportar MP4
+    </button>
+
+    <button
+      type="button"
+      id="drd-mp4-generate"
+      class="drd-mp4-primary"
+    >
+      🎬 Generar video
+    </button>
+
+    <button
+      type="button"
+      id="drd-mp4-clear"
+      class="drd-mp4-danger"
+    >
+      🗑️ Limpiar editor
+    </button>
+
+  </div>
+
+  <div class="drd-mp4-progress">
+    <div
+      id="drd-mp4-progress-bar"
+      class="drd-mp4-progress-bar"
+    ></div>
+  </div>
+
+  <div
+    id="drd-mp4-status"
+    class="drd-mp4-status"
+  >
+    Añade uno o más videos para comenzar.
+    Formato de salida según la configuración: 9:16, 16:9 o 1:1.
+  </div>
+
+  <div class="drd-mp4-preview-wrap">
+    <video id="drd-mp4-preview" class="drd-mp4-preview" controls playsinline style="display:none"></video>
+    <div id="drd-mp4-caption-preview" class="drd-mp4-caption-preview"></div>
+  </div>
+  <button type="button" id="drd-mp4-cover" class="drd-mp4-secondary" style="display:none;margin-top:10px">🖼️ Crear portada desde fotograma</button>
+
+  <a
+    id="drd-mp4-download"
+    class="drd-mp4-download"
+    style="display:none"
+    download="DoradoRD_video_final.mp4"
+  >
+    ⬇️ Descargar video MP4
+  </a>
+
+</section>
       </div>
 
       <!-- CONFIGURACION -->
@@ -603,18 +743,35 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
 <style>
 #drd-mp4-editor {
-  grid-column: 1 / -1;
+  grid-column: auto;
+  width: 100%;
   background: #10191e;
   border: 1px solid #29404b;
   border-radius: 17px;
-  margin: 24px 0;
-  padding: 22px;
+  margin: 14px 0 0;
+  padding: 18px;
   color: #eef6f4;
   box-sizing: border-box;
 }
 
 #drd-mp4-editor * {
   box-sizing: border-box;
+}
+.drd-mp4-embedded-heading {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #29404b;
+}
+.drd-mp4-embedded-heading h4 {
+  margin: 0 0 6px;
+  color: #eef6f4;
+  font-size: 17px;
+}
+.drd-mp4-embedded-heading p {
+  margin: 0;
+  color: #9fb5aa;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 #drd-mp4-editor h3 {
@@ -837,140 +994,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 }
 </style>
 
-<section id="drd-mp4-editor">
 
-  <h3>🎞️ Montaje, revisión y exportación</h3>
-
-  <p class="drd-mp4-small">
-    Esta es la etapa de producción del mismo Editor Inteligente. La IA prepara los fragmentos y aquí puedes revisarlos, añadir audio, ajustar subtítulos y exportar el MP4 final. No es un editor independiente.
-  </p>
-
-  <div class="drd-mp4-box">
-
-    <label class="drd-mp4-label">
-      🎬 Añadir clips complementarios desde tu computadora (opcional)
-    </label>
-
-    <input
-      type="file"
-      id="drd-mp4-files"
-      accept="video/*"
-      multiple
-    >
-
-    <label class="drd-mp4-label">
-      🎵 Música o audio de fondo (opcional)
-    </label>
-
-    <input
-      type="file"
-      id="drd-mp4-audio"
-      accept="audio/*"
-    >
-
-    <div class="drd-mp4-small" id="drd-mp4-audio-name">
-      No hay pista de audio seleccionada.
-    </div>
-
-  </div>
-
-  <div class="drd-mp4-box">
-    <strong>⚙️ Opciones adicionales de exportación</strong>
-    <div class="drd-mp4-config-grid">
-      <div>
-        <label class="drd-mp4-label" for="drd-mp4-count">🎬 Cantidad de versiones MP4</label>
-        <select id="drd-mp4-count"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option></select>
-      </div>
-    </div>
-    <label class="drd-mp4-label" for="drd-mp4-captions">💬 Subtítulos (texto opcional)</label>
-    <input type="hidden" id="drd-mp4-mode" value="review">
-    <input type="hidden" id="drd-mp4-format" value="vertical">
-    <input type="hidden" id="drd-mp4-duration" value="30">
-    <textarea id="drd-mp4-instructions" style="display:none" aria-hidden="true"></textarea>
-    <textarea id="drd-mp4-captions" placeholder="Escribe el texto que quieres ver como subtítulo. No se sincroniza automáticamente por voz todavía."></textarea>
-    <div class="drd-mp4-small">El texto de subtítulos se muestra en la vista previa. El MP4 todavía no lleva subtítulos incrustados ni generados automáticamente.</div>
-    <div id="drd-mp4-output-links"></div>
-    <div class="drd-mp4-small" id="drd-mp4-mode-help" style="margin-top:10px">
-      Revisión manual activa: analiza el video y revisa los fragmentos antes de exportar.
-    </div>
-    <div class="drd-mp4-small" style="margin-top:8px">
-      Los cortes propuestos por IA son aproximados y editables. Los subtítulos escritos se muestran en vista previa, pero todavía no se incrustan automáticamente en el MP4.
-    </div>
-  </div>
-
-
-  <div class="drd-mp4-box">
-
-    <strong>📚 Clips seleccionados</strong>
-
-    <p class="drd-mp4-small">
-      Usa las flechas para organizar el orden de las escenas.
-      Ajusta el inicio y final de cada clip.
-    </p>
-
-    <div id="drd-mp4-list"></div>
-
-  </div>
-
-  <div class="drd-mp4-actions">
-
-    <button
-      type="button"
-      id="drd-mp4-render"
-      class="drd-mp4-primary"
-    >
-      ⬇️ Exportar MP4
-    </button>
-
-    <button
-      type="button"
-      id="drd-mp4-generate"
-      class="drd-mp4-primary"
-    >
-      🎬 Generar video
-    </button>
-
-    <button
-      type="button"
-      id="drd-mp4-clear"
-      class="drd-mp4-danger"
-    >
-      🗑️ Limpiar editor
-    </button>
-
-  </div>
-
-  <div class="drd-mp4-progress">
-    <div
-      id="drd-mp4-progress-bar"
-      class="drd-mp4-progress-bar"
-    ></div>
-  </div>
-
-  <div
-    id="drd-mp4-status"
-    class="drd-mp4-status"
-  >
-    Añade uno o más videos para comenzar.
-    Formato de salida según la configuración: 9:16, 16:9 o 1:1.
-  </div>
-
-  <div class="drd-mp4-preview-wrap">
-    <video id="drd-mp4-preview" class="drd-mp4-preview" controls playsinline style="display:none"></video>
-    <div id="drd-mp4-caption-preview" class="drd-mp4-caption-preview"></div>
-  </div>
-  <button type="button" id="drd-mp4-cover" class="drd-mp4-secondary" style="display:none;margin-top:10px">🖼️ Crear portada desde fotograma</button>
-
-  <a
-    id="drd-mp4-download"
-    class="drd-mp4-download"
-    style="display:none"
-    download="DoradoRD_video_final.mp4"
-  >
-    ⬇️ Descargar video MP4
-  </a>
-
-</section>
 
 <script>
 (function ()  {
@@ -2050,7 +2074,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     const key=chosen?String(window.videoKey(chosen)):"";
     if(key && [...$("video-select").options].some(o=>o.value===key)) $("video-select").value=key;
     const state = $("tiktok-state");
-    if (state && chosen) state.textContent = "✓ Video de Biblioteca seleccionado: " + (chosen.title || chosen.video_description || "Video de TikTok") + ". Para editar necesitas el archivo MP4 original.";
+    if (state && chosen) state.textContent = "✓ Video seleccionado desde Biblioteca / Top 5: " + (chosen.title || chosen.video_description || "Video de TikTok") + ". La referencia y sus métricas ya están conectadas al Editor; para montar el contenido necesitas cargar el MP4 original.";
   }
 
   window.DoradoRDAIRefreshLibrary=refreshLibrary;
@@ -2854,6 +2878,8 @@ function selectVideo(video,scrollToLab=false){
   renderVideos();
   updateSelectedVideoPanel();
   if(window.DoradoRDAIRefreshSelection) window.DoradoRDAIRefreshSelection();
+  const aiSourceState = $("drd-ai-tiktok-state");
+  if (aiSourceState) aiSourceState.textContent = "✓ Selección del Top 5 enviada a Video de trabajo: " + titleOf(video) + ". Sus métricas y referencia están disponibles; carga el MP4 original para editarlo.";
 
   if(viralData)renderTopList();
 
