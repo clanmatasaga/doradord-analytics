@@ -369,7 +369,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   <div class="drd-header">
     <h2>🎬 DoradoRD · Editor Inteligente de Clips</h2>
     <p>
-      Selecciona un video, analízalo con los motores IA disponibles, organiza los clips, edita y exporta tu MP4 desde un solo espacio.
+      Selecciona un video, analízalo con Workers AI de Cloudflare, organiza los clips, edita y exporta tu MP4 desde un solo espacio.
     </p>
     <span class="drd-pill">ANÁLISIS IA</span>
     <span class="drd-pill">EDICIÓN MP4</span>
@@ -1399,13 +1399,17 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       throw new Error("No se encontró el Worker local (" + classWorkerURL + "). Sube el archivo ffmpeg/worker.js al repositorio antes de exportar.");
     }
 
-    const coreURL = await fetchBlobURL(coreBase + "/ffmpeg-core.js", "text/javascript", "ffmpeg-core.js");
-    const wasmURL = await fetchBlobURL(coreBase + "/ffmpeg-core.wasm", "application/wasm", "ffmpeg-core.wasm");
-
+    let coreURL = null;
+    let wasmURL = null;
     try {
+      coreURL = await fetchBlobURL(coreBase + "/ffmpeg-core.js", "text/javascript", "ffmpeg-core.js");
+      wasmURL = await fetchBlobURL(coreBase + "/ffmpeg-core.wasm", "application/wasm", "ffmpeg-core.wasm");
       await ffmpeg.load({ coreURL, wasmURL, classWorkerURL });
     } catch (error) {
       throw new Error("FFmpeg no pudo inicializarse con el Worker local: " + (error && error.message ? error.message : String(error)));
+    } finally {
+      if (coreURL) URL.revokeObjectURL(coreURL);
+      if (wasmURL) URL.revokeObjectURL(wasmURL);
     }
 
     ffmpegInstance = ffmpeg;
@@ -1418,11 +1422,11 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   }
 
   async function renderVideo() {
-    if (rendering) return;
+    if (rendering) return false;
 
     if (!clips.length) {
       setStatus("Primero añade al menos un video al editor.");
-      return;
+      return false;
     }
 
     for (let i = 0; i < clips.length; i++) {
@@ -1430,7 +1434,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       if (!clip.duration) {
         setStatus("No se pudo leer la duración de: " + clip.name);
-        return;
+        return false;
       }
 
       const start = Math.max(0, Number(clip.start) || 0);
@@ -1441,15 +1445,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           "Revisa el clip " + (i + 1) +
           ". El tiempo final debe ser mayor al tiempo inicial."
         );
-        return;
+        return false;
       }
     }
 
     const requestedDuration = Math.max(1, Number(durationInput && durationInput.value) || 1);
     const totalAvailable = clips.reduce((sum, clip) => sum + Math.max(0, (clip.end > 0 ? clip.end : clip.duration) - Math.max(0, clip.start || 0)), 0);
+    const exportDuration = Math.max(1, Math.min(requestedDuration, totalAvailable));
     if (requestedDuration > totalAvailable + 0.05) {
-      setStatus("⚠️ La duración solicitada (" + requestedDuration + " s) supera el material seleccionado (" + totalAvailable.toFixed(1) + " s). Añade más video o reduce los segundos.");
-      return;
+      setStatus("La selección contiene " + totalAvailable.toFixed(1) + " s; el MP4 se exportará con esa duración disponible en lugar de rellenar con escenas inexistentes.");
     }
 
     rendering = true;
@@ -1496,27 +1500,43 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         const end = clip.end > 0 ? clip.end : clip.duration;
         const duration = end - start;
 
-        const result = await ffmpeg.exec([
-          "-ss", String(start),
-          "-i", inputName,
-          "-t", String(duration),
-          "-vf",
-          (function(){
-            const format = formatInput ? formatInput.value : "vertical";
-            const dims = format === "horizontal" ? [1920,1080] : format === "square" ? [1080,1080] : [1080,1920];
-            return "scale="+dims[0]+":"+dims[1]+":force_original_aspect_ratio=increase,crop="+dims[0]+":"+dims[1]+",fps=30,setsar=1";
-          })(),
-          "-an",
-          "-c:v", "libx264",
-          "-preset", "ultrafast",
-          "-crf", "23",
-          "-pix_fmt", "yuv420p",
-          "-movflags", "+faststart",
-          outputName
+        const videoFilter = (function(){
+          const format = formatInput ? formatInput.value : "vertical";
+          const dims = format === "horizontal" ? [1920,1080] : format === "square" ? [1080,1080] : [1080,1920];
+          return "scale="+dims[0]+":"+dims[1]+":force_original_aspect_ratio=increase,crop="+dims[0]+":"+dims[1]+",fps=30,setsar=1";
+        })();
+
+        // Cada clip normalizado termina con una pista AAC. Si el original
+        // tiene audio, se conserva; si no, se crea silencio para mantener
+        // una estructura uniforme al concatenar clips diferentes.
+        let result = await ffmpeg.exec([
+          "-ss", String(start), "-i", inputName,
+          "-f", "lavfi", "-t", String(duration), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+          "-filter_complex",
+          "[0:a:0]atrim=duration="+duration+",asetpts=PTS-STARTPTS[a0];[1:a:0]atrim=duration="+duration+",asetpts=PTS-STARTPTS[a1];[a0][a1]amix=inputs=2:duration=first:dropout_transition=0[a]",
+          "-map", "0:v:0", "-map", "[a]",
+          "-t", String(duration), "-vf", videoFilter,
+          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+          "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+          "-ar", "44100", "-ac", "2", "-movflags", "+faststart", outputName
         ]);
 
+        // Si el archivo no contiene audio, el filtro anterior no encuentra
+        // [0:a:0]. Reintentar con una pista silenciosa, sin perder el video.
         if (result !== 0) {
-          throw new Error("FFmpeg falló al procesar el clip " + (i + 1));
+          result = await ffmpeg.exec([
+            "-ss", String(start), "-i", inputName,
+            "-f", "lavfi", "-t", String(duration), "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+            "-map", "0:v:0", "-map", "1:a:0", "-t", String(duration),
+            "-vf", videoFilter,
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+            "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k",
+            "-ar", "44100", "-ac", "2", "-movflags", "+faststart", outputName
+          ]);
+        }
+
+        if (result !== 0) {
+          throw new Error("FFmpeg falló al procesar el clip " + (i + 1) + ". Comprueba que el archivo sea un video compatible.");
         }
 
         normalizedFiles.push(outputName);
@@ -1576,16 +1596,12 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         const audioResult = await ffmpeg.exec([
           "-i", joinedFile,
-          "-i", audioInputName,
-          "-map", "0:v:0",
-          "-map", "1:a:0",
-          "-t", String(Math.max(1, Number(durationInput && durationInput.value) || 1)),
-          "-c:v", "copy",
-          "-c:a", "aac",
-          "-b:a", "192k",
-          "-shortest",
-          "-movflags", "+faststart",
-          finalFile
+          "-stream_loop", "-1", "-i", audioInputName,
+          "-filter_complex", "[0:a:0]volume=1.0[original];[1:a:0]volume=0.25[music];[original][music]amix=inputs=2:duration=first:dropout_transition=2[mixed]",
+          "-map", "0:v:0", "-map", "[mixed]",
+          "-t", String(exportDuration),
+          "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+          "-movflags", "+faststart", finalFile
         ]);
 
         if (audioResult !== 0) {
@@ -1596,10 +1612,10 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         const copyResult = await ffmpeg.exec([
           "-i", joinedFile,
+          "-map", "0:v:0", "-map", "0:a:0",
           "-t", String(Math.max(1, Number(durationInput && durationInput.value) || 1)),
-          "-c", "copy",
-          "-movflags", "+faststart",
-          finalFile
+          "-c:v", "copy", "-c:a", "copy",
+          "-movflags", "+faststart", finalFile
         ]);
 
         if (copyResult !== 0) {
@@ -1653,6 +1669,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       if (publishPreview) { publishPreview.src = outputUrl; publishPreview.style.display = "block"; publishPreview.load(); }
       if (publishDownload) { publishDownload.href = outputUrl; publishDownload.download = variantName; publishDownload.style.display = "inline-block"; }
       if (publishStatus) publishStatus.textContent = "✅ Video final transferido automáticamente al Centro de Publicación. Revisa descripción, hashtags y privacidad. La publicación directa aún requiere integración oficial de TikTok.";
+      return true;
 
     } catch (error) {
       console.error("DoradoRD MP4 error:", error);
@@ -1664,6 +1681,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         (error && error.message ? error.message : String(error)) +
         ". Si vuelve a ocurrir, intenta con clips más cortos o menos videos."
       );
+      return false;
 
     } finally {
       if (ffmpeg && temporaryFiles.length) {
@@ -1766,7 +1784,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     },
 
     export() {
-      renderVideo();
+      return renderVideo();
     },
 
     async generate(scriptText) {
@@ -1780,8 +1798,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       } else {
         setStatus("Iniciando render real con los recortes, orden de escenas, formato vertical y audio seleccionado.");
       }
-      await renderVideo();
-      return true;
+      return await renderVideo();
     },
 
     setBatchOptions(enabled, index) {
@@ -1910,11 +1927,15 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         alert("Se crearán " + count + " exportaciones MP4 independientes con la misma selección de clips. El motor actual aún no aplica variaciones de edición basadas en IA; por ahora serán exportaciones de la misma secuencia y duración configurada.");
       }
       if (instructionText) setStatus("Instrucciones recibidas para la producción (" + instructionText.length + " caracteres). El motor FFmpeg actual no las aplica automáticamente; exportará los recortes configurados.");
-      for (let i = 0; i < count; i++) {
-        editor.setBatchOptions(count > 1, i);
-        await editor.generate(scriptText);
+      try {
+        for (let i = 0; i < count; i++) {
+          editor.setBatchOptions(count > 1, i);
+          const completed = await editor.generate(scriptText);
+          if (!completed) break;
+        }
+      } finally {
+        editor.setBatchOptions(false, 0);
       }
-      editor.setBatchOptions(false, 0);
     });
   }
 
@@ -2146,7 +2167,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     writeOutput(script);
   }
 
-  /* ===== CONEXIÓN CON IA (WORKER + GEMINI) ===== */
+  /* ===== CONEXIÓN CON IA (CLOUDFLARE WORKERS AI) ===== */
   const AI_WORKER = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
   let lastAnalysis = "";
   let lastFrames = [];
@@ -2162,28 +2183,48 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     video.muted = true;
     video.preload = "auto";
     video.playsInline = true;
-    await new Promise((res, rej) => {
-      video.onloadedmetadata = res;
-      video.onerror = () => rej(new Error("No se pudo leer el video."));
+    const waitFor = (eventName, errorMessage, timeoutMs = 15000) => new Promise((resolve, reject) => {
+      let timer;
+      const cleanup = () => {
+        clearTimeout(timer);
+        video.removeEventListener(eventName, onReady);
+        video.removeEventListener("error", onError);
+      };
+      const onReady = () => { cleanup(); resolve(); };
+      const onError = () => { cleanup(); reject(new Error(errorMessage)); };
+      timer = setTimeout(() => { cleanup(); reject(new Error("Tiempo agotado al leer el video. Prueba con un archivo más corto o en MP4.")); }, timeoutMs);
+      video.addEventListener(eventName, onReady, { once: true });
+      video.addEventListener("error", onError, { once: true });
     });
-    const duration = video.duration || 0;
-    const canvas = document.createElement("canvas");
-    const scale = Math.min(1, 640 / (video.videoWidth || 640));
-    canvas.width = Math.round((video.videoWidth || 640) * scale);
-    canvas.height = Math.round((video.videoHeight || 360) * scale);
-    const ctx = canvas.getContext("2d");
-    const frames = [];
-    for (let i = 0; i < count; i++) {
-      const t = (duration * (i + 0.5)) / count;
-      await new Promise(res => {
-        video.onseeked = res;
-        video.currentTime = t;
-      });
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      frames.push({ timestamp: Math.round(t), image: canvas.toDataURL("image/jpeg", 0.7) });
+    try {
+      await waitFor("loadedmetadata", "No se pudo leer el video.");
+      const duration = Number(video.duration) || 0;
+      if (!duration || !Number.isFinite(duration)) throw new Error("El video no tiene una duración válida.");
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 640 / (video.videoWidth || 640));
+      canvas.width = Math.max(1, Math.round((video.videoWidth || 640) * scale));
+      canvas.height = Math.max(1, Math.round((video.videoHeight || 360) * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("No se pudo preparar el lienzo para extraer fotogramas.");
+      const frames = [];
+      const total = Math.max(1, Math.min(16, Number(count) || 8));
+      for (let i = 0; i < total; i++) {
+        const t = Math.min(Math.max(0, duration - 0.05), (duration * (i + 0.5)) / total);
+        if (Math.abs(video.currentTime - t) > 0.01) {
+          const seeked = waitFor("seeked", "No se pudo leer uno de los fotogramas.");
+          video.currentTime = t;
+          await seeked;
+        }
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frames.push({ timestamp: Math.round(t), image: canvas.toDataURL("image/jpeg", 0.7) });
+      }
+      return { frames, duration };
+    } finally {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      URL.revokeObjectURL(url);
     }
-    URL.revokeObjectURL(url);
-    return { frames, duration };
   }
 
   async function extractAudioWav(file){
@@ -2245,7 +2286,15 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     }
     const applied = await editor.setTimeline(localFile, result.segments || []);
     if (!applied) throw new Error("La IA no devolvió fragmentos utilizables.");
-    $("analysis-status").textContent = "✓ Análisis y selección de escenas completados. " + result.segments.length + " fragmentos propuestos · " + (result.engine || "Gemini") + ". " + ( $("mode").value === "automatic" ? "Modo inteligente listo para exportar." : "Revisa y ajusta los cortes antes de exportar." );
+    $("analysis-status").textContent = "✓ Análisis y selección de escenas completados. " + result.segments.length + " fragmentos propuestos · " + (result.engine || "Cloudflare Workers AI") + ". " + ( $("mode").value === "automatic" ? "Iniciando exportación automática." : "Revisa y ajusta los cortes antes de exportar." );
+    if ($("mode").value === "automatic") {
+      const exported = await editor.generate($("output").textContent || "");
+      if (!exported) {
+        $("analysis-status").textContent += " ⚠ La selección quedó preparada, pero la exportación no se completó. Revisa el estado del motor MP4.";
+        return false;
+      }
+      $("analysis-status").textContent += " ✓ MP4 exportado y transferido al Centro de Publicación.";
+    }
   }
 
   async function runAIAnalysis(coverOnly){
@@ -2314,7 +2363,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       $("analysis-status").textContent =
         "✓ Análisis completado. Fotogramas analizados: " + data.framesAnalyzed +
         " · Audio transcrito: " + (data.audioTranscribed ? "sí" : "no") +
-        " · Motor: " + (data.engine || "gemini") + note;
+        " · Motor: " + (data.engine || "cloudflare") + note;
 
       if (!coverOnly && activeLocalVideo && localFile) {
         try {
@@ -2366,6 +2415,9 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
   }
 
   $("video-select").addEventListener("change",()=>{
+    lastAnalysis = "";
+    lastFrames = [];
+    lastSourceDuration = 0;
     const v=selectedVideo();
     if(v){
       activeLocalVideo=false;
@@ -2453,10 +2505,14 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       "Composición sugerida:\n- Un sujeto principal.\n- Fondo limpio y contraste alto.\n- Texto breve, grande y legible.\n- Expresión o escena que genere curiosidad.\n\nLa generación de imagen real se habilitará al conectar el servicio de imágenes IA.");
   });
 
-  $("production").addEventListener("click",()=>{
-    if (lastAnalysis) runAIScript(true); else makeScript(true);
-    $("export-status").textContent=
-      "Plan de producción preparado como texto. La generación real de clips, voz, música, montaje y render MP4 todavía no está conectada.";
+  $("production").addEventListener("click",async()=>{
+    if (lastAnalysis) await runAIScript(true); else makeScript(true);
+    const editor = window.DoradoRDMP4;
+    if (editor && typeof editor.getClips === "function" && editor.getClips().length) {
+      $("analysis-status").textContent = "Plan preparado. Los clips están disponibles en el motor integrado; revisa la selección y pulsa «Generar video» para exportar.";
+    } else {
+      $("analysis-status").textContent = "Plan de producción preparado. Selecciona un MP4 local para montar y exportar el video.";
+    }
   });
 
   $("copy").addEventListener("click",async()=>{
@@ -2520,12 +2576,6 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       "\nHashtags: "+(hashtags||"(vacíos)")+
       "\n\nEsto es solo una configuración local. Todavía no se ha publicado ni enviado ningún video.";
   });
-
-  $("render").addEventListener("click",()=>{
-    $("export-status").textContent=
-      "La producción está configurada, pero aún falta conectar los servicios de generación de video, audio, subtítulos y renderizado.";
-  });
-
 
 
   refreshLibrary();
@@ -2691,9 +2741,15 @@ function setStatus(text,type=""){
 }
 
 function notice(message,type="info"){
-  if(!message){ $("notice").innerHTML=""; return; }
-  const color=type==="error"?"#ff5757":"#a9b9ad";
-  $("notice").innerHTML=`<div class="notice" style="color:${color}">${message}</div>`;
+  const host = $("notice");
+  if(!host) return;
+  host.textContent = "";
+  if(!message) return;
+  const item = document.createElement("div");
+  item.className = "notice";
+  item.style.color = type === "error" ? "#ff5757" : "#a9b9ad";
+  item.textContent = String(message);
+  host.appendChild(item);
 }
 
 function formatNumber(value){
