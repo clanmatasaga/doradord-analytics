@@ -1165,6 +1165,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   let clips = [];
   let audioFile = null;
   let outputUrl = null;
+  let publishOutputUrl = null;
   let ffmpegInstance = null;
   let rendering = false;
 
@@ -1584,6 +1585,16 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     clearBtn.disabled = true;
     setProgress(0);
     revokeOutput();
+    window.DoradoRDFinalVideoBlob = null;
+    window.DoradoRDFinalVideoFile = null;
+    window.DoradoRDFinalVideoURL = null;
+    const previousPublishPreview = document.getElementById("drd-publish-final-preview");
+    const previousPublishDownload = document.getElementById("drd-publish-final-download");
+    if (publishOutputUrl) { URL.revokeObjectURL(publishOutputUrl); publishOutputUrl = null; }
+    if (previousPublishPreview) { previousPublishPreview.pause(); previousPublishPreview.removeAttribute("src"); previousPublishPreview.style.display = "none"; previousPublishPreview.load(); }
+    if (previousPublishDownload) { previousPublishDownload.removeAttribute("href"); previousPublishDownload.style.display = "none"; }
+    const publishStatusBeforeRender = document.getElementById("drd-ai-publish-status");
+    if (publishStatusBeforeRender) publishStatusBeforeRender.textContent = "Exportando el MP4 final. El Centro de Publicación recibirá el archivo cuando termine.";
 
     let ffmpeg;
 
@@ -1784,14 +1795,18 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       const selectedFormat = formatInput ? formatInput.value : "vertical";
       const formatLabel = selectedFormat === "horizontal" ? "1920 × 1080 (16:9)" : selectedFormat === "square" ? "1080 × 1080 (1:1)" : "1080 × 1920 (9:16)";
       setStatus("✅ Video terminado correctamente. Formato " + formatLabel + ". Puedes visualizarlo y descargarlo.");
+      const finalVideoFile = new File([videoBlob], variantName, { type: "video/mp4", lastModified: Date.now() });
       window.DoradoRDFinalVideoBlob = videoBlob;
+      window.DoradoRDFinalVideoFile = finalVideoFile;
       window.DoradoRDFinalVideoURL = outputUrl;
       const publishStatus = document.getElementById("drd-ai-publish-status");
       const publishPreview = document.getElementById("drd-publish-final-preview");
       const publishDownload = document.getElementById("drd-publish-final-download");
-      if (publishPreview) { publishPreview.src = outputUrl; publishPreview.style.display = "block"; publishPreview.load(); }
-      if (publishDownload) { publishDownload.href = outputUrl; publishDownload.download = variantName; publishDownload.style.display = "inline-block"; }
-      if (publishStatus) publishStatus.textContent = "✅ Video final transferido automáticamente al Centro de Publicación. Revisa descripción, hashtags y privacidad. La publicación directa aún requiere integración oficial de TikTok.";
+      if (publishOutputUrl) URL.revokeObjectURL(publishOutputUrl);
+      publishOutputUrl = URL.createObjectURL(videoBlob);
+      if (publishPreview) { publishPreview.src = publishOutputUrl; publishPreview.style.display = "block"; publishPreview.load(); }
+      if (publishDownload) { publishDownload.href = publishOutputUrl; publishDownload.download = variantName; publishDownload.style.display = "inline-block"; }
+      if (publishStatus) publishStatus.textContent = "✅ MP4 recibido en el Centro de Publicación (" + (videoBlob.size / 1048576).toFixed(2) + " MB). Ya puedes preparar la publicación. Todavía no se ha enviado ni publicado en TikTok.";
       return true;
 
     } catch (error) {
@@ -1839,16 +1854,30 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     },
 
     addFile(file) {
-      if (!file || !file.type.startsWith("video/")) {
-        return false;
-      }
-
+      if (!file || !file.type.startsWith("video/")) return false;
       const clip = createClip(file);
       clips.push(clip);
-      readVideoDuration(clip).then(renderList);
+      readVideoDuration(clip).then(() => { renderList(); });
       renderList();
-
       setStatus("Video recibido desde otro módulo de DoradoRD.");
+      return true;
+    },
+
+    async addFileAndWait(file) {
+      if (!file || !file.type || !file.type.startsWith("video/")) return false;
+      if (rendering) throw new Error("El editor está exportando otro video.");
+      const clip = createClip(file);
+      clips.push(clip);
+      renderList();
+      const duration = await readVideoDuration(clip);
+      renderList();
+      if (!duration) {
+        clips = clips.filter(item => item !== clip);
+        revokeClipURL(clip);
+        renderList();
+        throw new Error("El editor no pudo leer la duración del video generado.");
+      }
+      setStatus("Video recibido y preparado en el editor: " + clip.name);
       return true;
     },
 
@@ -2254,10 +2283,18 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           if (typeof window.DoradoRDMP4.setFormat === "function") {
             window.DoradoRDMP4.setFormat(ratio === "16:9" ? "horizontal" : ratio === "1:1" ? "square" : "vertical");
           }
-          window.DoradoRDMP4.addFile(videoFile);
-          const publishStatus = document.getElementById("drd-ai-publish-status");
-          if (publishStatus) publishStatus.textContent = "Las escenas generadas se enviaron al editor MP4. Pulsa Exportar video en el editor para convertirlo a MP4 y transferirlo al Centro de Publicación.";
-          setAIGenerationStatus("✅ Video de escenas creado y enviado al editor. Reprodúcelo y pulsa Exportar video para obtener el MP4 final y pasarlo al Centro de Publicación.");
+          const editor = window.DoradoRDMP4;
+          const received = typeof editor.addFileAndWait === "function"
+            ? await editor.addFileAndWait(videoFile)
+            : editor.addFile(videoFile);
+          if (!received) throw new Error("El editor no aceptó el video generado.");
+          setAIGenerationStatus("🎞️ Escenas listas. Convirtiendo automáticamente a MP4 y enviándolo al Centro de Publicación…");
+          if (typeof editor.export !== "function") throw new Error("El exportador MP4 no está disponible.");
+          const exported = await editor.export();
+          if (!exported || !window.DoradoRDFinalVideoBlob || window.DoradoRDFinalVideoBlob.type !== "video/mp4") {
+            throw new Error("No se completó la exportación MP4. Revisa el estado del editor y vuelve a exportar.");
+          }
+          setAIGenerationStatus("✅ Video generado, convertido a MP4 y transferido al Centro de Publicación. Revisa la vista previa y pulsa Preparar publicación.");
         } else {
           setAIGenerationStatus("✅ Video creado. Descárgalo en WEBM; el editor MP4 no está disponible en esta página.");
         }
@@ -2901,40 +2938,57 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   });
 
-  $("publish-mode").addEventListener("change",()=>{
-    const mode=$("publish-mode").value;
-    $("publish-status").textContent=mode==="manual"?
-      "Modo manual: no se publicará nada sin tu acción.":
-      mode==="draft"?
-      "Borrador seleccionado. Requiere integración oficial de TikTok.":
-      "Publicación automática seleccionada. Requiere API oficial, permisos y conexión segura. Todavía no se enviará nada.";
-  });
+  const publishMode = $("drd-ai-publish-mode");
+  const publishCaption = $("drd-ai-caption");
+  const publishHashtags = $("drd-ai-hashtags");
+  const publishPrivacy = $("drd-ai-privacy");
+  const publishApproval = $("drd-ai-approval");
+  const publishAuto = $("drd-ai-auto-enabled");
+  const publishLimit = $("drd-ai-daily-limit");
+  const publishReadyButton = $("drd-ai-publish-ready");
+  const publishStatus = $("drd-ai-publish-status");
 
-  $("auto-enabled").addEventListener("change",()=>{
-    const enabled=$("auto-enabled").checked;
-    $("publish-status").textContent=enabled?
-      "Automatización marcada como preferencia. No está activa hasta conectar el servicio de publicación y autorizarlo.":
-      "Automatización desactivada.";
+  function updatePublishPreferenceStatus() {
+    if (!publishStatus) return;
+    const mode = publishMode ? publishMode.value : "manual";
+    if (mode === "manual") publishStatus.textContent = "Modo manual: tú decides cuándo publicar. No se enviará nada automáticamente.";
+    else if (mode === "draft") publishStatus.textContent = "Borrador seleccionado. El envío depende de la integración oficial y permisos de TikTok.";
+    else publishStatus.textContent = "Publicación automática seleccionada como preferencia. Requiere integración oficial, permisos y autorización.";
+  }
+  if (publishMode) publishMode.addEventListener("change", updatePublishPreferenceStatus);
+  if (publishAuto) publishAuto.addEventListener("change", () => {
+    if (publishStatus) publishStatus.textContent = publishAuto.checked
+      ? "Automatización marcada como preferencia. No se activa ni publica nada sin integración y autorización."
+      : "Automatización desactivada.";
   });
-
-  $("publish-ready").addEventListener("click",()=>{
-    const mode=$("publish-mode").value;
-    const caption=$("caption").value.trim();
-    const hashtags=$("hashtags").value.trim();
-    const privacy=$("privacy").value;
-    const approval=$("approval").checked;
-    const auto=$("auto-enabled").checked;
-    const hasFinalVideo = !!window.DoradoRDFinalVideoBlob;
-    $("publish-status").textContent=
-      (hasFinalVideo ? "VIDEO FINAL ADJUNTO\n" : "FALTA EXPORTAR EL VIDEO\n") +
-      "PUBLICACIÓN PREPARADA\n"+
-      "Modo: "+mode+"\n"+
-      "Privacidad: "+privacy+"\n"+
-      "Aprobación: "+(approval?"Requerida":"No requerida")+"\n"+
-      "Automatización: "+(auto?"Marcada":"Desactivada")+
-      "\nDescripción: "+(caption||"(vacía)")+
-      "\nHashtags: "+(hashtags||"(vacíos)")+
-      "\n\nEsto es solo una configuración local. Todavía no se ha publicado ni enviado ningún video.";
+  if (publishReadyButton) publishReadyButton.addEventListener("click", () => {
+    const blob = window.DoradoRDFinalVideoBlob;
+    const file = window.DoradoRDFinalVideoFile;
+    const hasFinalVideo = !!(blob && file && blob.size > 0 && file.type === "video/mp4");
+    const mode = publishMode ? publishMode.value : "manual";
+    const caption = publishCaption ? publishCaption.value.trim() : "";
+    const hashtags = publishHashtags ? publishHashtags.value.trim() : "";
+    const privacy = publishPrivacy ? publishPrivacy.value : "PUBLIC_TO_EVERYONE";
+    const approval = publishApproval ? publishApproval.checked : true;
+    const auto = publishAuto ? publishAuto.checked : false;
+    const limit = publishLimit ? publishLimit.value : "1";
+    if (!publishStatus) return;
+    if (!hasFinalVideo) {
+      publishStatus.textContent = "FALTA EXPORTAR EL VIDEO. Primero genera el video desde el guion o pulsa Exportar MP4 en el editor. No se ha adjuntado ningún archivo.";
+      return;
+    }
+    publishStatus.textContent =
+      "✅ VIDEO MP4 ADJUNTO (" + (blob.size / 1048576).toFixed(2) + " MB)\n" +
+      "PUBLICACIÓN PREPARADA\n" +
+      "Archivo: " + file.name + "\n" +
+      "Modo: " + mode + "\n" +
+      "Privacidad: " + privacy + "\n" +
+      "Aprobación: " + (approval ? "Requerida" : "No requerida") + "\n" +
+      "Automatización: " + (auto ? "Preferencia activada" : "Desactivada") + "\n" +
+      "Límite diario: " + limit + " video(s)\n" +
+      "Descripción: " + (caption || "(vacía)") + "\n" +
+      "Hashtags: " + (hashtags || "(vacíos)") +
+      "\n\nEl archivo está preparado localmente. Todavía no se ha enviado ni publicado en TikTok; la publicación requiere la integración oficial.";
   });
 
 
