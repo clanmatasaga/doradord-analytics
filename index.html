@@ -513,6 +513,29 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           El archivo MP4 local se utilizará para analizar y editar. La selección desde TikTok solo aporta metadatos y portada: la API conectada no entrega el MP4 original. Al analizar, se envían al Worker los fotogramas y el audio extraídos en el navegador, no el archivo completo.
         </p>
 
+      <!-- ANALISIS -->
+      <div class="drd-card">
+        <h3>🧠 Análisis del contenido</h3>
+
+        <p class="drd-small">
+          Análisis audiovisual con IA: escenas, voz, sonido,
+          portada, ritmo y potencial de retención (estimado).
+        </p>
+
+        <div class="drd-actions">
+          <button class="drd-btn primary" id="drd-ai-analyze">
+            🔍 Analizar video completo
+          </button>
+          <button class="drd-btn secondary" id="drd-ai-cover">
+            🖼️ Analizar portada
+          </button>
+        </div>
+
+        <div class="drd-status" id="drd-ai-analysis-status">
+          Selecciona un video y pulsa «Analizar video completo».
+        </div>
+      </div>
+
 
         <div class="drd-mp4-embedded-heading">
           <h4>🎞️ Montaje, revisión y exportación</h4>
@@ -697,29 +720,6 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
         <div class="drd-status" id="drd-ai-mode-status">
           Modo automático con revisión manual: la IA propone los mejores fragmentos y puedes ajustar cada corte antes de exportar.
-        </div>
-      </div>
-
-      <!-- ANALISIS -->
-      <div class="drd-card">
-        <h3>🧠 Análisis del contenido</h3>
-
-        <p class="drd-small">
-          Análisis audiovisual con IA: escenas, voz, sonido,
-          portada, ritmo y potencial de retención (estimado).
-        </p>
-
-        <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-analyze">
-            🔍 Analizar video completo
-          </button>
-          <button class="drd-btn secondary" id="drd-ai-cover">
-            🖼️ Analizar portada
-          </button>
-        </div>
-
-        <div class="drd-status" id="drd-ai-analysis-status">
-          Selecciona un video y pulsa «Analizar video completo».
         </div>
       </div>
 
