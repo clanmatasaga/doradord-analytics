@@ -828,8 +828,30 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         <video id="drd-publish-final-preview" controls playsinline style="display:none;width:100%;max-height:420px;background:#000;border-radius:10px;margin-top:12px"></video>
         <a id="drd-publish-final-download" class="drd-btn secondary" href="#" download="DoradoRD_video_final.mp4" style="display:none;text-align:center;text-decoration:none">⬇ Descargar video listo para publicar</a>
 
+        <div class="drd-divider"></div>
+        <h4>📚 Biblioteca MP4 de DoradoRD</h4>
+        <p class="drd-small">Guarda aquí los MP4 generados o importados. La biblioteca se conserva en este navegador y dispositivo.</p>
+        <input type="file" id="drd-mp4-library-import" accept="video/mp4,.mp4">
+        <select id="drd-mp4-library-select" style="width:100%;margin-top:8px">
+          <option value="">Cargando biblioteca MP4...</option>
+        </select>
+        <div class="drd-small" id="drd-mp4-library-info" style="margin-top:7px">Selecciona un archivo MP4 para enviarlo a TikTok.</div>
         <div class="drd-actions">
-          <button class="drd-btn primary" id="drd-ai-publish-ready">
+          <button class="drd-btn secondary" id="drd-mp4-library-use-current" type="button">＋ Guardar MP4 actual</button>
+          <button class="drd-btn secondary" id="drd-mp4-library-delete" type="button">Eliminar seleccionado</button>
+        </div>
+        <div class="drd-divider"></div>
+        <label class="drd-check"><input type="checkbox" id="drd-tiktok-is-aigc" checked> Marcar como contenido generado con IA</label>
+        <label class="drd-check"><input type="checkbox" id="drd-tiktok-disable-comments"> Desactivar comentarios</label>
+        <label class="drd-check"><input type="checkbox" id="drd-tiktok-disable-duet"> Desactivar Dúo</label>
+        <label class="drd-check"><input type="checkbox" id="drd-tiktok-disable-stitch"> Desactivar Pegar</label>
+        <div class="drd-actions">
+          <button class="drd-btn secondary" id="drd-tiktok-send-draft" type="button">📥 Enviar a borradores de TikTok</button>
+          <button class="drd-btn primary" id="drd-tiktok-publish-direct" type="button">🚀 Publicar directamente</button>
+        </div>
+        <button class="drd-btn secondary" id="drd-tiktok-check-status" type="button" style="margin-top:8px">↻ Consultar estado del último envío</button>
+        <div class="drd-actions">
+          <button class="drd-btn secondary" id="drd-ai-publish-ready">
             ✔ Preparar publicación
           </button>
         </div>
@@ -1799,6 +1821,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       window.DoradoRDFinalVideoBlob = videoBlob;
       window.DoradoRDFinalVideoFile = finalVideoFile;
       window.DoradoRDFinalVideoURL = outputUrl;
+      if (window.DoradoRDMP4LibrarySave) window.DoradoRDMP4LibrarySave(finalVideoFile).catch(error => console.warn("No se pudo guardar automáticamente en Biblioteca MP4:", error));
       const publishStatus = document.getElementById("drd-ai-publish-status");
       const publishPreview = document.getElementById("drd-publish-final-preview");
       const publishDownload = document.getElementById("drd-publish-final-download");
@@ -3721,6 +3744,53 @@ async function initializeDashboard(force=false){
 }
 
 document.addEventListener("DOMContentLoaded",()=>initializeDashboard());
+</script>
+
+
+<script>
+/* DoradoRD: Biblioteca MP4 local + TikTok Content Posting API */
+(() => {
+  "use strict";
+  const WORKER_URL = "https://doradord-tiktok-auth.clanmatasaga.workers.dev";
+  const DB_NAME = "DoradoRD_MP4_Library";
+  const STORE = "videos";
+  const $ = id => document.getElementById(id);
+  const session = () => sessionStorage.getItem("doradord_session") || "";
+  let selectedVideo = null;
+  let lastPublishId = "";
+  let dbPromise;
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => { const db=request.result; if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:"id"}); };
+      request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error||new Error("No se pudo abrir la biblioteca local."));
+    }); return dbPromise;
+  }
+  async function dbPut(record) { const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(STORE,"readwrite"); const req=tx.objectStore(STORE).put(record); tx.oncomplete=()=>resolve(req.result); tx.onerror=()=>reject(tx.error); }); }
+  async function dbGet(id) { const db=await openDB(); return new Promise((resolve,reject)=>{ const req=db.transaction(STORE,"readonly").objectStore(STORE).get(id); req.onsuccess=()=>resolve(req.result||null); req.onerror=()=>reject(req.error); }); }
+  async function dbAll() { const db=await openDB(); return new Promise((resolve,reject)=>{ const req=db.transaction(STORE,"readonly").objectStore(STORE).getAll(); req.onsuccess=()=>resolve((req.result||[]).sort((a,b)=>b.createdAt-a.createdAt)); req.onerror=()=>reject(req.error); }); }
+  async function dbDelete(id) { const db=await openDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).delete(id); tx.oncomplete=resolve; tx.onerror=()=>reject(tx.error); }); }
+  const sizeLabel=n=>n>=1073741824?(n/1073741824).toFixed(2)+" GB":(n/1048576).toFixed(2)+" MB";
+  function status(message){const el=$("drd-ai-publish-status");if(el)el.textContent=message;}
+  async function saveToLibrary(file){if(!file||!file.size)throw new Error("No hay un MP4 válido para guardar.");if(file.type&&file.type!=="video/mp4")throw new Error("La biblioteca acepta archivos MP4.");const record={id:crypto.randomUUID(),name:file.name||("DoradoRD_"+Date.now()+".mp4"),size:file.size,type:"video/mp4",createdAt:Date.now(),blob:file};await dbPut(record);await renderLibrary(record.id);return record;}
+  window.DoradoRDMP4LibrarySave=saveToLibrary;
+  async function selectRecord(id){selectedVideo=id?await dbGet(id):null;const info=$("drd-mp4-library-info");if(info)info.textContent=selectedVideo?"✓ Seleccionado: "+selectedVideo.name+" · "+sizeLabel(selectedVideo.size)+". Listo para transferir.":"Selecciona un MP4 para enviarlo a TikTok.";}
+  async function renderLibrary(preselect){const select=$("drd-mp4-library-select");if(!select)return;const info=$("drd-mp4-library-info");try{const records=await dbAll();select.innerHTML="";const first=document.createElement("option");first.value="";first.textContent=records.length?"Selecciona un MP4 de tu biblioteca":"Biblioteca MP4 vacía";select.appendChild(first);records.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.name+" · "+sizeLabel(r.size);select.appendChild(o);});const wanted=preselect||(selectedVideo&&selectedVideo.id);select.value=wanted&&records.some(r=>r.id===wanted)?wanted:"";await selectRecord(select.value);if(!records.length&&info)info.textContent="Importa un MP4 o genera uno en el editor para guardarlo aquí.";}catch(e){if(info)info.textContent="No se pudo abrir la biblioteca: "+e.message;}}
+  function headers(extra){const token=session();if(!token)throw new Error("Conecta TikTok nuevamente antes de enviar videos.");return Object.assign({Authorization:"Bearer "+token},extra||{});}
+  async function api(path,body){const r=await fetch(WORKER_URL+path,{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify(body||{})});const d=await r.json().catch(()=>({}));if(!r.ok||d.error)throw new Error(d.error||("Error del Worker: "+r.status)+(d.details?" · "+JSON.stringify(d.details):""));return d;}
+  async function uploadChunks(blob,init,chunkSize){const total=blob.size;for(let start=0,index=0;start<total;start+=chunkSize,index++){const end=Math.min(start+chunkSize,total);const chunk=blob.slice(start,end,"video/mp4");const range="bytes "+start+"-"+(end-1)+"/"+total;status("Transfiriendo MP4 a TikTok... fragmento "+(index+1)+"/"+Math.ceil(total/chunkSize)+" ("+Math.round(end/total*100)+"%). No cierres esta página.");const r=await fetch(WORKER_URL+"/tiktok/upload-chunk",{method:"POST",headers:headers({"Content-Type":"video/mp4","Content-Range":range,"X-TikTok-Upload-Url":init.upload_url}),body:chunk});const d=await r.json().catch(()=>({}));if(!r.ok||!d.success)throw new Error(d.error||("Falló el fragmento "+(index+1)+" (HTTP "+r.status+")")+(d.details?" · "+d.details:""));}}
+  async function transfer(mode){if(!selectedVideo?.blob)throw new Error("Selecciona primero un MP4 de la Biblioteca DoradoRD.");if(!session())throw new Error("Conecta TikTok para autorizar el envío.");const blob=selectedVideo.blob;if(blob.size<1024)throw new Error("El MP4 parece estar vacío o incompleto.");if(blob.type&&blob.type!=="video/mp4")throw new Error("El archivo seleccionado no es MP4.");const caption=(( $("drd-ai-caption")?.value||"")+" "+($("drd-ai-hashtags")?.value||"")).trim().slice(0,2200);let privacy="";
+    if(mode==="direct"){status("Consultando las opciones de publicación permitidas por TikTok...");const creator=await api("/tiktok/creator-info",{});const options=creator.creator?.privacy_level_options||[];const sel=$("drd-ai-privacy");if(sel&&options.length){const previous=sel.value;sel.innerHTML="";const labels={PUBLIC_TO_EVERYONE:"Público",MUTUAL_FOLLOW_FRIENDS:"Amigos mutuos",FOLLOWER_OF_CREATOR:"Seguidores",SELF_ONLY:"Privado"};options.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=labels[v]||v;sel.appendChild(o);});sel.value=options.includes(previous)?previous:options[0];}privacy=sel?.value||options[0];if(!privacy||!options.includes(privacy))throw new Error("TikTok no devolvió opciones de privacidad válidas para esta cuenta.");if(!confirm("Vas a enviar este MP4 a TikTok para PUBLICACIÓN DIRECTA.\n\nArchivo: "+selectedVideo.name+"\nPrivacidad: "+privacy+"\n\n¿Confirmas que autorizas el envío?"))return;
+    }else{if(!confirm("Vas a enviar este MP4 a la bandeja de borradores de TikTok. Recibirás una notificación en TikTok para terminar la edición y publicarlo desde la aplicación.\n\nArchivo: "+selectedVideo.name+"\n\n¿Confirmas el envío?"))return;}
+    const chunkSize=blob.size<=64*1024*1024?blob.size:64*1024*1024;const totalChunks=Math.ceil(blob.size/chunkSize);const body={video_size:blob.size,chunk_size:chunkSize,total_chunk_count:totalChunks};let init;
+    if(mode==="direct"){Object.assign(body,{title:caption,privacy_level:privacy,is_aigc:!!$("drd-tiktok-is-aigc")?.checked,disable_comment:!!$("drd-tiktok-disable-comments")?.checked,disable_duet:!!$("drd-tiktok-disable-duet")?.checked,disable_stitch:!!$("drd-tiktok-disable-stitch")?.checked});init=await api("/tiktok/publish/init",body);}else init=await api("/tiktok/inbox/init",body);
+    await uploadChunks(blob,init,chunkSize);lastPublishId=init.publish_id;status(mode==="direct"?"✓ TikTok recibió el archivo para publicación directa. Aún debe procesarlo. Consulta el estado para confirmar si se publicó. ID: "+lastPublishId:"✓ MP4 enviado a TikTok. Revisa la bandeja de entrada/notificaciones de TikTok para continuar y publicar el borrador. ID: "+lastPublishId);
+  }
+  async function checkStatus(){if(!lastPublishId)throw new Error("Todavía no hay un envío reciente para consultar.");const result=await api("/tiktok/status",{publish_id:lastPublishId});const s=result.status||{};status("Estado de TikTok: "+(s.status||"Sin estado")+(s.fail_reason?" · Motivo: "+s.fail_reason:"")+" · ID: "+lastPublishId+(s.status==="SEND_TO_USER_INBOX"?" · Abre TikTok y revisa la notificación para completar el borrador.":""));}
+  function bind(id,fn){const el=$(id);if(el)el.addEventListener("click",async()=>{try{el.disabled=true;await fn();}catch(e){status("❌ "+e.message);console.error("DoradoRD TikTok:",e);}finally{el.disabled=false;}});}
+  document.addEventListener("DOMContentLoaded",()=>{const importer=$("drd-mp4-library-import");if(importer)importer.addEventListener("change",async e=>{try{const f=e.target.files?.[0];if(f){const r=await saveToLibrary(f);status("✓ MP4 guardado en la Biblioteca DoradoRD: "+r.name);}}catch(err){status("❌ "+err.message);}finally{importer.value="";}});const select=$("drd-mp4-library-select");if(select)select.addEventListener("change",()=>selectRecord(select.value));bind("drd-mp4-library-use-current",async()=>{const f=window.DoradoRDFinalVideoFile;if(!f)throw new Error("Primero genera o exporta un MP4 en el editor.");const r=await saveToLibrary(f);status("✓ MP4 actual guardado en la biblioteca: "+r.name);});bind("drd-mp4-library-delete",async()=>{if(!selectedVideo)throw new Error("Selecciona un archivo para eliminar.");if(!confirm("¿Eliminar "+selectedVideo.name+" de la biblioteca local?"))return;await dbDelete(selectedVideo.id);selectedVideo=null;await renderLibrary();});bind("drd-tiktok-send-draft",()=>transfer("draft"));bind("drd-tiktok-publish-direct",()=>transfer("direct"));bind("drd-tiktok-check-status",checkStatus);renderLibrary();});
+})();
 </script>
 
 </body>
