@@ -2061,7 +2061,17 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       ></textarea>
 
       <div class="drd-small" style="margin-top:8px;">
-        El guion se convierte en escenas visuales generadas con IA. Se monta un video WEBM y luego el editor lo exporta a MP4. La cuota de imágenes es gratuita y limitada por día.
+        Desde este mismo módulo puedes crear un video con el guion o cargar un MP4 existente para que la IA analice sus escenas y proponga cortes. El resultado se monta en el editor integrado y se exporta a MP4.
+      </div>
+
+      <div style="margin-top:14px;padding:12px;border:1px solid #29404b;border-radius:10px;background:#0b1318;">
+        <strong>🎬 Modificar un MP4 existente</strong>
+        <label for="drd-mp4-ai-source-file" class="drd-small" style="display:block;margin:10px 0 6px;">Selecciona el video original</label>
+        <input id="drd-mp4-ai-source-file" type="file" accept="video/mp4,.mp4,video/*" style="width:100%;">
+        <label for="drd-mp4-ai-edit-instructions" class="drd-small" style="display:block;margin:10px 0 6px;">¿Qué cambios quieres hacer?</label>
+        <textarea id="drd-mp4-ai-edit-instructions" rows="3" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;resize:vertical;" placeholder="Ej.: elimina pausas, prioriza el gancho, conserva las escenas más importantes y deja un video dinámico de 30 segundos."></textarea>
+        <button type="button" id="drd-mp4-ai-edit-existing" class="drd-btn secondary" style="margin-top:10px;width:100%;">🔍 Analizar y preparar edición del MP4</button>
+        <div id="drd-mp4-ai-edit-status" class="drd-status" role="status" aria-live="polite" style="margin-top:9px;">Carga un MP4 y escribe las instrucciones para modificarlo con IA.</div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px;">
@@ -2137,6 +2147,50 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       if (goalDisplay) goalDisplay.textContent = "Guion limpiado. Puedes pegar o cargar otro texto.";
     });
   }
+
+  const existingMP4Input = document.getElementById("drd-mp4-ai-source-file");
+  const existingMP4EditButton = document.getElementById("drd-mp4-ai-edit-existing");
+  const existingMP4EditInstructions = document.getElementById("drd-mp4-ai-edit-instructions");
+  const existingMP4EditStatus = document.getElementById("drd-mp4-ai-edit-status");
+  let existingMP4File = null;
+
+  if (existingMP4Input) existingMP4Input.addEventListener("change", () => {
+    existingMP4File = existingMP4Input.files && existingMP4Input.files[0] || null;
+    if (existingMP4EditStatus) existingMP4EditStatus.textContent = existingMP4File
+      ? "MP4 seleccionado: " + existingMP4File.name + " · " + (existingMP4File.size / 1048576).toFixed(2) + " MB."
+      : "Carga un MP4 para comenzar.";
+  });
+
+  if (existingMP4EditButton) existingMP4EditButton.addEventListener("click", async () => {
+    if (!existingMP4File) {
+      if (existingMP4EditStatus) existingMP4EditStatus.textContent = "⚠️ Selecciona primero un archivo MP4.";
+      return;
+    }
+    if (existingMP4File.size > 500 * 1024 * 1024) {
+      if (existingMP4EditStatus) existingMP4EditStatus.textContent = "⚠️ El archivo supera 500 MB. Usa un video más ligero para evitar falta de memoria en el navegador.";
+      return;
+    }
+    if (typeof window.DoradoRDAIAnalyzeLocalFile !== "function") {
+      if (existingMP4EditStatus) existingMP4EditStatus.textContent = "❌ El módulo de análisis IA no está disponible. Recarga la página.";
+      return;
+    }
+    existingMP4EditButton.disabled = true;
+    existingMP4EditButton.textContent = "⏳ Analizando MP4…";
+    if (existingMP4EditStatus) existingMP4EditStatus.textContent = "Preparando el video, extrayendo fotogramas y solicitando a la IA una selección de escenas…";
+    try {
+      await window.DoradoRDAIAnalyzeLocalFile(existingMP4File, {
+        instructions: existingMP4EditInstructions ? existingMP4EditInstructions.value.trim() : "",
+        mode: aiModeSelect ? aiModeSelect.value : "review",
+        ratio: aiRatioSelect ? aiRatioSelect.value : "9:16"
+      });
+      if (existingMP4EditStatus) existingMP4EditStatus.textContent = "✓ Análisis enviado al módulo de edición. Revisa los cortes propuestos en Clips seleccionados; en modo inteligente se inicia la exportación MP4.";
+    } catch (error) {
+      if (existingMP4EditStatus) existingMP4EditStatus.textContent = "❌ " + (error.message || String(error));
+    } finally {
+      existingMP4EditButton.disabled = false;
+      existingMP4EditButton.textContent = "🔍 Analizar y preparar edición del MP4";
+    }
+  });
 
   // GENERACIÓN GRATUITA: GUION -> IMÁGENES FLUX -> VIDEO WEBM -> EDITOR MP4
   const aiGenerateButton = document.getElementById("drd-mp4-ai-generate");
@@ -2794,8 +2848,10 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       } else if (!coverOnly && !activeLocalVideo) {
         $("analysis-status").textContent += "\nℹ Video de Biblioteca seleccionado: TikTok entrega portada y métricas, pero no el MP4 original. Para crear cortes y exportar, carga el archivo MP4 original.";
       }
+      return true;
     } catch (error) {
       $("analysis-status").textContent = "No se pudo analizar: " + error.message;
+      return false;
     } finally {
       aiBusy = false;
       $("analyze").disabled = false;
@@ -3014,6 +3070,38 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
       "\n\nEl archivo está preparado localmente. Todavía no se ha enviado ni publicado en TikTok; la publicación requiere la integración oficial.";
   });
 
+
+  // API interna para que "Guion recibido desde Estudio IA" use el mismo
+  // análisis, selección de escenas y exportador ya existentes.
+  window.DoradoRDAIAnalyzeLocalFile = async function(file, options = {}) {
+    if (!file || !file.type || !file.type.startsWith("video/")) {
+      throw new Error("Selecciona un archivo de video válido.");
+    }
+    if (aiBusy) throw new Error("Ya hay un análisis IA en curso.");
+    localFile = file;
+    activeLocalVideo = true;
+    lastAnalysis = "";
+    lastFrames = [];
+    lastSourceDuration = 0;
+    const instructions = $("instructions");
+    if (instructions && options.instructions) instructions.value = String(options.instructions).slice(0, 2000);
+    const mode = $("mode");
+    if (mode) mode.value = options.mode === "smart" ? "automatic" : "manual";
+    const format = $("format");
+    if (format) format.value = options.ratio === "16:9" ? "landscape" : options.ratio === "1:1" ? "square" : "vertical";
+    syncProductionSettings();
+    const preview = $("local-preview");
+    if (localVideoUrl) URL.revokeObjectURL(localVideoUrl);
+    localVideoUrl = URL.createObjectURL(file);
+    if (preview) { preview.src = localVideoUrl; preview.style.display = "block"; preview.load(); }
+    $("local-actions").style.display = "flex";
+    selectLocalVideo();
+    const completed = await runAIAnalysis(false);
+    if (!completed || !lastAnalysis) {
+      throw new Error($("analysis-status").textContent || "La IA no pudo completar el análisis del MP4.");
+    }
+    return { analysis: lastAnalysis, duration: lastSourceDuration, frames: lastFrames.length };
+  };
 
   refreshLibrary();
 })();
