@@ -365,6 +365,105 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 }
 </style>
 
+<!-- LABORATORIO VIRAL -->
+<section class="viral-lab" id="viralLab">
+  <div class="viral-header">
+    <div class="viral-title">
+      <div class="viral-icon">⚡</div>
+      <div>
+        <h2>Laboratorio Viral</h2>
+        <p>Inteligencia creativa · DoradoRD</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="viral-description">
+    El Top 5 recomienda. Tú decides qué video analizar, rescatar o convertir en una nueva idea.
+  </div>
+
+  <div class="viral-stats">
+    <div class="viral-stat">
+      <div class="viral-stat-label">Videos analizados</div>
+      <div class="viral-stat-value" id="viralAnalyzed">0</div>
+      <div class="viral-stat-sub">Biblioteca disponible</div>
+    </div>
+    <div class="viral-stat">
+      <div class="viral-stat-label">Promedio de visualizaciones</div>
+      <div class="viral-stat-value" id="viralAverage">--</div>
+      <div class="viral-stat-sub">Por publicación</div>
+    </div>
+    <div class="viral-stat">
+      <div class="viral-stat-label">Videos destacados</div>
+      <div class="viral-stat-value" id="viralWinners">--</div>
+      <div class="viral-stat-sub">Por encima de tu promedio</div>
+    </div>
+  </div>
+
+  <div class="lab-tip">
+    💡 Puedes seleccionar cualquier video de tu biblioteca. No estás obligado a elegir uno del Top 5.
+  </div>
+
+  <div id="selectedVideoPanel" class="selected-video-panel">
+    <strong>🎯 VIDEO SELECCIONADO PARA EL LABORATORIO</strong>
+    <p id="selectedVideoTitle">Ningún video seleccionado</p>
+    <p id="selectedVideoStats"></p>
+  </div>
+
+  <div class="viral-actions">
+    <button class="viral-button" onclick="analyzeViralLab()">🧠 Analizar videos · Top 5</button>
+    <button class="viral-button secondary" onclick="generateViralIdea()">✍️ Crear guion</button>
+    <button class="viral-button secondary" onclick="improveSelectedVideo()">🚀 Mejorar video</button>
+  </div>
+
+  <div id="viralResults" class="viral-results">
+    <div class="viral-card viral-highlight">
+      <span class="viral-badge">🏆 VIDEO CON MÁS VISUALIZACIONES</span>
+      <h3>Tu publicación con mejor rendimiento</h3>
+      <div id="viralBestVideo" class="viral-video-title"></div>
+      <p id="viralBestStats"></p>
+      <div class="viral-idea">
+        <strong>Oportunidad</strong>
+        <p id="viralBestAdvice"></p>
+      </div>
+    </div>
+
+    <div class="viral-card">
+      <h3>📊 Lo que encontramos en tu contenido</h3>
+      <div id="viralInsights"></div>
+    </div>
+
+    <div class="viral-card">
+      <h3>🔥 Top 5 · Selecciona cualquiera para el laboratorio</h3>
+      <div id="viralTopList" class="viral-top-list"></div>
+    </div>
+
+    <div class="viral-card">
+      <span class="viral-badge">✍️ CREACIÓN PARA EL VIDEO SELECCIONADO</span>
+      <h3 id="viralIdeaTitle">Tu nueva idea</h3>
+      <div id="viralIdeaContent"></div>
+      <button class="viral-button secondary" onclick="generateViralIdea()" style="margin-top:15px">🔄 Crear otro guion</button>
+      <button class="viral-button secondary" onclick="copyViralScript()" style="margin-top:15px">📋 Copiar guion</button>
+    </div>
+
+    <div class="viral-card viral-highlight">
+      <span class="viral-badge">🚀 MEJORA DEL VIDEO</span>
+      <h3 id="improveTitle">Análisis de mejora</h3>
+      <div id="improveContent">
+        <p>Selecciona un video y pulsa Mejorar video.</p>
+      </div>
+      <button class="viral-button secondary" onclick="copyImprovedScript()" style="margin-top:15px">📋 Copiar mejora</button>
+    </div>
+
+    <p class="viral-small">
+      El análisis utiliza los títulos y métricas disponibles. No puede confirmar la retención real sin datos de retención de TikTok. Las recomendaciones son propuestas, no garantías de viralidad.
+    </p>
+  </div>
+
+  <div id="viralEmpty" class="viral-empty">
+    Conecta TikTok y carga tus videos para comenzar el análisis.
+  </div>
+</section>
+
 <section id="drd-ai-studio">
   <div class="drd-header">
     <h2>🎬 DoradoRD · Editor Inteligente de Clips</h2>
@@ -2607,104 +2706,7 @@ Este guion es una estructura creativa preliminar. Aún no es un análisis genera
 </script>
 <!-- FIN DORADOR RD AI STUDIO -->
 
-<!-- LABORATORIO VIRAL -->
-<section class="viral-lab" id="viralLab">
-  <div class="viral-header">
-    <div class="viral-title">
-      <div class="viral-icon">⚡</div>
-      <div>
-        <h2>Laboratorio Viral</h2>
-        <p>Inteligencia creativa · DoradoRD</p>
-      </div>
-    </div>
-  </div>
 
-  <div class="viral-description">
-    El Top 5 recomienda. Tú decides qué video analizar, rescatar o convertir en una nueva idea.
-  </div>
-
-  <div class="viral-stats">
-    <div class="viral-stat">
-      <div class="viral-stat-label">Videos analizados</div>
-      <div class="viral-stat-value" id="viralAnalyzed">0</div>
-      <div class="viral-stat-sub">Biblioteca disponible</div>
-    </div>
-    <div class="viral-stat">
-      <div class="viral-stat-label">Promedio de visualizaciones</div>
-      <div class="viral-stat-value" id="viralAverage">--</div>
-      <div class="viral-stat-sub">Por publicación</div>
-    </div>
-    <div class="viral-stat">
-      <div class="viral-stat-label">Videos destacados</div>
-      <div class="viral-stat-value" id="viralWinners">--</div>
-      <div class="viral-stat-sub">Por encima de tu promedio</div>
-    </div>
-  </div>
-
-  <div class="lab-tip">
-    💡 Puedes seleccionar cualquier video de tu biblioteca. No estás obligado a elegir uno del Top 5.
-  </div>
-
-  <div id="selectedVideoPanel" class="selected-video-panel">
-    <strong>🎯 VIDEO SELECCIONADO PARA EL LABORATORIO</strong>
-    <p id="selectedVideoTitle">Ningún video seleccionado</p>
-    <p id="selectedVideoStats"></p>
-  </div>
-
-  <div class="viral-actions">
-    <button class="viral-button" onclick="analyzeViralLab()">🧠 Analizar videos · Top 5</button>
-    <button class="viral-button secondary" onclick="generateViralIdea()">✍️ Crear guion</button>
-    <button class="viral-button secondary" onclick="improveSelectedVideo()">🚀 Mejorar video</button>
-  </div>
-
-  <div id="viralResults" class="viral-results">
-    <div class="viral-card viral-highlight">
-      <span class="viral-badge">🏆 VIDEO CON MÁS VISUALIZACIONES</span>
-      <h3>Tu publicación con mejor rendimiento</h3>
-      <div id="viralBestVideo" class="viral-video-title"></div>
-      <p id="viralBestStats"></p>
-      <div class="viral-idea">
-        <strong>Oportunidad</strong>
-        <p id="viralBestAdvice"></p>
-      </div>
-    </div>
-
-    <div class="viral-card">
-      <h3>📊 Lo que encontramos en tu contenido</h3>
-      <div id="viralInsights"></div>
-    </div>
-
-    <div class="viral-card">
-      <h3>🔥 Top 5 · Selecciona cualquiera para el laboratorio</h3>
-      <div id="viralTopList" class="viral-top-list"></div>
-    </div>
-
-    <div class="viral-card">
-      <span class="viral-badge">✍️ CREACIÓN PARA EL VIDEO SELECCIONADO</span>
-      <h3 id="viralIdeaTitle">Tu nueva idea</h3>
-      <div id="viralIdeaContent"></div>
-      <button class="viral-button secondary" onclick="generateViralIdea()" style="margin-top:15px">🔄 Crear otro guion</button>
-      <button class="viral-button secondary" onclick="copyViralScript()" style="margin-top:15px">📋 Copiar guion</button>
-    </div>
-
-    <div class="viral-card viral-highlight">
-      <span class="viral-badge">🚀 MEJORA DEL VIDEO</span>
-      <h3 id="improveTitle">Análisis de mejora</h3>
-      <div id="improveContent">
-        <p>Selecciona un video y pulsa Mejorar video.</p>
-      </div>
-      <button class="viral-button secondary" onclick="copyImprovedScript()" style="margin-top:15px">📋 Copiar mejora</button>
-    </div>
-
-    <p class="viral-small">
-      El análisis utiliza los títulos y métricas disponibles. No puede confirmar la retención real sin datos de retención de TikTok. Las recomendaciones son propuestas, no garantías de viralidad.
-    </p>
-  </div>
-
-  <div id="viralEmpty" class="viral-empty">
-    Conecta TikTok y carga tus videos para comenzar el análisis.
-  </div>
-</section>
 
 <section class="section" id="videoLibrary">
   <div class="section-header">
