@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DoradoRD Analytics · MakeMyClip v6</title>
+<title>DoradoRD Analytics · MakeMyClip v8</title>
 
 <style>
 :root{
@@ -2088,9 +2088,21 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           <div><label for="drd-mmc-effect" class="drd-small" style="display:block;margin-bottom:5px;">Efecto visual</label><select id="drd-mmc-effect" style="width:100%;padding:9px;border-radius:8px;"><option value="zoom" selected>Acercamiento 1.12x</option><option value="vivid">Color más vivo</option><option value="none">Sin efecto adicional</option></select></div>
         </div>
         <label class="drd-check" style="margin-top:10px;"><input id="drd-mmc-captions" type="checkbox" checked> Generar subtítulos sincronizados en español</label>
-        <label for="drd-mmc-caption-style" class="drd-small" style="display:block;margin:9px 0 5px;">Estilo de subtítulos</label>
-        <select id="drd-mmc-caption-style" style="width:100%;padding:9px;border-radius:8px;"><option value="karaoke" selected>Palabra por palabra · amarillo · sin recuadro</option><option value="phrase">Frases cortas · blanco · sin recuadro</option></select>
-        <div class="drd-small">Whisper reconoce y sincroniza la voz. El estilo palabra por palabra crea un efecto tipo karaoke. El fondo negro sólido queda desactivado. La familia tipográfica depende de las fuentes disponibles en el motor.</div>
+        <label for="drd-mmc-caption-style" class="drd-small" style="display:block;margin:9px 0 5px;">Diseño de subtítulos</label>
+        <select id="drd-mmc-caption-style" style="width:100%;padding:9px;border-radius:8px;">
+          <option value="karaoke" selected>Karaoke amarillo · palabra por palabra</option>
+          <option value="phrase">Clásico blanco · frases cortas</option>
+          <option value="impact-yellow">Impacto amarillo · frases grandes</option>
+          <option value="impact-white">Impacto blanco · frases grandes</option>
+          <option value="cyan-words">Neón cian · palabra por palabra</option>
+          <option value="red-words">Rojo intenso · palabra por palabra</option>
+          <option value="green-words">Verde brillante · palabra por palabra</option>
+        </select>
+        <label for="drd-mmc-caption-size" class="drd-small" style="display:block;margin:9px 0 5px;">Tamaño del texto</label>
+        <select id="drd-mmc-caption-size" style="width:100%;padding:9px;border-radius:8px;">
+          <option value="60">Grande</option><option value="68" selected>Muy grande</option><option value="76">Extra grande</option><option value="82">Máximo</option>
+        </select>
+        <div class="drd-small">Whisper sincroniza los subtítulos con la voz. Los estilos y tamaños se aplican al render real; se mantiene el fondo transparente y la zona inferior segura de TikTok. La familia tipográfica depende de las fuentes instaladas en Windows.</div>
         <details style="margin-top:10px;"><summary class="drd-small" style="cursor:pointer;">Funciones que ejecutará el motor</summary><ul class="drd-small" style="margin:8px 0 0 18px;padding:0;"><li>Selección y montaje de fragmentos destacados.</li><li>Transiciones entre fragmentos según el selector.</li><li>Acercamiento 1.12x o mejora de color, según el efecto elegido.</li><li>Transcripción local en español y subtítulos sincronizados.</li><li>Reencuadre vertical 9:16 y normalización de audio a -14 LUFS.</li><li>Verificación del archivo MP4 exportado.</li></ul></details>
         <label for="drd-mmc-token" class="drd-small" style="display:block;margin:10px 0 5px;">Código local del puente (aparece al ejecutar INICIAR.bat)</label>
         <input id="drd-mmc-token" type="password" autocomplete="off" placeholder="Pega aquí el código local" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;">
@@ -2386,6 +2398,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         const effectSelect=document.getElementById("drd-mmc-effect");
         const captionsToggle=document.getElementById("drd-mmc-captions");
         const captionStyleSelect=document.getElementById("drd-mmc-caption-style");
+        const captionSizeSelect=document.getElementById("drd-mmc-caption-size");
         const edit=await fetch(base+"/api/edit",{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify({
           sourceName:uploaded.sourceName,
           segments:segments.map(x=>({startSec:x.start,endSec:x.end})),
@@ -2394,7 +2407,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           transitionSec:0.35,
           effect:effectSelect?effectSelect.value:"zoom",
           captions:captionsToggle?captionsToggle.checked:true,
-          captionStyle:captionStyleSelect?captionStyleSelect.value:"karaoke"
+          captionStyle:captionStyleSelect?captionStyleSelect.value:"karaoke",
+          captionSize:captionSizeSelect?Number(captionSizeSelect.value):68
         })});
         const result=await edit.json().catch(()=>({}));
         if (!edit.ok || !result.ok) throw new Error(result.error || "MakeMyClip no pudo exportar el MP4.");
