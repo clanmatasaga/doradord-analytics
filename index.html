@@ -2086,13 +2086,20 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       <div id="drd-makemyclip-panel" style="margin-top:14px;padding:12px;border:1px solid #36515f;border-radius:10px;background:#101c23;">
         <strong>🛠️ Motor local MakeMyClip</strong>
-        <div class="drd-small" style="margin:6px 0 10px;">Edita el MP4 original en tu computadora. El análisis y la selección de escenas siguen usando el Estudio IA; MakeMyClip ejecuta los cortes y la exportación local.</div>
+        <div class="drd-small" style="margin:6px 0 10px;">Edita el MP4 original en tu computadora: cortes, transiciones, subtítulos sincronizados, zoom/ajustes visuales, reencuadre 9:16 y volumen normalizado. El Estudio IA selecciona las escenas; MakeMyClip ejecuta el montaje local.</div>
         <label for="drd-mmc-library-select" class="drd-small" style="display:block;margin:8px 0 5px;">MP4 guardado en Biblioteca</label>
         <select id="drd-mmc-library-select" style="width:100%;padding:10px;border-radius:8px;"><option value="">Cargando Biblioteca MP4…</option></select>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:10px;">
+          <div><label for="drd-mmc-transition" class="drd-small" style="display:block;margin-bottom:5px;">Transición entre clips</label><select id="drd-mmc-transition" style="width:100%;padding:9px;border-radius:8px;"><option value="fade" selected>Fundido suave</option><option value="dissolve">Disolver</option><option value="fadeblack">Fundido a negro</option><option value="wipeleft">Barrido lateral</option></select></div>
+          <div><label for="drd-mmc-effect" class="drd-small" style="display:block;margin-bottom:5px;">Efecto visual</label><select id="drd-mmc-effect" style="width:100%;padding:9px;border-radius:8px;"><option value="zoom" selected>Zoom dinámico suave</option><option value="vivid">Color más vivo</option><option value="none">Sin efecto adicional</option></select></div>
+        </div>
+        <label class="drd-check" style="margin-top:10px;"><input id="drd-mmc-captions" type="checkbox" checked> Generar subtítulos sincronizados en español</label>
+        <div class="drd-small">Los subtítulos requieren whisper.cpp y un modelo multilingüe instalado en Windows. Si falta, el motor lo indicará y no entregará un video fingiendo que tiene subtítulos.</div>
         <label for="drd-mmc-token" class="drd-small" style="display:block;margin:10px 0 5px;">Código local del puente (aparece al ejecutar INICIAR.bat)</label>
         <input id="drd-mmc-token" type="password" autocomplete="off" placeholder="Pega aquí el código local" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">
           <button type="button" id="drd-mmc-check" class="drd-btn secondary">🔌 Comprobar conexión</button>
+          <button type="button" id="drd-mmc-doctor" class="drd-btn secondary">🩺 Diagnóstico del motor</button>
           <button type="button" id="drd-mmc-run" class="drd-btn primary" style="flex:1;">🎬 Analizar y editar con MakeMyClip</button>
         </div>
         <div id="drd-mmc-status" class="drd-status" role="status" aria-live="polite" style="margin-top:9px;">Inicia primero el puente local de MakeMyClip en Windows.</div>
@@ -2311,6 +2318,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
     const tokenInput = document.getElementById("drd-mmc-token");
     const librarySelect = document.getElementById("drd-mmc-library-select");
     const checkButton = document.getElementById("drd-mmc-check");
+    const doctorButton = document.getElementById("drd-mmc-doctor");
     const runButton = document.getElementById("drd-mmc-run");
     const status = document.getElementById("drd-mmc-status");
     if (!tokenInput || !librarySelect || !checkButton || !runButton || !status) return;
@@ -2343,6 +2351,18 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
       catch(error){ setStatus("❌ "+error.message+". Comprueba que INICIAR.bat siga abierto."); }
       finally { checkButton.disabled=false; }
     });
+    if (doctorButton) doctorButton.addEventListener("click", async()=>{
+      doctorButton.disabled=true; setStatus("Ejecutando diagnóstico de Node, FFmpeg, whisper.cpp y modelo de voz…");
+      try {
+        await checkBridge();
+        const response=await fetch(base+"/api/doctor",{headers:headers(),cache:"no-store"});
+        const data=await response.json().catch(()=>({}));
+        if (!response.ok || !data.ok) throw new Error(data.error || "El diagnóstico detectó componentes pendientes.");
+        const report=typeof data.report === "string" ? data.report : JSON.stringify(data.report,null,2);
+        setStatus("DIAGNÓSTICO MAKEMYCLIP\n"+report.slice(0,3500));
+      } catch(error) { setStatus("❌ "+error.message); }
+      finally { doctorButton.disabled=false; }
+    });
     runButton.addEventListener("click", async()=>{
       if (runButton.disabled) return;
       runButton.disabled=true; const oldText=runButton.textContent;
@@ -2361,11 +2381,22 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         await window.DoradoRDAIAnalyzeLocalFile(file, {instructions:existingMP4EditInstructions?existingMP4EditInstructions.value.trim():"",mode:"review",ratio});
         const segments=window.DoradoRDAILastSegments;
         if (!Array.isArray(segments) || !segments.length) throw new Error("La IA no devolvió fragmentos válidos. Revisa el análisis y vuelve a intentar.");
-        setStatus("Enviando el MP4 a MakeMyClip y ejecutando cortes FFmpeg localmente…");
+        setStatus("Enviando el MP4 a MakeMyClip: cortes, transiciones, subtítulos y efectos…");
         const upload=await fetch(base+"/api/import",{method:"POST",headers:headers({"Content-Type":"video/mp4","X-Dorado-Filename":file.name}),body:file});
         const uploaded=await upload.json().catch(()=>({}));
         if (!upload.ok || !uploaded.ok) throw new Error(uploaded.error || "No se pudo transferir el MP4 al motor local.");
-        const edit=await fetch(base+"/api/edit",{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify({sourceName:uploaded.sourceName,segments:segments.map(x=>({startSec:x.start,endSec:x.end})),ratio})});
+        const transitionSelect=document.getElementById("drd-mmc-transition");
+        const effectSelect=document.getElementById("drd-mmc-effect");
+        const captionsToggle=document.getElementById("drd-mmc-captions");
+        const edit=await fetch(base+"/api/edit",{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify({
+          sourceName:uploaded.sourceName,
+          segments:segments.map(x=>({startSec:x.start,endSec:x.end})),
+          ratio,
+          transition:transitionSelect?transitionSelect.value:"fade",
+          transitionSec:0.35,
+          effect:effectSelect?effectSelect.value:"zoom",
+          captions:captionsToggle?captionsToggle.checked:true
+        })});
         const result=await edit.json().catch(()=>({}));
         if (!edit.ok || !result.ok) throw new Error(result.error || "MakeMyClip no pudo exportar el MP4.");
         setStatus("Descargando el MP4 final desde MakeMyClip…");
