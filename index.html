@@ -2064,6 +2064,16 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         Desde este mismo módulo puedes crear un video con el guion o cargar un MP4 existente para que la IA analice sus escenas y proponga cortes. El resultado se monta en el editor integrado y se exporta a MP4.
       </div>
 
+
+      <div id="drd-live-import-panel" style="margin-top:14px;padding:14px;border:1px solid #3b654d;border-radius:10px;background:#102019;">
+        <strong>📥 Importar grabación de TikTok LIVE</strong>
+        <p class="drd-small" style="margin:7px 0 10px;">Descarga primero tu repetición desde TikTok Studio → LIVE → LIVE recordings. Después selecciónala aquí: se guardará en Biblioteca MP4 y podrás analizarla para extraer clips.</p>
+        <label for="drd-live-mp4-file" class="drd-small" style="display:block;margin:10px 0 6px;">Seleccionar grabación LIVE (MP4)</label>
+        <input id="drd-live-mp4-file" type="file" accept="video/mp4,.mp4" style="width:100%;">
+        <div id="drd-live-import-status" class="drd-status" role="status" aria-live="polite" style="margin-top:9px;">Esperando una grabación LIVE en formato MP4.</div>
+        <button type="button" id="drd-live-analyze-button" class="drd-btn primary" disabled style="margin-top:10px;width:100%;">🎯 Analizar LIVE y preparar clips</button>
+      </div>
+
       <div style="margin-top:14px;padding:12px;border:1px solid #29404b;border-radius:10px;background:#0b1318;">
         <strong>🎬 Modificar un MP4 existente</strong>
         <label for="drd-mp4-ai-source-file" class="drd-small" style="display:block;margin:10px 0 6px;">Selecciona el video original</label>
@@ -2167,6 +2177,74 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
   const existingMP4EditInstructions = document.getElementById("drd-mp4-ai-edit-instructions");
   const existingMP4EditStatus = document.getElementById("drd-mp4-ai-edit-status");
   let existingMP4File = null;
+
+  // Importación de grabaciones LIVE: almacenamiento local en la Biblioteca MP4.
+  const liveMP4Input = document.getElementById("drd-live-mp4-file");
+  const liveImportStatus = document.getElementById("drd-live-import-status");
+  const liveAnalyzeButton = document.getElementById("drd-live-analyze-button");
+  let liveMP4File = null;
+
+  if (liveMP4Input) liveMP4Input.addEventListener("change", async () => {
+    const file = liveMP4Input.files && liveMP4Input.files[0] || null;
+    liveMP4File = null;
+    if (liveAnalyzeButton) liveAnalyzeButton.disabled = true;
+    if (!file) {
+      if (liveImportStatus) liveImportStatus.textContent = "No se seleccionó ninguna grabación.";
+      return;
+    }
+    const isMP4 = file.type === "video/mp4" || /\\.mp4$/i.test(file.name || "");
+    if (!isMP4) {
+      if (liveImportStatus) liveImportStatus.textContent = "❌ El archivo debe ser MP4. Descarga la repetición en formato MP4 desde TikTok Studio.";
+      liveMP4Input.value = "";
+      return;
+    }
+    if (file.size > 500 * 1024 * 1024) {
+      if (liveImportStatus) liveImportStatus.textContent = "⚠️ El archivo supera 500 MB. Reduce su tamaño antes de importarlo para evitar falta de memoria.";
+      liveMP4Input.value = "";
+      return;
+    }
+    if (typeof window.DoradoRDMP4LibrarySave !== "function") {
+      if (liveImportStatus) liveImportStatus.textContent = "❌ La Biblioteca MP4 no está disponible. Recarga la página e inténtalo de nuevo.";
+      return;
+    }
+    if (liveImportStatus) liveImportStatus.textContent = "⏳ Guardando grabación en la Biblioteca MP4 local…";
+    try {
+      await window.DoradoRDMP4LibrarySave(file);
+      liveMP4File = file;
+      if (liveImportStatus) liveImportStatus.textContent = "✓ Grabación LIVE guardada en Biblioteca MP4: " + file.name + " · " + (file.size / 1048576).toFixed(2) + " MB. Ya puedes analizarla.";
+      if (liveAnalyzeButton) liveAnalyzeButton.disabled = false;
+    } catch (error) {
+      if (liveImportStatus) liveImportStatus.textContent = "❌ No se pudo guardar la grabación: " + (error.message || String(error));
+    }
+  });
+
+  if (liveAnalyzeButton) liveAnalyzeButton.addEventListener("click", async () => {
+    if (!liveMP4File) {
+      if (liveImportStatus) liveImportStatus.textContent = "Selecciona primero una grabación LIVE MP4.";
+      return;
+    }
+    if (typeof window.DoradoRDAIAnalyzeLocalFile !== "function") {
+      if (liveImportStatus) liveImportStatus.textContent = "❌ El módulo de análisis IA no está disponible. Recarga la página.";
+      return;
+    }
+    liveAnalyzeButton.disabled = true;
+    const oldText = liveAnalyzeButton.textContent;
+    liveAnalyzeButton.textContent = "⏳ Analizando grabación LIVE…";
+    if (liveImportStatus) liveImportStatus.textContent = "La IA está analizando la grabación para proponer los mejores fragmentos. La duración del proceso depende del tamaño del LIVE.";
+    try {
+      await window.DoradoRDAIAnalyzeLocalFile(liveMP4File, {
+        instructions: "Analiza esta grabación completa de TikTok LIVE. Identifica momentos interesantes, frases destacadas, reacciones y segmentos que funcionen como clips cortos independientes. Prioriza ganchos claros y evita pausas, silencios y repeticiones.",
+        mode: "smart",
+        ratio: "9:16"
+      });
+      if (liveImportStatus) liveImportStatus.textContent = "✓ Análisis LIVE enviado al editor. Revisa los fragmentos propuestos y continúa con MakeMyClip para montar y exportar tus clips.";
+    } catch (error) {
+      if (liveImportStatus) liveImportStatus.textContent = "❌ No se pudo analizar la grabación: " + (error.message || String(error));
+    } finally {
+      liveAnalyzeButton.disabled = false;
+      liveAnalyzeButton.textContent = oldText;
+    }
+  });
 
   if (existingMP4Input) existingMP4Input.addEventListener("change", () => {
     existingMP4File = existingMP4Input.files && existingMP4Input.files[0] || null;
