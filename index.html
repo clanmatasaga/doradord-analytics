@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DoradoRD Analytics</title>
+<title>DoradoRD Analytics · MakeMyClip v6</title>
 
 <style>
 :root{
@@ -2086,15 +2086,18 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
 
       <div id="drd-makemyclip-panel" style="margin-top:14px;padding:12px;border:1px solid #36515f;border-radius:10px;background:#101c23;">
         <strong>🛠️ Motor local MakeMyClip</strong>
-        <div class="drd-small" style="margin:6px 0 10px;">Edita el MP4 original en tu computadora: cortes, transiciones, subtítulos sincronizados, zoom/ajustes visuales, reencuadre 9:16 y volumen normalizado. El Estudio IA selecciona las escenas; MakeMyClip ejecuta el montaje local.</div>
+        <div class="drd-small" style="margin:6px 0 10px;">Perfil de edición profesional: selección de momentos, cortes limpios, transiciones reales, acercamiento visual, corrección de color, subtítulos sincronizados, reencuadre y audio normalizado. El motor local ejecuta las operaciones; no se simulan efectos.</div>
         <label for="drd-mmc-library-select" class="drd-small" style="display:block;margin:8px 0 5px;">MP4 guardado en Biblioteca</label>
         <select id="drd-mmc-library-select" style="width:100%;padding:10px;border-radius:8px;"><option value="">Cargando Biblioteca MP4…</option></select>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-top:10px;">
           <div><label for="drd-mmc-transition" class="drd-small" style="display:block;margin-bottom:5px;">Transición entre clips</label><select id="drd-mmc-transition" style="width:100%;padding:9px;border-radius:8px;"><option value="fade" selected>Fundido suave</option><option value="dissolve">Disolver</option><option value="fadeblack">Fundido a negro</option><option value="wipeleft">Barrido lateral</option></select></div>
-          <div><label for="drd-mmc-effect" class="drd-small" style="display:block;margin-bottom:5px;">Efecto visual</label><select id="drd-mmc-effect" style="width:100%;padding:9px;border-radius:8px;"><option value="zoom" selected>Zoom dinámico suave</option><option value="vivid">Color más vivo</option><option value="none">Sin efecto adicional</option></select></div>
+          <div><label for="drd-mmc-effect" class="drd-small" style="display:block;margin-bottom:5px;">Efecto visual</label><select id="drd-mmc-effect" style="width:100%;padding:9px;border-radius:8px;"><option value="zoom" selected>Acercamiento 1.12x</option><option value="vivid">Color más vivo</option><option value="none">Sin efecto adicional</option></select></div>
         </div>
         <label class="drd-check" style="margin-top:10px;"><input id="drd-mmc-captions" type="checkbox" checked> Generar subtítulos sincronizados en español</label>
-        <div class="drd-small">Los subtítulos requieren whisper.cpp y un modelo multilingüe instalado en Windows. Si falta, el motor lo indicará y no entregará un video fingiendo que tiene subtítulos.</div>
+        <label for="drd-mmc-caption-style" class="drd-small" style="display:block;margin:9px 0 5px;">Estilo de subtítulos</label>
+        <select id="drd-mmc-caption-style" style="width:100%;padding:9px;border-radius:8px;"><option value="karaoke" selected>Palabra por palabra · amarillo · sin recuadro</option><option value="phrase">Frases cortas · blanco · sin recuadro</option></select>
+        <div class="drd-small">Whisper reconoce y sincroniza la voz. El estilo palabra por palabra crea un efecto tipo karaoke. El fondo negro sólido queda desactivado. La familia tipográfica depende de las fuentes disponibles en el motor.</div>
+        <details style="margin-top:10px;"><summary class="drd-small" style="cursor:pointer;">Funciones que ejecutará el motor</summary><ul class="drd-small" style="margin:8px 0 0 18px;padding:0;"><li>Selección y montaje de fragmentos destacados.</li><li>Transiciones entre fragmentos según el selector.</li><li>Acercamiento 1.12x o mejora de color, según el efecto elegido.</li><li>Transcripción local en español y subtítulos sincronizados.</li><li>Reencuadre vertical 9:16 y normalización de audio a -14 LUFS.</li><li>Verificación del archivo MP4 exportado.</li></ul></details>
         <label for="drd-mmc-token" class="drd-small" style="display:block;margin:10px 0 5px;">Código local del puente (aparece al ejecutar INICIAR.bat)</label>
         <input id="drd-mmc-token" type="password" autocomplete="off" placeholder="Pega aquí el código local" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;">
@@ -2388,6 +2391,7 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
         const transitionSelect=document.getElementById("drd-mmc-transition");
         const effectSelect=document.getElementById("drd-mmc-effect");
         const captionsToggle=document.getElementById("drd-mmc-captions");
+        const captionStyleSelect=document.getElementById("drd-mmc-caption-style");
         const edit=await fetch(base+"/api/edit",{method:"POST",headers:headers({"Content-Type":"application/json"}),body:JSON.stringify({
           sourceName:uploaded.sourceName,
           segments:segments.map(x=>({startSec:x.start,endSec:x.end})),
@@ -2395,7 +2399,8 @@ html{scroll-behavior:smooth;scroll-padding-top:100px}
           transition:transitionSelect?transitionSelect.value:"fade",
           transitionSec:0.35,
           effect:effectSelect?effectSelect.value:"zoom",
-          captions:captionsToggle?captionsToggle.checked:true
+          captions:captionsToggle?captionsToggle.checked:true,
+          captionStyle:captionStyleSelect?captionStyleSelect.value:"karaoke"
         })});
         const result=await edit.json().catch(()=>({}));
         if (!edit.ok || !result.ok) throw new Error(result.error || "MakeMyClip no pudo exportar el MP4.");
